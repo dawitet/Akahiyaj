@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "81721365267",
+    "firebase_url": "https://akahidegn-79376-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "akahidegn-79376",
+    "storage_bucket": "akahidegn-79376.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:81721365267:android:dcceea55dbf8b542adc0e6",
+        "android_client_info": {
+          "package_name": "com.dawitf.akahidegn"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-04oS-c5FmfZ-DekJqdBl_GTnW4b_yAo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

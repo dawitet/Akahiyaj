@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">አካሂደኝ</string> <!-- Akahidegn -->
+
+    <!-- MainActivity / MainAppScreen -->
+    <string name="main_title">አካሂደኝ</string> <!-- Akahidegn App -->
+    <string name="user_id_prefix">ተጠቃሚ:</string> <!-- User ID: -->
+    <string name="authenticating_user">ማንነትን በማረጋገጥ ላይ...</string> <!-- Authenticating user... -->
+    <string name="location_prefix">አካባቢ:</string> <!-- Location: -->
+    <string name="acquiring_location">አካባቢ በመፈለግ ላይ...</string> <!-- Acquiring location... -->
+    <string name="grant_location_permission">የአካባቢ ማሳወቂያ ፍቃድ ስጥ</string> <!-- Grant Location Permission -->
+    <string name="nearby_groups_title">በአቅራቢያ ያሉ ቡድኖች</string> <!-- Nearby Groups -->
+    <string name="nearby_groups_placeholder">እዚህ ጋር በአቅራቢያ ያሉ ቡድኖች ዝርዝር</string> <!-- List of nearby groups will be shown here. -->
+    <string name="create_new_group_fab_description">አዲስ ቡድን ፍጠር</string> <!-- Create New Group (for FAB contentDescription) -->
+    <string name="destination_input_label">የታክሲ መስመር ስም ያስገቡ</string> <!-- Enter Taxi Route Name -->
+    <string name="create_group_button">ቡድን ፍጠር</string> <!-- Create Group -->
+    <string name="find_groups_button">ቡድን ፈልግ</string> <!-- Find Groups -->
+    <string name="toast_location_permission_required_for_create">ቡድን ለመፍጠር ያሉበትን ቦታ ለማወቅ ፍቃድ ያስፈልጋል።</string> <!-- Location permission required to create group. -->
+    <string name="toast_group_created">ቡድን ተፈጥሯል: %1$s</string> <!-- Group created: %1$s -->
+    <string name="toast_group_failed_to_create">ቡድን መፍጠር አልተቻለም: %1$s</string> <!-- Failed to create group: %1$s -->
+    <string name="dialog_title_create_group">ግሩፕ ፍጠር</string> <!-- Create Group -->
+    <string name="dialog_destination_label">መድረሻ ያስገቡ</string> <!-- Enter Destination -->
+    <string name="dialog_button_create">ፍጠር</string> <!-- Create -->
+    <string name="dialog_button_cancel">ሰርዝ</string> <!-- Cancel -->
+    <string name="toast_destination_cannot_be_empty">መድረሻ ባዶ ሊሆን አይችልም።</string> <!-- Destination cannot be empty. -->
+    <string name="toast_destination_too_short">መድረሻ ትንሽ ነው።</string> <!-- Destination is too short. -->
+
+    <!-- GroupListScreen -->
+    <string name="group_list_title">የቡድኖች ዝርዝር</string> <!-- Group List -->
+    <string name="group_members_count">%1$d/%2$d አባላት</string> <!-- 3/6 members -->
+    <string name="button_join_group">ቡድን ተቀላቀል</string> <!-- Join Group -->
+    <string name="button_view_group">ቡድን ይመልከቱ</string> <!-- View Group -->
+    <string name="toast_joined_group">ቡድኑን ተቀላቅለዋል።</string> <!-- You have joined the group. -->
+    <string name="toast_failed_to_join_group">ቡድኑን መቀላቀል አልተቻለም: %1$s</string> <!-- Failed to join group: %1$s -->
+    <string name="no_groups_found">ምንም ቡድን አልተገኘም።</string> <!-- No groups found. -->
+    <string name="loading_groups">ቡድኖች በመጫን ላይ...</string> <!-- Loading groups... -->
+    <string name="error_loading_groups">ቡድኖችን በመጫን ላይ ስህተት: %1$s</string> <!-- Error loading groups: %1$s -->
+    <string name="retry_button">እንደገና ሞክር</string> <!-- Retry -->
+    <string name="refresh_button">አዘምን</string> <!-- Refresh -->
+    <string name="distance_from_you">%1$s ከእርስዎ</string> <!-- distance from you -->
+    <string name="km_unit">ኪ.ሜ</string> <!-- km -->
+    <string name="meters_unit">ሜትር</string> <!-- meters -->
+    <string name="toast_group_is_full">ይህ ቡድን ሙሉ ነው།</string> <!-- This group is full. -->
+    <string name="toast_already_a_member">እርስዎ ቀድሞውኑ የዚህ ቡድን አባል ነዎት።</string> <!-- You are already a member of this group. -->
+    <string name="create_group_ad_prompt_title">ቡድን መፍጠር</string> <!-- Create Group (Title for Ad Prompt) -->
+    <string name="create_group_ad_prompt_message">ግሩፕ ለመፍጠር ማስታወቂያ ማየት አለብዎት።</string> <!-- To create a group, you need to watch an ad. -->
+    <string name="dialog_button_ok_amharic">እሺ</string> <!-- Okay -->
+    <string name="dialog_button_no_amharic">እንቢ</string> <!-- No (Decline) -->
+    <string name="toast_rewarded_ad_not_ready">የሽልማት ማስታወቂያ ገና ዝግጁ አይደለም። እባክዎ ትንሽ ቆይተው ይሞክሩ።</string> <!-- Rewarded ad is not ready yet. Please try again shortly. -->
+    <string name="search_radius_label">የፍለጋ ርቀት:</string> <!-- Search Radius: -->
+    <string name="group_item_button_disband">አፍርስ</string> <!-- Disband -->
+    <string name="toast_group_disband_success">ቡድን በተሳካ ሁኔታ ፈርሷል።</string> <!-- Group disbanded successfully. -->
+    <string name="toast_group_disband_failed">ቡድኑን ማፍረስ አልተቻለም: %1$s</string> <!-- Failed to disband group: %1$s -->
+
+    <!-- GroupDetailScreen -->
+    <string name="group_detail_title">የቡድን ዝርዝር</string> <!-- Group Details -->
+    <string name="members_section_title">አባላት:</string> <!-- Members: -->
+    <string name="button_leave_group">ቡድን ለቅቅ</string> <!-- Leave Group -->
+    <string name="button_back_to_list">ወደ ዝርዝር ተመለስ</string> <!-- Back to List -->
+    <string name="toast_left_group">ቡድኑን ለቀቁ።</string> <!-- You have left the group. -->
+    <string name="toast_failed_to_leave_group">ቡድኑን መልቀቅ አልተቻለም: %1$s</string> <!-- Failed to leave group: %1$s -->
+    <string name="member_you_indicator">(እርስዎ)</string> <!-- (You) -->
+    <string name="creator_indicator">(ፈጣሪ)</string> <!-- (Creator) -->
+    <string name="admin_indicator">(አስተዳዳሪ)</string> <!-- (Admin) -->
+    <string name="loading_group_details">የቡድን ዝርዝር በመጫን ላይ...</string> <!-- Loading group details... -->
+    <string name="error_loading_group_details">የቡድን ዝርዝር በመጫን ላይ ስህተት: %1$s</string> <!-- Error loading group details: %1$s -->
+    <string name="group_not_found">ቡድን አልተገኘም።</string> <!-- Group not found. -->
+    <string name="group_destination_label">መድረሻ:</string> <!-- Destination: -->
+    <string name="group_created_at_label">የተፈጠረበት ጊዜ:</string> <!-- Created at: -->
+    <string name="group_creator_label">ፈጣሪ:</string> <!-- Creator: -->
+    <string name="group_max_members_label">ከፍተኛ አባላት:</string> <!-- Max Members: -->
+    <string name="group_current_location_label">አሁኑ አካባቢ:</string> <!-- Current Location: -->
+
+    <!-- Chat functionality -->
+    <string name="chat_title">ውይይት</string> <!-- Chat -->
+    <string name="chat_input_placeholder">መልእክት ላክ...</string> <!-- Send message... -->
+    <string name="send_button">ላክ</string> <!-- Send -->
+    <string name="chat_title_prefix_dynamic">ውይይት: %1$s</string>
+    <string name="unknown_destination">ያልታወቀ መድረሻ</string> <!-- Unknown destination -->
+    <string name="action_close_chat">ውይይት ዝጋ</string> <!-- Close chat -->
+    <string name="chat_message_input_label">መልእክት ጻፍ</string> <!-- Write message -->
+    <string name="action_send_message">መልክት ላክ</string> <!-- Send message -->
+    <string name="chat_no_messages_placeholder">ምንም መልእክት የለም። ውይይት ጀምር!</string> <!-- No messages. Start conversation! -->
+
+    <!-- Missing action strings -->
+    <string name="action_back">ተመለስ</string> <!-- Go back -->
+    <string name="find_a_ride_title">ግሩፕ ፈልግ</string> <!-- Find a Group -->
+    <string name="search_bar_hint_where_to">ወዴት?</string> <!-- Where to? -->
+    <string name="nearby_rides_title">በአቅራቢያ ያሉ ግሩፖች</string> <!-- Nearby Groups -->
+    <string name="no_groups_found_placeholder">ምንም ግሩፕ አልተገኘም። አንዱን ይፍጠሩ!</string> <!-- No groups found. Create one! -->
+    
+    <!-- Name input screen -->
+    <string name="enter_your_name_title">ስምዎን ያስገቡ</string> <!-- Enter your name -->
+    <string name="name_input_label">ሙሉ ስም</string> <!-- Full name -->
+    <string name="please_enter_a_name">እባክዎ ስምዎን ያስገቡ</string> <!-- Please enter your name -->
+    <string name="submit_button">ላክ</string> <!-- Submit -->
+    
+    <!-- Additional missing toast messages -->
+    <string name="toast_location_permission_required">የአካባቢ ፍቃድ ያስፈልጋል</string> <!-- Location permission required -->
+    <string name="toast_user_not_authenticated">ተጠቃሚ ማንነት አልተረጋገጠም</string> <!-- User not authenticated -->
+    <string name="toast_location_not_available_for_create">ግሩፕ ለመፍጠር አካባቢ አልተገኘም</string> <!-- Location not available for creating group -->
+    <string name="toast_group_created_successfully">ግሩፕ በተሳካ ሁኔታ ተፈጠረ: %1$s</string> <!-- Group created successfully: %1$s -->
+    <string name="toast_failed_to_create_group">ግሩፕ መፍጠር አልተሳካም: %1$s</string> <!-- Failed to create group: %1$s -->
+    <string name="toast_user_not_authenticated_generic">ተጠቃሚ ማንነት አልተረጋገጠም</string> <!-- User not authenticated (generic) -->
+    <string name="toast_location_not_available_generic">አካባቢ አልተገኘም</string> <!-- Location not available (generic) -->
+    <string name="toast_destination_blank_generic">መድረሻ ባዶ ነው</string> <!-- Destination is blank (generic) -->
+    <string name="toast_failed_generic">አልተሳካም</string> <!-- Failed (generic) -->
+    <string name="toast_group_no_longer_exists">ግሩፕ ከአሁን በኋላ የለም</string> <!-- Group no longer exists -->
+    <string name="toast_join_group_failed_generic">ግሩፕ መቀላቀል አልተሳካም</string> <!-- Failed to join group (generic) -->
+    <string name="toast_not_creator_disband">ፈጣሪ ብቻ ግሩፕ ማፍረስ ይችላል</string> <!-- Only creator can disband group -->
+    <string name="toast_not_creator_change_members">ፈጣሪ ብቻ አባላት ቁጥር መቀየር ይችላል</string> <!-- Only creator can change member count -->
+    <string name="toast_cannot_reduce_max_members">ከአሁኑ የበለጠ አባላት ቁጥር መቀነስ አይችሉም: %1$s</string> <!-- Cannot reduce max members below current: %1$s -->
+    <string name="toast_join_group_success">ግሩፕ ተቀላቅለዋል</string> <!-- Successfully joined group -->
+    <string name="toast_join_group_failed">ግሩፕ መቀላቀል አልተሳካም: %1$s</string> <!-- Failed to join group: %1$s -->
+    
+    <!-- FCM/Notification related -->
+    <string name="fcm_channel_name">ያልታወቀ ቻናል</string> <!-- Default channel -->
+    <string name="fcm_channel_description">ለመተግበሪያ ማሳወቂያዎች</string> <!-- For app notifications -->
+
+    <!-- Splash Screen Text -->
+    <string name="splash_screen_text">ሪይድ እና ፈረስ ከሌሎች ሰዎች ጋር በመሄድ ሂሳቡን ይካፈሉ</string> <!-- Share rides and horses with others and split the bill -->
+    <!-- Group creation strings - updated names -->
+    <string name="dialog_create_group_title_new">አዲስ ግሩፕ ፍጠር</string> <!-- Create New Group -->
+    <string name="destination_input_label_new">መድረሻ ያስገቡ</string> <!-- Enter Destination -->
+    <string name="dialog_button_create_group">ግሩፕ ፍጠር</string> <!-- Create Group -->
+    <string name="toast_please_enter_destination">እባክዎ መድረሻዎን ያስገቡ።</string> <!-- Please enter your destination. -->
+    <string name="toast_invalid_max_members_range">የአባላት ብዛት በ%1$s እና %2$s መካከል መሆን አለበት።</string>
+    <string name="toast_auth_failed_firebase_reason">የማንነት ማረጋገጫ አልተሳካም: %1$s</string>
+    <string name="notification_permission_needed">ማሳወቂያዎችን ለማሳየት ፍቃድ ያስፈልጋል።</string>
+</resources>

@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background -->
+    <item>
+        <shape android:shape="rectangle">
+            <solid android:color="@color/splash_background" />
+        </shape>
+    </item>
+    
+    <!-- App Logo centered -->
+    <item
+        android:drawable="@drawable/akahidegn_splash_logo"
+        android:gravity="center"
+        android:width="120dp"
+        android:height="120dp" />
+        
+    <!-- Text area placeholder - actual text will be handled by layout for better support -->
+    <item android:gravity="bottom|center"
+          android:bottom="80dp">
+        <shape android:shape="rectangle">
+            <solid android:color="@android:color/transparent" />
+            <size android:width="300dp" android:height="60dp" />
+        </shape>
+    </item>
+</layer-list>
