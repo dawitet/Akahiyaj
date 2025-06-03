@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose) // Assuming this is for Jetpack Compose
+    id("org.jetbrains.kotlin.plugin.compose") version libs.versions.kotlin.get()
     id("com.google.gms.google-services")
     id("com.google.dagger.hilt.android")
     id("kotlin-kapt")
@@ -36,11 +36,14 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11 // Or JavaVersion.VERSION_1_8 if you have older libraries
-        targetCompatibility = JavaVersion.VERSION_11 // Or JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11" // Or "1.8"
+        jvmTarget = "17"
+    }
+    composeOptions {
+        // kotlinCompilerExtensionVersion = libs.versions.compose.compiler.get() // Or your specific version
     }
     buildFeatures {
         compose = true
@@ -55,12 +58,12 @@ dependencies {
     implementation("androidx.core:core-splashscreen:1.0.1") // For Android 12+ splash, can coexist
 
     // Dependencies needed for the custom SplashActivity.kt and activity_splash.xml
-    implementation("androidx.appcompat:appcompat:1.6.1") // For AppCompatActivity
+    implementation("androidx.appcompat:appcompat:1.7.0") // For AppCompatActivity
     implementation("androidx.constraintlayout:constraintlayout:2.1.4") // For ConstraintLayout in XML
 
     // Your existing dependencies
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0") // Updated to a more common recent version, use your libs version if available
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0") // For ViewModel in Compose
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.2")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.2")
     // implementation(libs.androidx.lifecycle.runtime.ktx) // This is likely the same as above if defined in libs
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -82,7 +85,7 @@ dependencies {
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("com.google.code.gson:gson:2.10.1")
 
-    implementation(platform("com.google.firebase:firebase-bom:33.1.1")) // Updated to a recent BOM version
+    implementation(platform("com.google.firebase:firebase-bom:33.2.0"))
     implementation("com.google.firebase:firebase-analytics-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
@@ -91,17 +94,17 @@ dependencies {
     implementation("com.google.firebase:firebase-installations-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-perf-ktx")
-    implementation("com.google.android.gms:play-services-location:21.3.0") // Updated to a recent version
-    implementation("com.google.android.gms:play-services-ads:23.1.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0") // Kept as recent
+    implementation("com.google.android.gms:play-services-ads:23.1.0") // Kept as recent
     
     // Hilt for Dependency Injection
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-compiler:2.48")
-    implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
+    implementation("com.google.dagger:hilt-android:2.51.1")
+    kapt("com.google.dagger:hilt-compiler:2.51.1")
+    implementation("androidx.hilt:hilt-navigation-compose:1.2.0")
     
     // Paging for performance
-    implementation("androidx.paging:paging-runtime-ktx:3.2.1")
-    implementation("androidx.paging:paging-compose:3.2.1")
+    implementation("androidx.paging:paging-runtime-ktx:3.3.0")
+    implementation("androidx.paging:paging-compose:3.3.0")
     
     // Room for local database with better performance
     implementation("androidx.room:room-runtime:2.6.1")
@@ -110,8 +113,8 @@ dependencies {
     kapt("androidx.room:room-compiler:2.6.1")
     
     // Retrofit for better networking
-    implementation("com.squareup.retrofit2:retrofit:2.9.0")
-    implementation("com.squareup.retrofit2:converter-gson:2.9.0")
+    implementation("com.squareup.retrofit2:retrofit:2.11.0")
+    implementation("com.squareup.retrofit2:converter-gson:2.11.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.12.0")
     
     // DataStore for secure preferences
