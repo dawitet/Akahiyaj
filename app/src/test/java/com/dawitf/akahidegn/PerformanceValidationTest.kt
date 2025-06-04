@@ -1,6 +1,9 @@
 package com.dawitf.akahidegn
 
+import com.dawitf.akahidegn.domain.repository.ChatRepository
+import com.dawitf.akahidegn.domain.repository.GroupRepository
 import com.dawitf.akahidegn.viewmodel.MainViewModel
+import io.mockk.mockk
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.*
@@ -19,12 +22,20 @@ import kotlin.system.measureTimeMillis
 class PerformanceValidationTest {
 
     private lateinit var viewModel: MainViewModel
+    private lateinit var mockGroupRepository: GroupRepository
+    private lateinit var mockChatRepository: ChatRepository
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = MainViewModel()
+        
+        // Create mock repositories
+        mockGroupRepository = mockk(relaxed = true)
+        mockChatRepository = mockk(relaxed = true)
+        
+        // Create ViewModel with mocked dependencies
+        viewModel = MainViewModel(mockGroupRepository, mockChatRepository)
     }
 
     @After

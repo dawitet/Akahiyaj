@@ -12,6 +12,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -227,7 +228,8 @@ private fun BuddyStatsCard(
                 )
                 StatItem(
                     label = "Groups",
-                    value = stats.regularGroupsCount.toString(),                        icon = Icons.Default.Person
+                    value = stats.regularGroupsCount.toString(),
+                    icon = Icons.Default.Person
                 )
             }
         }
@@ -752,7 +754,7 @@ private fun SuggestionCard(
                 ) {
                     repeat(5) { index ->
                         Icon(
-                            imageVector = if (index < (suggestion.confidence * 5).toInt()) Icons.Default.Star else Icons.Default.Star,
+                            imageVector = if (index < (suggestion.confidence * 5).toInt()) Icons.Default.Star else Icons.Outlined.Star,
                             contentDescription = null,
                             tint = if (index < (suggestion.confidence * 5).toInt()) Color(0xFFFFD700) else MaterialTheme.colorScheme.outline,
                             modifier = Modifier.size(16.dp)
@@ -998,7 +1000,7 @@ private fun RatingDialog(
                             onClick = { rating = (index + 1).toFloat() }
                         ) {
                             Icon(
-                                imageVector = if (index < rating.toInt()) Icons.Default.Star else Icons.Default.Star,
+                                imageVector = if (index < rating.toInt()) Icons.Default.Star else Icons.Outlined.Star,
                                 contentDescription = null,
                                 tint = if (index < rating.toInt()) Color(0xFFFFD700) else MaterialTheme.colorScheme.outline,
                                 modifier = Modifier.size(32.dp)

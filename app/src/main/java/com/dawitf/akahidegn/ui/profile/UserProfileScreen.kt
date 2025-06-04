@@ -6,6 +6,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -186,7 +187,7 @@ private fun RideStatsSection(
             TextButton(onClick = onRideHistory) {
                 Text("View History")
                 Icon(
-                    imageVector = Icons.Default.ArrowForward,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
                     modifier = Modifier.size(16.dp)
                 )
@@ -224,7 +225,8 @@ private fun RideStatsSection(
             // Money Spent
             StatCard(
                 title = "Total Spent",
-                value = formatCurrency(rideStats?.totalSpent ?: 0.0),                        icon = Icons.Default.Star,
+                value = formatCurrency(rideStats?.totalSpent ?: 0.0),
+                icon = Icons.Default.Settings,
                 color = AkahidegnColors.Warning,
                 modifier = Modifier.weight(1f)
             )
@@ -232,7 +234,8 @@ private fun RideStatsSection(
             // Time Saved
             StatCard(
                 title = "Time Saved",
-                value = "${rideStats?.totalTimeSaved ?: 0} min",                        icon = Icons.Default.Settings,
+                value = "${rideStats?.totalTimeSaved ?: 0} min",
+                icon = Icons.Default.Settings,
                 color = AkahidegnColors.Info,
                 modifier = Modifier.weight(1f)
             )
@@ -419,7 +422,7 @@ private fun QuickActionItem(
         }
         
         Icon(
-            imageVector = Icons.Default.ArrowForward,
+            imageVector = Icons.AutoMirrored.Filled.ArrowForward,
             contentDescription = "Go",
             tint = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.size(20.dp)
