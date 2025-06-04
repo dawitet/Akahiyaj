@@ -90,7 +90,12 @@ class SmartMatchingService @Inject constructor(
                 ).first()
                 
                 if (nearbyGroupsResult.isFailure) {
-                    return@withContext Result.failure(nearbyGroupsResult.exceptionOrNull()!!)
+                    val errorMsg = if (nearbyGroupsResult is com.dawitf.akahidegn.core.result.Result.Error) {
+                        nearbyGroupsResult.error.message ?: "Failed to get nearby groups"
+                    } else {
+                        "Failed to get nearby groups"
+                    }
+                    return@withContext kotlin.Result.failure(Exception(errorMsg))
                 }
                 
                 val nearbyGroups = nearbyGroupsResult.getOrNull() ?: emptyList()
@@ -136,7 +141,7 @@ class SmartMatchingService @Inject constructor(
             // Calculate geographical compatibility
             val walkingDistance = calculateDistance(
                 request.originLat, request.originLng,
-                group.latitude, group.longitude
+                group.pickupLat ?: 0.0, group.pickupLng ?: 0.0
             )
             
             if (walkingDistance > request.userProfile.preferences.maxWalkingDistanceKm) {
@@ -144,7 +149,7 @@ class SmartMatchingService @Inject constructor(
             }
             
             // Calculate time compatibility
-            val groupDepartureTime = parseTime(group.date, group.time)
+            val groupDepartureTime = group.timestamp ?: System.currentTimeMillis()
             val timeDifference = abs(groupDepartureTime - request.departureTime) / 60000 // Convert to minutes
             
             if (timeDifference > request.flexibilityMinutes) {
@@ -155,7 +160,7 @@ class SmartMatchingService @Inject constructor(
             val routeRequest = RouteService.RouteRequest(
                 origin = RouteService.LatLng(request.originLat, request.originLng),
                 destination = RouteService.LatLng(request.destinationLat, request.destinationLng),
-                waypoints = listOf(RouteService.LatLng(group.latitude, group.longitude))
+                waypoints = listOf(RouteService.LatLng(group.pickupLat ?: 0.0, group.pickupLng ?: 0.0))
             )
             
             val routeResult = routeService.getRoute(routeRequest)
@@ -223,7 +228,7 @@ class SmartMatchingService @Inject constructor(
         // Destination similarity bonus
         val destinationSimilarity = calculateDestinationSimilarity(
             request.destinationLat, request.destinationLng,
-            group.latitude, group.longitude // Assuming group location is pickup point
+            group.pickupLat ?: 0.0, group.pickupLng ?: 0.0 // Assuming group location is pickup point
         )
         score += destinationSimilarity * 0.2
         
@@ -261,14 +266,14 @@ class SmartMatchingService @Inject constructor(
             reasons.add("Group has space for ${group.maxMembers - group.memberCount} more riders")
         }
         
-        if (group.destination.contains(request.userProfile.preferences.preferredTravelModes.firstOrNull() ?: "", true)) {
+        if (group.destinationName?.contains(request.userProfile.preferences.preferredTravelModes.firstOrNull() ?: "", true) == true) {
             reasons.add("Matches your travel preferences")
         }
         
         return reasons
     }
     
-    private fun calculateCostSavings(route: RouteService.Route, totalPassengers: Int): Double {
+    private suspend fun calculateCostSavings(route: RouteService.Route, totalPassengers: Int): Double {
         val estimatedSoloFare = routeService.estimateFare(route, 1)
         val estimatedSharedFare = routeService.estimateFare(route, totalPassengers)
         return estimatedSoloFare - estimatedSharedFare

@@ -16,7 +16,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.List
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.LocationOn
-import androidx.compose.material.icons.filled.People
+import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -108,7 +108,7 @@ fun NewMainScreen(
                         .background(Color.Transparent, CircleShape)
                 ) {
                     Icon(
-                        Icons.Filled.People,
+                        Icons.Filled.Person,
                         contentDescription = "Ride Buddies",
                         tint = Color.Black
                     )

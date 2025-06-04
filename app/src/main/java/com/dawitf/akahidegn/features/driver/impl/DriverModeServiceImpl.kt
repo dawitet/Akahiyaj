@@ -81,7 +81,7 @@ class DriverModeServiceImpl @Inject constructor(
             
             Result.Success(Unit)
         } catch (e: Exception) {
-            analyticsService.logError("driver_mode_enable_failed", e)
+            analyticsService.logError(e, "driver_mode_enable_failed")
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to enable driver mode"))
         }
     }
@@ -112,7 +112,7 @@ class DriverModeServiceImpl @Inject constructor(
             
             Result.Success(Unit)
         } catch (e: Exception) {
-            analyticsService.logError("driver_mode_disable_failed", e)
+            analyticsService.logError(e, "driver_mode_disable_failed")
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to disable driver mode"))
         }
     }
@@ -169,7 +169,8 @@ class DriverModeServiceImpl @Inject constructor(
             val userId = auth.currentUser?.uid ?: return Result.Error(AppError.AuthenticationError.NotAuthenticated)
             
             // Check rate limiting
-            if (!securityService.checkRateLimit("accept_ride_$userId", 3, 60)) {
+            val rateLimitResult = securityService.checkRateLimit(userId, "accept_ride", 3, 60000)
+            if (rateLimitResult.isFailure) {
                 return Result.Error(AppError.RateLimitError.TooManyRequests("Too many ride acceptance attempts"))
             }
             
@@ -233,7 +234,7 @@ class DriverModeServiceImpl @Inject constructor(
             
             Result.Success(acceptance)
         } catch (e: Exception) {
-            analyticsService.logError("ride_accept_failed", e)
+            analyticsService.logError(e, "ride_accept_failed")
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to accept ride"))
         }
     }
@@ -348,7 +349,7 @@ class DriverModeServiceImpl @Inject constructor(
             
             Result.Success(completion)
         } catch (e: Exception) {
-            analyticsService.logError("ride_complete_failed", e)
+            analyticsService.logError(e, "ride_complete_failed")
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to complete ride"))
         }
     }
@@ -404,7 +405,7 @@ class DriverModeServiceImpl @Inject constructor(
                 emit(stats)
             }
         } catch (e: Exception) {
-            analyticsService.logError("get_driver_stats_failed", e)
+            analyticsService.logError(e, "get_driver_stats_failed")
         }
     }
     
@@ -515,7 +516,7 @@ class DriverModeServiceImpl @Inject constructor(
                 emit(driverRating)
             }
         } catch (e: Exception) {
-            analyticsService.logError("get_driver_rating_failed", e)
+            analyticsService.logError(e, "get_driver_rating_failed")
         }
     }
     
@@ -657,7 +658,7 @@ class DriverModeServiceImpl @Inject constructor(
                 }
             }
         } catch (e: Exception) {
-            analyticsService.logError("update_earnings_failed", e)
+            analyticsService.logError(e, "update_earnings_failed")
         }
     }
     
@@ -694,7 +695,7 @@ class DriverModeServiceImpl @Inject constructor(
             
             emit(earningsData)
         } catch (e: Exception) {
-            analyticsService.logError("get_earnings_failed", e)
+            analyticsService.logError(e, "get_earnings_failed")
         }
     }
     

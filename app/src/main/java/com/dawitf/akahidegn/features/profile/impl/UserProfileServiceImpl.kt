@@ -81,7 +81,7 @@ class UserProfileServiceImpl @Inject constructor(
             
             Result.Success(profile)
         } catch (e: Exception) {
-            analyticsService.logError("get_user_profile_failed", e)
+            analyticsService.logError(e, "get_user_profile_failed")
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to get user profile"))
         }
     }
@@ -124,7 +124,7 @@ class UserProfileServiceImpl @Inject constructor(
             
             Result.Success(Unit)
         } catch (e: Exception) {
-            analyticsService.logError("update_user_profile_failed", e)
+            analyticsService.logError(e, "update_user_profile_failed")
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to update profile"))
         }
     }
@@ -151,7 +151,7 @@ class UserProfileServiceImpl @Inject constructor(
             
             Result.Success(downloadUrl)
         } catch (e: Exception) {
-            analyticsService.logError("upload_profile_photo_failed", e)
+            analyticsService.logError(e, "upload_profile_photo_failed")
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to upload photo"))
         }
     }
@@ -209,7 +209,7 @@ class UserProfileServiceImpl @Inject constructor(
             
             emit(stats)
         } catch (e: Exception) {
-            analyticsService.logError("get_ride_stats_failed", e)
+            analyticsService.logError(e, "get_ride_stats_failed")
         }
     }
     
@@ -327,7 +327,7 @@ class UserProfileServiceImpl @Inject constructor(
             
             emit(achievements)
         } catch (e: Exception) {
-            analyticsService.logError("get_achievements_failed", e)
+            analyticsService.logError(e, "get_achievements_failed")
         }
     }
     
@@ -366,7 +366,7 @@ class UserProfileServiceImpl @Inject constructor(
             
             emit(badges)
         } catch (e: Exception) {
-            analyticsService.logError("get_badge_progress_failed", e)
+            analyticsService.logError(e, "get_badge_progress_failed")
         }
     }
     
@@ -440,7 +440,7 @@ class UserProfileServiceImpl @Inject constructor(
             
             emit(friends)
         } catch (e: Exception) {
-            analyticsService.logError("get_friends_failed", e)
+            analyticsService.logError(e, "get_friends_failed")
         }
     }
     
@@ -558,7 +558,7 @@ class UserProfileServiceImpl @Inject constructor(
                 emit(stats)
             }
         } catch (e: Exception) {
-            analyticsService.logError("get_referral_stats_failed", e)
+            analyticsService.logError(e, "get_referral_stats_failed")
         }
     }
     
@@ -586,7 +586,7 @@ class UserProfileServiceImpl @Inject constructor(
                 emit(data)
             }
         } catch (e: Exception) {
-            analyticsService.logError("get_carbon_footprint_failed", e)
+            analyticsService.logError(e, "get_carbon_footprint_failed")
         }
     }
     

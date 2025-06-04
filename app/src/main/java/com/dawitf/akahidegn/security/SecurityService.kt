@@ -8,6 +8,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.dawitf.akahidegn.analytics.AnalyticsService
 import com.dawitf.akahidegn.core.error.AppError
+import com.dawitf.akahidegn.core.result.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
@@ -100,13 +101,13 @@ class SecurityService @Inject constructor(
         return if (rateLimitInfo == null) {
             // First request
             rateLimitMap[key] = RateLimitInfo(currentTime, 1, currentTime)
-            Result.success(Unit)
+            com.dawitf.akahidegn.core.result.Result.success(Unit)
         } else {
             // Check if we're in a new window
             if (currentTime - rateLimitInfo.windowStartTime > windowMs) {
                 // New window, reset count
                 rateLimitMap[key] = RateLimitInfo(currentTime, 1, currentTime)
-                Result.success(Unit)
+                com.dawitf.akahidegn.core.result.Result.success(Unit)
             } else if (rateLimitInfo.requestCount >= maxRequests) {
                 // Rate limit exceeded
                 analyticsService.trackCustomEvent("rate_limit_exceeded", mapOf(
@@ -115,14 +116,14 @@ class SecurityService @Inject constructor(
                     "request_count" to rateLimitInfo.requestCount,
                     "window_start" to rateLimitInfo.windowStartTime
                 ))
-                Result.failure(AppError.RateLimitError.TooManyRequests("Too many requests. Please try again later."))
+                com.dawitf.akahidegn.core.result.Result.failure(AppError.RateLimitError.TooManyRequests("Too many requests. Please try again later."))
             } else {
                 // Within limits, increment count
                 rateLimitMap[key] = rateLimitInfo.copy(
                     lastRequestTime = currentTime,
                     requestCount = rateLimitInfo.requestCount + 1
                 )
-                Result.success(Unit)
+                com.dawitf.akahidegn.core.result.Result.success(Unit)
             }
         }
     }
@@ -175,7 +176,7 @@ class SecurityService @Inject constructor(
                 "last_activity" to lastActivity,
                 "timeout_hours" to 24
             ))
-            Result.failure(AppError.AuthenticationError.SessionExpired("Session has expired. Please sign in again."))
+            Result.failure(AppError.AuthenticationError.SessionExpired)
         } else {
             storeSecurePreference("last_activity_$userId", currentTime)
             Result.success(Unit)
@@ -191,7 +192,7 @@ class SecurityService @Inject constructor(
     
     private fun containsProfanity(text: String): Boolean {
         // Basic profanity filter - in production, use a more comprehensive solution
-        val profanityWords = listOf(
+        val profanityWords = listOf<String>(
             // Add appropriate profanity words for your target languages
             // This is a simplified example
         )
@@ -202,7 +203,7 @@ class SecurityService @Inject constructor(
     
     private fun containsSpam(text: String): Boolean {
         // Basic spam detection
-        val spamIndicators = listOf(
+        val spamIndicators = listOf<Regex>(
             Regex("(http|https)://[^\\s]+"), // URLs
             Regex("\\b\\d{3}-\\d{3}-\\d{4}\\b"), // Phone numbers
             Regex("\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b"), // Email addresses

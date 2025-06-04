@@ -3,7 +3,7 @@ package com.dawitf.akahidegn.ui.profile
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dawitf.akahidegn.analytics.AnalyticsService
-import com.dawitf.akahidegn.core.common.Result
+import com.dawitf.akahidegn.core.result.Result
 import com.dawitf.akahidegn.features.profile.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*

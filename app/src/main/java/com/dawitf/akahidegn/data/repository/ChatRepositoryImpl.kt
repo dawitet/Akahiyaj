@@ -33,7 +33,7 @@ class ChatRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getRecentMessages(groupId: String, limit: Int): Flow<com.dawitf.akahidegn.core.result.Result<List<ChatMessage>>> {
+    override fun getRecentMessages(groupId: String, limit: Int): Flow<Result<List<ChatMessage>>> {
         return combine(
             localDataSource.getRecentMessages(groupId, limit),
             remoteDataSource.getMessages(groupId)
@@ -47,11 +47,11 @@ class ChatRepositoryImpl @Inject constructor(
                     } catch (e: Exception) {
                         // Log error but don't fail
                     }
-                    com.dawitf.akahidegn.core.result.Result.success(remoteMessages.take(limit))
+                    Result.success(remoteMessages.take(limit))
                 }
                 localMessages.isNotEmpty() -> {
                     // Return cached data if remote fails
-                    com.dawitf.akahidegn.core.result.Result.success(localMessages.toDomainModels())
+                    Result.success(localMessages.toDomainModels())
                 }
                 else -> {
                     remoteResult
@@ -62,7 +62,7 @@ class ChatRepositoryImpl @Inject constructor(
 
     override suspend fun sendMessage(groupId: String, message: ChatMessage): Result<ChatMessage> {
         // First save locally for immediate UI update
-        val localMessage = message.copy(id = "temp_${System.currentTimeMillis()}")
+        val localMessage = message.copy(messageId = "temp_${System.currentTimeMillis()}")
         try {
             localDataSource.insertMessage(localMessage.toEntity(groupId))
         } catch (e: Exception) {

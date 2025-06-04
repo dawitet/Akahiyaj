@@ -35,7 +35,7 @@ class GroupRepositoryImpl @Inject constructor(
         }
     }
 
-    override fun getAllGroups(): Flow<com.dawitf.akahidegn.core.result.Result<List<Group>>> {
+    override fun getAllGroups(): Flow<Result<List<Group>>> {
         return combine(
             localDataSource.getAllGroups(),
             remoteDataSource.getAllGroups()
@@ -49,11 +49,11 @@ class GroupRepositoryImpl @Inject constructor(
                     } catch (e: Exception) {
                         // Log error but don't fail the operation
                     }
-                    com.dawitf.akahidegn.core.result.Result.success(remoteGroups)
+                    Result.success(remoteGroups)
                 }
                 localGroups.isNotEmpty() -> {
                     // Return cached data if remote fails but we have local data
-                    com.dawitf.akahidegn.core.result.Result.success(localGroups.toDomainModels())
+                    Result.success(localGroups.toDomainModels())
                 }
                 else -> {
                     remoteResult // Return the remote error

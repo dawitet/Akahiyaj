@@ -1,5 +1,6 @@
 package com.dawitf.akahidegn.ui.profile
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
@@ -210,7 +211,7 @@ private fun RideStatsSection(
             StatCard(
                 title = "Distance",
                 value = "${formatDistance(rideStats?.totalDistance ?: 0.0)} km",
-                icon = Icons.Default.Directions,
+                icon = Icons.Default.LocationOn,
                 color = AkahidegnColors.Success,
                 modifier = Modifier.weight(1f)
             )
@@ -223,8 +224,7 @@ private fun RideStatsSection(
             // Money Spent
             StatCard(
                 title = "Total Spent",
-                value = formatCurrency(rideStats?.totalSpent ?: 0.0),
-                icon = Icons.Default.AccountBalance,
+                value = formatCurrency(rideStats?.totalSpent ?: 0.0),                        icon = Icons.Default.Star,
                 color = AkahidegnColors.Warning,
                 modifier = Modifier.weight(1f)
             )
@@ -232,8 +232,7 @@ private fun RideStatsSection(
             // Time Saved
             StatCard(
                 title = "Time Saved",
-                value = "${rideStats?.totalTimeSaved ?: 0} min",
-                icon = Icons.Default.Schedule,
+                value = "${rideStats?.totalTimeSaved ?: 0} min",                        icon = Icons.Default.Settings,
                 color = AkahidegnColors.Info,
                 modifier = Modifier.weight(1f)
             )
@@ -559,7 +558,7 @@ private fun CarbonFootprintCard(carbonFootprint: CarbonFootprintData?) {
                 horizontalArrangement = Arrangement.spacedBy(8.dp)
             ) {
                 Icon(
-                    imageVector = Icons.Default.LocalGasStation,
+                    imageVector = Icons.Default.Share,
                     contentDescription = "Eco friendly",
                     tint = AkahidegnColors.Success,
                     modifier = Modifier.size(24.dp)

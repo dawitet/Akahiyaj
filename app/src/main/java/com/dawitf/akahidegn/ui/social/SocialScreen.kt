@@ -1,5 +1,6 @@
 package com.dawitf.akahidegn.ui.social
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -453,7 +454,7 @@ private fun EmptyFriendsState() {
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.People,
+            imageVector = Icons.Default.Person,
             contentDescription = "No friends",
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.onSurfaceVariant

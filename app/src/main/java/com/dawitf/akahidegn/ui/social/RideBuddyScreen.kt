@@ -213,7 +213,7 @@ private fun BuddyStatsCard(
                 StatItem(
                     label = "Buddies",
                     value = stats.totalBuddies.toString(),
-                    icon = Icons.Default.People
+                    icon = Icons.Default.Person
                 )
                 StatItem(
                     label = "Rides Together",
@@ -227,8 +227,7 @@ private fun BuddyStatsCard(
                 )
                 StatItem(
                     label = "Groups",
-                    value = stats.regularGroupsCount.toString(),
-                    icon = Icons.Default.People
+                    value = stats.regularGroupsCount.toString(),                        icon = Icons.Default.Person
                 )
             }
         }
@@ -325,8 +324,7 @@ private fun BuddyCard(
                     .size(56.dp)
                     .clip(CircleShape)
                     .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape),
-                contentScale = ContentScale.Crop,
-                error = painterResource(R.drawable.ic_person_placeholder)
+                contentScale = ContentScale.Crop
             )
             
             Spacer(modifier = Modifier.width(16.dp))
@@ -754,7 +752,7 @@ private fun SuggestionCard(
                 ) {
                     repeat(5) { index ->
                         Icon(
-                            imageVector = if (index < (suggestion.confidence * 5).toInt()) Icons.Default.Star else Icons.Default.StarBorder,
+                            imageVector = if (index < (suggestion.confidence * 5).toInt()) Icons.Default.Star else Icons.Default.Star,
                             contentDescription = null,
                             tint = if (index < (suggestion.confidence * 5).toInt()) Color(0xFFFFD700) else MaterialTheme.colorScheme.outline,
                             modifier = Modifier.size(16.dp)
@@ -792,7 +790,7 @@ private fun EmptyState(
         verticalArrangement = Arrangement.Center
     ) {
         Icon(
-            imageVector = Icons.Default.People,
+            imageVector = Icons.Default.Person,
             contentDescription = null,
             modifier = Modifier.size(64.dp),
             tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.4f)
@@ -1000,7 +998,7 @@ private fun RatingDialog(
                             onClick = { rating = (index + 1).toFloat() }
                         ) {
                             Icon(
-                                imageVector = if (index < rating.toInt()) Icons.Default.Star else Icons.Default.StarBorder,
+                                imageVector = if (index < rating.toInt()) Icons.Default.Star else Icons.Default.Star,
                                 contentDescription = null,
                                 tint = if (index < rating.toInt()) Color(0xFFFFD700) else MaterialTheme.colorScheme.outline,
                                 modifier = Modifier.size(32.dp)
