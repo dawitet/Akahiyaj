@@ -17,9 +17,7 @@ object NetworkModule {
     @Provides
     @Singleton
     fun provideFirebaseDatabase(): FirebaseDatabase {
-        val database = FirebaseDatabase.getInstance()
-        database.setPersistenceEnabled(true) // Enable offline persistence
-        return database
+        return FirebaseDatabase.getInstance()
     }
 
     @Provides

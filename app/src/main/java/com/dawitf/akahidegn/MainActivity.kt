@@ -18,22 +18,42 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
 import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.font.FontWeight
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.lifecycleScope
@@ -81,11 +101,16 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
 import com.dawitf.akahidegn.ChatMessage
+import com.dawitf.akahidegn.debug.GroupCleanupDebugHelper
+import javax.inject.Inject
 
 // Data classes (ChatMessage, Group) - consider moving to a 'data' package
 @IgnoreExtraProperties
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+
+    @Inject
+    lateinit var groupCleanupDebugHelper: GroupCleanupDebugHelper
 
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var activeGroupsRef: DatabaseReference
@@ -114,8 +139,11 @@ class MainActivity : ComponentActivity() {
 
     private val snackbarHostState = SnackbarHostState()
 
-    private enum class AppScreen { ASK_NAME, MAIN_CONTENT, CHAT, RIDE_BUDDIES }
+    private enum class AppScreen { ASK_NAME, MAIN_CONTENT, CHAT, RIDE_BUDDIES, DEBUG_MENU }
     private var currentAppScreen by mutableStateOf(AppScreen.ASK_NAME)
+
+    // Debug mode flag - set to true during testing
+    private var isDebugMode by mutableStateOf(true)
 
     // State for Create Ride Dialog flow
     private var showCreateRideDialog by mutableStateOf(false)
@@ -128,6 +156,8 @@ class MainActivity : ComponentActivity() {
         // Initialize Firebase
         try {
             firebaseAuth = Firebase.auth
+            
+            // Note: Firebase persistence is already enabled in AkahidegnApplication.onCreate()
             activeGroupsRef = Firebase.database.getReference("active_groups")
             groupChatsRef = Firebase.database.getReference("group_chats")
             com.google.firebase.installations.FirebaseInstallations.getInstance().id
@@ -295,6 +325,9 @@ class MainActivity : ComponentActivity() {
                     onNavigateToRideBuddies = {
                         currentAppScreen = AppScreen.RIDE_BUDDIES
                     },
+                    onNavigateToDebug = if (isDebugMode) {
+                        { currentAppScreen = AppScreen.DEBUG_MENU }
+                    } else null,
                     snackbarHostState = snackbarHostState
                 )
 
@@ -368,6 +401,14 @@ class MainActivity : ComponentActivity() {
                         }
                         AppScreen.RIDE_BUDDIES -> {
                             RideBuddyScreen(
+                                onNavigateBack = {
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                }
+                            )
+                        }
+                        AppScreen.DEBUG_MENU -> {
+                            DebugMenuScreen(
+                                groupCleanupDebugHelper = groupCleanupDebugHelper,
                                 onNavigateBack = {
                                     currentAppScreen = AppScreen.MAIN_CONTENT
                                 }
@@ -938,5 +979,163 @@ class MainActivity : ComponentActivity() {
 
 // Helper extension function (should be top-level, outside the class)
 fun Double.format(digits: Int): String = "%.${digits}f".format(this, Locale.US)
+
+@Composable
+fun DebugMenuScreen(
+    groupCleanupDebugHelper: GroupCleanupDebugHelper,
+    onNavigateBack: () -> Unit
+) {
+    var statusMessage by remember { mutableStateOf("Ready for testing") }
+
+    LazyColumn(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(16.dp)
+    ) {
+        item {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                IconButton(onClick = onNavigateBack) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.ArrowBack,
+                        contentDescription = "Back"
+                    )
+                }
+                Text(
+                    text = "Debug Menu - Group Cleanup Testing",
+                    style = MaterialTheme.typography.headlineMedium,
+                    fontWeight = FontWeight.Bold,
+                    modifier = Modifier.padding(start = 8.dp)
+                )
+            }
+        }
+
+        item {
+            Text(
+                text = "Status: $statusMessage",
+                style = MaterialTheme.typography.bodyLarge,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(
+                        MaterialTheme.colorScheme.surfaceVariant,
+                        RoundedCornerShape(8.dp)
+                    )
+                    .padding(16.dp)
+            )
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Group Testing Actions",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Button(
+                        onClick = {
+                            statusMessage = "Creating test group..."
+                            groupCleanupDebugHelper.createTestGroup("Debug Test Group ${System.currentTimeMillis() % 1000}")
+                            statusMessage = "Test group created! Check logs for details."
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Create Test Group")
+                    }
+
+                    Button(
+                        onClick = {
+                            statusMessage = "Listing all groups with timestamps..."
+                            groupCleanupDebugHelper.logAllGroupsWithTimestamps()
+                            statusMessage = "Groups listed in logs. Check Android logs."
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Log All Groups with Timestamps")
+                    }
+
+                    Button(
+                        onClick = {
+                            statusMessage = "Logging current timestamp info..."
+                            groupCleanupDebugHelper.logCurrentTimestamp()
+                            statusMessage = "Timestamp info logged. Check Android logs."
+                        },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text("Log Current Timestamp Info")
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    Text(
+                        text = "Cleanup Testing Actions",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Button(
+                        onClick = {
+                            statusMessage = "Triggering immediate cleanup..."
+                            groupCleanupDebugHelper.triggerImmediateCleanup()
+                            statusMessage = "Immediate cleanup triggered! Check logs for results."
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.secondary
+                        )
+                    ) {
+                        Text("Trigger Immediate Cleanup")
+                    }
+                }
+            }
+        }
+
+        item {
+            Card(
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    Text(
+                        text = "Testing Instructions",
+                        style = MaterialTheme.typography.titleLarge,
+                        fontWeight = FontWeight.Bold
+                    )
+
+                    Text(
+                        text = """
+                        1. Create test groups using the button above
+                        2. Check logs to see group timestamps and age
+                        3. Groups should persist for 30 minutes before cleanup
+                        4. Use 'Trigger Immediate Cleanup' to test cleanup process
+                        5. Monitor Android logs (tag: GroupCleanupDebug, FirebaseGroupService)
+                        """.trimIndent(),
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+        }
+    }
+}
 
 

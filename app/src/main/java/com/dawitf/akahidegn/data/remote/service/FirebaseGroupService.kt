@@ -22,4 +22,9 @@ interface FirebaseGroupService {
     suspend fun joinGroup(groupId: String, userId: String): Result<Unit>
     
     suspend fun leaveGroup(groupId: String, userId: String): Result<Unit>
+    
+    // Cleanup methods
+    suspend fun getExpiredGroups(thresholdTimestamp: Long): Result<List<Group>>
+    
+    suspend fun deleteExpiredGroups(groupIds: List<String>): Result<Unit>
 }

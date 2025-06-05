@@ -1,6 +1,7 @@
 package com.dawitf.akahidegn
 
 import android.content.Intent
+import dagger.hilt.android.AndroidEntryPoint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -23,6 +24,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
 
+@AndroidEntryPoint
 class SplashActivity : ComponentActivity() {
     
     override fun onCreate(savedInstanceState: Bundle?) {

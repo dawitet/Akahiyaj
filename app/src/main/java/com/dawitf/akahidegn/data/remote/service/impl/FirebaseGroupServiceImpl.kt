@@ -168,6 +168,59 @@ class FirebaseGroupServiceImpl @Inject constructor(
         }
     }
     
+    override suspend fun getExpiredGroups(thresholdTimestamp: Long): Result<List<Group>> {
+        return try {
+            retryMechanism.withRetry {
+                // Get all groups and filter client-side to avoid precision issues with Long->Double conversion
+                val snapshot = groupsRef.get().await()
+                
+                val allGroups = snapshot.children.mapNotNull { child ->
+                    child.getValue(Group::class.java)?.copy(groupId = child.key ?: "")
+                }
+                
+                android.util.Log.d("FirebaseGroupService", "getExpiredGroups - Total groups: ${allGroups.size}, Threshold: $thresholdTimestamp")
+                
+                val expiredGroups = allGroups.mapNotNull { group ->
+                    // Only consider groups with valid timestamps that are truly expired
+                    if (group.timestamp != null) {
+                        val isExpired = group.timestamp!! <= thresholdTimestamp
+                        val ageMinutes = (System.currentTimeMillis() - group.timestamp!!) / (60 * 1000)
+                        android.util.Log.d("FirebaseGroupService", "Group ${group.destinationName} (${group.groupId}): timestamp=${group.timestamp}, age=${ageMinutes}min, expired=$isExpired")
+                        
+                        if (isExpired) group else null
+                    } else {
+                        android.util.Log.d("FirebaseGroupService", "Group ${group.destinationName} (${group.groupId}): null timestamp, skipping")
+                        null
+                    }
+                }
+                
+                android.util.Log.d("FirebaseGroupService", "getExpiredGroups - Expired groups found: ${expiredGroups.size}")
+                Result.Success(expiredGroups)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("FirebaseGroupService", "getExpiredGroups failed", e)
+            Result.Error(AppError.NetworkError.FirebaseError(e.message ?: "Failed to get expired groups"))
+        }
+    }
+    
+    override suspend fun deleteExpiredGroups(groupIds: List<String>): Result<Unit> {
+        return try {
+            retryMechanism.withRetry {
+                val updates = mutableMapOf<String, Any?>()
+                groupIds.forEach { groupId ->
+                    updates["groups/$groupId"] = null
+                    // Also cleanup associated chat data
+                    updates["group_chats/$groupId"] = null
+                }
+                
+                database.reference.updateChildren(updates).await()
+                Result.Success(Unit)
+            }
+        } catch (e: Exception) {
+            Result.Error(AppError.NetworkError.FirebaseError(e.message ?: "Failed to delete expired groups"))
+        }
+    }
+    
     private fun calculateDistance(lat1: Double, lon1: Double, lat2: Double, lon2: Double): Double {
         val earthRadiusKm = 6371.0
         val dLat = Math.toRadians(lat2 - lat1)

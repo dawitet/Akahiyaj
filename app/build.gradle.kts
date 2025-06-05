@@ -68,7 +68,8 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation(libs.firebase.messaging.ktx) // Ensure this is from your libs or specify version
+    implementation(libs.firebase.messaging.ktx)
+    implementation(libs.androidx.hilt.work) // Ensure this is from your libs or specify version
     testImplementation(libs.junit)
     testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
@@ -82,6 +83,7 @@ dependencies {
     debugImplementation(libs.androidx.ui.test.manifest)
     implementation("io.coil-kt:coil-compose:2.6.0")
     implementation("com.google.code.gson:gson:2.10.1")
+
 
     implementation(platform("com.google.firebase:firebase-bom:33.1.1")) // Updated to a recent BOM version
     implementation("com.google.firebase:firebase-analytics-ktx") // Use -ktx version
@@ -117,4 +119,13 @@ dependencies {
     
     // DataStore for secure preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    
+    // WorkManager for background tasks
+    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.hilt:hilt-work:1.1.0")
+    kapt("androidx.hilt:hilt-compiler:1.1.0")
+
+    // Add dependencies for WorkManager testing
+    testImplementation("androidx.work:work-testing:2.9.0")
+    testImplementation("androidx.test:core:1.5.0")
 }

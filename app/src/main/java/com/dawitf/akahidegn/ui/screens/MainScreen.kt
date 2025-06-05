@@ -50,6 +50,7 @@ fun NewMainScreen(
     onCreateRideClicked: () -> Unit,
     onBackClicked: () -> Unit,
     onNavigateToRideBuddies: () -> Unit = {},
+    onNavigateToDebug: (() -> Unit)? = null,
     snackbarHostState: SnackbarHostState
 ) {
     val focusManager = LocalFocusManager.current
@@ -112,6 +113,22 @@ fun NewMainScreen(
                         contentDescription = "Ride Buddies",
                         tint = Color.Black
                     )
+                }
+                
+                // Debug Menu Button (only visible when debug is enabled)
+                if (onNavigateToDebug != null) {
+                    IconButton(
+                        onClick = onNavigateToDebug,
+                        modifier = Modifier
+                            .size(40.dp)
+                            .background(Color.Transparent, CircleShape)
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.List,
+                            contentDescription = "Debug Menu",
+                            tint = Color.Black
+                        )
+                    }
                 }
             }
         }

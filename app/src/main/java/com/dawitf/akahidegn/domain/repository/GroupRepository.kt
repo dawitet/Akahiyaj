@@ -28,4 +28,9 @@ interface GroupRepository {
     suspend fun syncGroups(): Result<Unit>
     
     suspend fun clearCache(): Result<Unit>
+    
+    // Cleanup methods
+    suspend fun getExpiredGroups(thresholdTimestamp: Long): Result<List<Group>>
+    
+    suspend fun cleanupExpiredGroups(): Result<Int>
 }

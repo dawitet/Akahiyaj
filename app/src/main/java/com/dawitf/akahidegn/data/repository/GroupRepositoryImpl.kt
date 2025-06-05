@@ -186,6 +186,47 @@ class GroupRepositoryImpl @Inject constructor(
             Result.failure(AppError.DatabaseError.OperationFailed(e.message ?: "Clear cache failed"))
         }
     }
+    
+    override suspend fun getExpiredGroups(thresholdTimestamp: Long): Result<List<Group>> {
+        return remoteDataSource.getExpiredGroups(thresholdTimestamp)
+    }
+    
+    override suspend fun cleanupExpiredGroups(): Result<Int> {
+        return try {
+            val thirtyMinutesAgo = System.currentTimeMillis() - (30 * 60 * 1000) // 30 minutes in milliseconds
+            
+            // Get expired groups
+            when (val expiredGroupsResult = remoteDataSource.getExpiredGroups(thirtyMinutesAgo)) {
+                is Result.Success -> {
+                    val expiredGroups = expiredGroupsResult.data
+                    if (expiredGroups.isNotEmpty()) {
+                        val groupIds = expiredGroups.mapNotNull { it.groupId }
+                        
+                        // Delete expired groups from Firebase
+                        when (val deleteResult = remoteDataSource.deleteExpiredGroups(groupIds)) {
+                            is Result.Success -> {
+                                // Also clean up from local cache
+                                try {
+                                    groupIds.forEach { groupId ->
+                                        localDataSource.deleteGroupById(groupId)
+                                    }
+                                } catch (e: Exception) {
+                                    // Log error but don't fail the operation
+                                }
+                                Result.success(groupIds.size)
+                            }
+                            is Result.Error -> Result.success(0)
+                        }
+                    } else {
+                        Result.success(0)
+                    }
+                }
+                is Result.Error -> Result.success(0)
+            }
+        } catch (e: Exception) {
+            Result.failure(AppError.NetworkError.FirebaseError(e.message ?: "Failed to cleanup expired groups"))
+        }
+    }
 }
 
 // Simple RemoteMediator for demonstration
