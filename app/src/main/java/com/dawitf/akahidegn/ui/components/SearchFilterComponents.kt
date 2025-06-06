@@ -66,6 +66,71 @@ data class SearchFilters(
     val minimumSeats: Int = 1
 )
 
+/**
+ * Filters a list of groups based on search filters
+ */
+fun filterGroups(groups: List<Group>, filters: SearchFilters): List<Group> {
+    var filteredGroups = groups
+    
+    // Apply text query filter
+    if (filters.query.isNotBlank()) {
+        filteredGroups = filteredGroups.filter { group ->
+            group.destinationName?.contains(filters.query, ignoreCase = true) == true ||
+            group.creatorId?.contains(filters.query, ignoreCase = true) == true
+        }
+    }
+    
+    // Apply type filter
+    filteredGroups = when (filters.filterType) {
+        GroupFilterType.ALL -> filteredGroups
+        GroupFilterType.DEPARTING_SOON -> {
+            val currentTime = System.currentTimeMillis()
+            filteredGroups.filter { group ->
+                val departureTime = group.timestamp?.plus(30 * 60 * 1000) ?: 0L // Default 30 mins from creation
+                departureTime > currentTime && departureTime < (currentTime + 15 * 60 * 1000) // Within next 15 mins
+            }
+        }
+        GroupFilterType.AVAILABLE_SEATS -> filteredGroups.filter { group ->
+            group.maxMembers > group.memberCount + 1 // At least 1 seat available
+        }
+        GroupFilterType.PREMIUM -> filteredGroups.filter { group ->
+            group.isPremium == true
+        }
+        GroupFilterType.WOMEN_ONLY -> filteredGroups.filter { group ->
+            group.isWomenOnly == true
+        }
+    }
+    
+    // Apply price filter
+    filteredGroups = filteredGroups.filter { group -> 
+        group.pricePerPerson <= filters.maxPrice
+    }
+    
+    // Apply minimum seats filter
+    filteredGroups = filteredGroups.filter { group ->
+        val availableSeats = group.maxMembers - group.memberCount
+        availableSeats >= filters.minimumSeats
+    }
+    
+    // Sort based on selected option
+    filteredGroups = when (filters.sortOption) {
+        GroupSortOption.NEAREST -> filteredGroups.sortedBy { 0.0 } // TODO: implement distance calculation
+        GroupSortOption.DEPARTURE_TIME -> {
+            val currentTime = System.currentTimeMillis()
+            filteredGroups.sortedBy { group ->
+                group.timestamp?.plus(30 * 60 * 1000) ?: currentTime // Default 30 mins from creation
+            }
+        }
+        GroupSortOption.AVAILABLE_SEATS -> filteredGroups.sortedByDescending { group ->
+            group.maxMembers - group.memberCount
+        }
+        GroupSortOption.PRICE -> filteredGroups.sortedBy { it.pricePerPerson }
+        GroupSortOption.RATING -> filteredGroups.sortedByDescending { it.rating }
+    }
+    
+    return filteredGroups
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun EnhancedSearchBar(
@@ -422,48 +487,4 @@ fun NoSearchResults(
 /**
  * Smart search functionality for filtering groups
  */
-fun filterGroups(
-    groups: List<Group>,
-    filters: SearchFilters
-): List<Group> {
-    return groups.filter { group ->
-        // Text search
-        val matchesQuery = if (filters.query.isBlank()) {
-            true
-        } else {
-            group.name.contains(filters.query, ignoreCase = true) ||
-            group.destination.contains(filters.query, ignoreCase = true) ||
-            group.meetingPoint.contains(filters.query, ignoreCase = true)
-        }
-        
-        // Filter type
-        val matchesFilter = when (filters.filterType) {
-            GroupFilterType.ALL -> true
-            GroupFilterType.DEPARTING_SOON -> {
-                // Groups departing within 2 hours
-                val currentHour = java.util.Calendar.getInstance().get(java.util.Calendar.HOUR_OF_DAY)
-                val departureHour = group.departureTime.substringBefore(":").toIntOrNull() ?: 24
-                departureHour - currentHour <= 2 && departureHour >= currentHour
-            }
-            GroupFilterType.AVAILABLE_SEATS -> group.currentMembers < group.maxMembers
-            GroupFilterType.PREMIUM -> group.isPremium == true
-            GroupFilterType.WOMEN_ONLY -> group.isWomenOnly == true
-        }
-        
-        // Minimum seats available
-        val hasEnoughSeats = (group.maxMembers - group.currentMembers) >= filters.minimumSeats
-        
-        matchesQuery && matchesFilter && hasEnoughSeats
-    }.let { filteredGroups ->
-        // Apply sorting
-        when (filters.sortOption) {
-            GroupSortOption.DEPARTURE_TIME -> filteredGroups.sortedBy { it.departureTime }
-            GroupSortOption.AVAILABLE_SEATS -> filteredGroups.sortedByDescending { 
-                it.maxMembers - it.currentMembers 
-            }
-            GroupSortOption.PRICE -> filteredGroups.sortedBy { it.pricePerPerson }
-            GroupSortOption.RATING -> filteredGroups.sortedByDescending { it.rating ?: 0f }
-            else -> filteredGroups // NEAREST - would require location data
-        }
-    }
-}
+

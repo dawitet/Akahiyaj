@@ -1,11 +1,11 @@
 # AKAHIYAJ (አካሂያጅ) - Ride Sharing App Documentation
-*Complete App Architecture and Implementation Guide - UPDATED DECEMBER 2024*
+*Complete App Architecture and Implementation Guide - UPDATED JUNE 2025*
 
 ## 📱 **APP OVERVIEW**
 
 **Akahiyaj** (አካሂያጅ - meaning "Take me with you" in Amharic) is a comprehensive ride-sharing application built for Android using Kotlin and Jetpack Compose. The app features modern UI/UX design, advanced functionality, and complete Amharic localization for the Ethiopian market.
 
-### **✨ Key Features (IMPLEMENTATION STATUS: 95% COMPLETE)**
+### **✨ Key Features (IMPLEMENTATION STATUS: 100% COMPLETE)**
 - **🎨 Modern UI/UX**: ✅ Material 3 design with glassmorphism effects, animations, and transitions
 - **🔍 Advanced Search**: ✅ Smart filtering, sorting, and real-time search capabilities  
 - **📑 Bookmark System**: ✅ Save favorite groups with activity tracking
@@ -18,7 +18,7 @@
 - **⚡ Performance**: ✅ Memory optimization, infinite scroll, and smooth animations
 - **🚨 Error Handling**: ✅ Comprehensive error recovery with beautiful UI feedback
 - **✅ Success Feedback**: ✅ Animated confirmations and haptic feedback throughout
-- **🔧 Integration**: 🔄 Component integration into main app flow (IN PROGRESS)
+- **🔧 Integration**: ✅ Complete component integration into main app flow
 
 ---
 
@@ -291,6 +291,44 @@ cd Akahidegn
 - **Email**: dawitfikadu3@gmail.com
 - **Feedback**: Via in-app feedback option
 - **Issues**: GitHub Issues (if applicable)
+
+## 🆕 **RECENTLY IMPLEMENTED FEATURES**
+
+### **1. Settings Screen with Theme Toggle**
+- Complete settings screen with theme preferences (Light/Dark/System)
+- Theme preferences are persisted using DataStore
+- Navigation to settings from both MainScreen and UserProfileScreen
+- Additional accessibility settings for text size and high contrast mode
+
+### **2. Group Filtering & Searching**
+- Advanced filtering by destination, departure time, and capacity
+- Sort options by proximity, time, available seats, price, and rating
+- Real-time filtering with smart algorithm implementation
+- Filtering UI with animated transitions and haptic feedback
+
+### **3. Bookmark & Recent Activity System**
+- BookmarkManager for saving and retrieving favorite routes
+- Recent activity tracking for user interactions
+- Dedicated RecentActivityScreen with chronological activity display
+- Persistent storage using DataStore with proper serialization
+
+### **4. Optimized Image Loading**
+- LazyImageLoader component for efficient image loading
+- Image caching with memory and disk support
+- Placeholder handling during loading
+- Error states with appropriate fallback UI
+
+### **5. Accessibility Improvements**
+- AccessibilityUtils for screen reader support
+- Minimum touch target size of 48dp for all interactive elements
+- High contrast mode for visually impaired users
+- Semantic properties for better screen reader experience
+
+### **6. Performance Documentation**
+- Comprehensive ACCESSIBILITY_AND_PERFORMANCE.md guide
+- Memory management best practices
+- State handling optimizations
+- Component lifecycle management guidelines
 
 ---
 

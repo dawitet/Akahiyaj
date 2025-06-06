@@ -26,6 +26,7 @@ import java.util.*
 // Enhanced UI Components
 import com.dawitf.akahidegn.ui.components.AdvancedSearchBar
 import com.dawitf.akahidegn.ui.components.FilterChipRow
+import com.dawitf.akahidegn.ui.components.FilterOption
 import com.dawitf.akahidegn.ui.components.AnimatedPressableCard
 import com.dawitf.akahidegn.ui.components.StatusBadge
 
@@ -79,13 +80,17 @@ fun SocialScreen(
         // Filter chips for friends
         if (selectedTab == 0) {
             FilterChipRow(
-                filters = listOf("Online", "Nearby", "Frequent Riders", "Recent"),
-                selectedFilters = activeFilters,
+                filters = listOf(
+                    FilterOption(id = "online", label = "Online", isSelected = "online" in activeFilters),
+                    FilterOption(id = "nearby", label = "Nearby", isSelected = "nearby" in activeFilters),
+                    FilterOption(id = "frequent", label = "Frequent Riders", isSelected = "frequent" in activeFilters),
+                    FilterOption(id = "recent", label = "Recent", isSelected = "recent" in activeFilters)
+                ),
                 onFilterToggle = { filter ->
-                    activeFilters = if (filter in activeFilters) {
-                        activeFilters - filter
+                    activeFilters = if (filter.id in activeFilters) {
+                        activeFilters - filter.id
                     } else {
-                        activeFilters + filter
+                        activeFilters + filter.id
                     }
                 },
                 modifier = Modifier.padding(horizontal = 16.dp)

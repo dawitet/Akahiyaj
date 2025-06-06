@@ -59,8 +59,8 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4") // For ConstraintLayout in XML
 
     // Your existing dependencies
-    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.0") // Updated to a more common recent version, use your libs version if available
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.0") // For ViewModel in Compose
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.8.7") // Updated to latest stable version
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // For ViewModel in Compose
     // implementation(libs.androidx.lifecycle.runtime.ktx) // This is likely the same as above if defined in libs
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
@@ -86,7 +86,7 @@ dependencies {
     implementation("com.google.code.gson:gson:2.10.1")
 
 
-    implementation(platform("com.google.firebase:firebase-bom:33.1.1")) // Updated to a recent BOM version
+    implementation(platform("com.google.firebase:firebase-bom:33.5.1")) // Updated to latest BOM version
     implementation("com.google.firebase:firebase-analytics-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-database-ktx")
     implementation("com.google.firebase:firebase-firestore-ktx")
@@ -95,12 +95,12 @@ dependencies {
     implementation("com.google.firebase:firebase-installations-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-perf-ktx")
-    implementation("com.google.android.gms:play-services-location:21.3.0") // Updated to a recent version
-    implementation("com.google.android.gms:play-services-ads:23.1.0")
+    implementation("com.google.android.gms:play-services-location:21.3.0") // Latest stable version
+    implementation("com.google.android.gms:play-services-ads:23.5.0")
     
     // Hilt for Dependency Injection
-    implementation("com.google.dagger:hilt-android:2.48")
-    kapt("com.google.dagger:hilt-compiler:2.48")
+    implementation("com.google.dagger:hilt-android:2.50")
+    kapt("com.google.dagger:hilt-compiler:2.50")
     implementation("androidx.hilt:hilt-navigation-compose:1.1.0")
     
     // Paging for performance
@@ -122,7 +122,7 @@ dependencies {
     implementation("androidx.datastore:datastore-preferences:1.0.0")
     
     // WorkManager for background tasks
-    implementation("androidx.work:work-runtime-ktx:2.9.0")
+    implementation("androidx.work:work-runtime-ktx:2.9.1")
     implementation("androidx.hilt:hilt-work:1.1.0")
     kapt("androidx.hilt:hilt-compiler:1.1.0")
 
@@ -138,6 +138,6 @@ dependencies {
     implementation("androidx.compose.material3:material3-window-size-class:1.1.2") // For adaptive layouts
 
     // Add dependencies for WorkManager testing
-    testImplementation("androidx.work:work-testing:2.9.0")
+    testImplementation("androidx.work:work-testing:2.9.1")
     testImplementation("androidx.test:core:1.5.0")
 }

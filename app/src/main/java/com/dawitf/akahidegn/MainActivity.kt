@@ -3,6 +3,7 @@ package com.dawitf.akahidegn
 // Removed LocalContext as most direct UI context needs are in Composables now
 // Removed LocalFocusManager as it's handled in Composable files
 import android.Manifest
+import android.content.Context
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -56,6 +57,17 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.app.NotificationCompat
 import androidx.core.content.ContextCompat
+import androidx.datastore.core.DataStore
+import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.edit
+import androidx.datastore.preferences.core.stringPreferencesKey
+import androidx.datastore.preferences.preferencesDataStore
+import androidx.lifecycle.lifecycleScope
+import com.dawitf.akahidegn.ui.components.ThemeMode
+import com.dawitf.akahidegn.ui.components.ThemeToggleCard
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dawitf.akahidegn.ui.components.CreateRideDialog
@@ -105,9 +117,24 @@ import com.dawitf.akahidegn.debug.GroupCleanupDebugHelper
 import javax.inject.Inject
 
 // Data classes (ChatMessage, Group) - consider moving to a 'data' package
-@IgnoreExtraProperties
+// Extension property for DataStore
+val android.content.Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
+
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
+    // Function to navigate to settings screen
+    fun navigateToSettings() {
+        currentAppScreen = AppScreen.SETTINGS
+    }
+    
+    // Function to navigate to recent activity screen
+    fun navigateToRecentActivity() {
+        currentAppScreen = AppScreen.RECENT_ACTIVITY
+    }
+    // Theme preferences key
+    companion object {
+        val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+    }
 
     @Inject
     lateinit var groupCleanupDebugHelper: GroupCleanupDebugHelper
@@ -139,11 +166,14 @@ class MainActivity : ComponentActivity() {
 
     private val snackbarHostState = SnackbarHostState()
 
-    private enum class AppScreen { ASK_NAME, MAIN_CONTENT, CHAT, RIDE_BUDDIES, DEBUG_MENU }
+    private enum class AppScreen { ASK_NAME, MAIN_CONTENT, CHAT, RIDE_BUDDIES, DEBUG_MENU, SETTINGS, RECENT_ACTIVITY }
     private var currentAppScreen by mutableStateOf(AppScreen.ASK_NAME)
 
     // Debug mode flag - set to true during testing
     private var isDebugMode by mutableStateOf(true)
+    
+    // Theme state
+    private var currentThemeMode by mutableStateOf(ThemeMode.SYSTEM)
 
     // State for Create Ride Dialog flow
     private var showCreateRideDialog by mutableStateOf(false)
@@ -152,6 +182,21 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        
+        // Load theme preference
+        lifecycleScope.launch {
+            dataStore.data.map { preferences ->
+                preferences[THEME_MODE_KEY]?.let {
+                    when (it) {
+                        "LIGHT" -> ThemeMode.LIGHT
+                        "DARK" -> ThemeMode.DARK
+                        else -> ThemeMode.SYSTEM
+                    }
+                } ?: ThemeMode.SYSTEM
+            }.first().also { themeMode ->
+                currentThemeMode = themeMode
+            }
+        }
 
         // Initialize Firebase
         try {
@@ -261,7 +306,9 @@ class MainActivity : ComponentActivity() {
                 }
             }
 
-            AkahidegnTheme {
+            AkahidegnTheme(
+                themeMode = currentThemeMode
+            ) {
                 Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
                     when (currentAppScreen) {
                         AppScreen.ASK_NAME -> NameInputScreen(
@@ -288,25 +335,21 @@ class MainActivity : ComponentActivity() {
                             } else {
                                 MainScreen(
                                     groups = groups,
-                                    isLoadingGroups = isLoadingGroups,
-                                    recentSearches = recentSearches,
-                                    currentSearchText = currentSearchQuery,
-                                    onSearchQueryChanged = { query ->
+                                    searchQuery = currentSearchQuery,
+                                    onSearchQueryChange = { query ->
                                         viewModel.updateSearchQuery(query)
                                     },
-                                    onPerformSearch = { query ->
-                                        val trimmedQuery = query.trim()
-                                        viewModel.updateSearchQuery(trimmedQuery)
-                                        if (trimmedQuery.isNotBlank()) {
-                                            viewModel.addRecentSearch(this@MainActivity, trimmedQuery)
-                                        }
-                                        Log.d("Search", "Search submitted for: $trimmedQuery")
-                                    },
-                                    onRideClicked = { group ->
+                                    selectedFilters = com.dawitf.akahidegn.ui.components.SearchFilters(),
+                                    onFiltersChange = { /* TODO: Implement filters */ },
+                                    onGroupClick = { group ->
                                         // Show interstitial ad before joining the group
                                         showInterstitialAdForJoinGroup(group)
                                     },
-                                    onCreateRideClicked = {
+                                    isLoading = isLoadingGroups,
+                                    onRefreshGroups = {
+                                        viewModel.refreshGroups()
+                                    },
+                                    onCreateGroup = {
                                         if (currentFirebaseUserId == null) {
                                             Toast.makeText(this, getString(R.string.toast_user_not_authenticated), Toast.LENGTH_SHORT).show()
                                             return@MainScreen
@@ -318,18 +361,14 @@ class MainActivity : ComponentActivity() {
                                         }
                                         // Start the create ride flow by showing the ad prompt first
                                         showAdPromptForCreateRideDialog = true
-                                    },                    onBackClicked = {
-                        // Define appropriate back behavior, e.g., finish activity
-                        finish()
-                    },
-                    onNavigateToRideBuddies = {
-                        currentAppScreen = AppScreen.RIDE_BUDDIES
-                    },
-                    onNavigateToDebug = if (isDebugMode) {
-                        { currentAppScreen = AppScreen.DEBUG_MENU }
-                    } else null,
-                    snackbarHostState = snackbarHostState
-                )
+                                    },
+                                    onNavigateToSettings = { /* TODO */ },
+                                    onNavigateToProfile = { /* TODO */ },
+                                    onNavigateToBookmarks = { /* TODO */ },
+                                    onNavigateToChat = { /* TODO */ },
+                                    onNavigateToNotifications = { /* TODO */ },
+                                    onNavigateToHistory = { /* TODO */ }
+                                )
 
                                 // Ad Prompt Dialog for creating a ride
                                 if (showAdPromptForCreateRideDialog) {
@@ -411,6 +450,30 @@ class MainActivity : ComponentActivity() {
                                 groupCleanupDebugHelper = groupCleanupDebugHelper,
                                 onNavigateBack = {
                                     currentAppScreen = AppScreen.MAIN_CONTENT
+                                }
+                            )
+                        }
+                        AppScreen.SETTINGS -> {
+                            com.dawitf.akahidegn.ui.settings.SettingsScreen(
+                                currentThemeMode = currentThemeMode,
+                                onThemeChanged = { newThemeMode ->
+                                    currentThemeMode = newThemeMode
+                                    // Theme preference saving is handled within SettingsScreen
+                                },
+                                onNavigateBack = {
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                }
+                            )
+                        }
+                        AppScreen.RECENT_ACTIVITY -> {
+                            com.dawitf.akahidegn.ui.activity.RecentActivityScreen(
+                                onNavigateBack = {
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                },
+                                onClearActivity = {
+                                    lifecycleScope.launch {
+                                        com.dawitf.akahidegn.features.bookmark.BookmarkManager.clearRecentActivity(this@MainActivity)
+                                    }
                                 }
                             )
                         }

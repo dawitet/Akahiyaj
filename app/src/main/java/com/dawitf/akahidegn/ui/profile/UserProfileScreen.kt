@@ -1,13 +1,8 @@
 package com.dawitf.akahidegn.ui.profile
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.            // User Name
-            BilingualText(
-                englishText = "${userProfile.firstName ?: ""} ${userProfile.lastName ?: ""}",
-                amharicText = "${userProfile.firstName ?: ""} ${userProfile.lastName ?: ""}", // Use same for now
-                style = MaterialTheme.typography.headlineMedium,
-                fontWeight = FontWeight.Bold
-            )rt androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -40,6 +35,7 @@ import com.dawitf.akahidegn.ui.components.GlassmorphismCard
 import com.dawitf.akahidegn.ui.components.StatusBadge
 import com.dawitf.akahidegn.ui.components.ShimmerProfileHeader
 import com.dawitf.akahidegn.ui.components.QuickActionButton
+import com.dawitf.akahidegn.ui.components.OptimizedProfileImage
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -116,17 +112,11 @@ private fun ProfileHeader(
             modifier = Modifier.padding(20.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Profile Photo
-            AsyncImage(
-                model = ImageRequest.Builder(LocalContext.current)
-                    .data(userProfile?.profilePhotoUrl ?: "")
-                    .crossfade(true)
-                    .build(),
-                contentDescription = "Profile Photo",
-                modifier = Modifier
-                    .size(100.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop
+            // Profile Photo with optimized image loading
+            OptimizedProfileImage(
+                imageUrl = userProfile?.profilePhotoUrl,
+                modifier = Modifier.size(100.dp),
+                contentDescription = "Profile Photo"
             )
             
             Spacer(modifier = Modifier.height(12.dp))
@@ -361,10 +351,10 @@ private fun QuickActionsSection(
     onReferrals: () -> Unit
 ) {
     Column {
-        Text(
-            text = "Quick Actions",
-            style = MaterialTheme.typography.titleLarge,
-            fontWeight = FontWeight.SemiBold
+        BilingualText(
+            englishText = "Quick Actions",
+                        amharicText = "ፈጣን ድርጊቶች",
+            style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
         )
         
         Spacer(modifier = Modifier.height(12.dp))
@@ -379,7 +369,7 @@ private fun QuickActionsSection(
                 ) {
                     QuickActionItem(
                         title = "Settings",
-                        subtitle = "Manage your preferences",
+                        subtitle = "Manage your preferences and theme",
                         icon = Icons.Default.Settings,
                         onClick = onSettings
                     )

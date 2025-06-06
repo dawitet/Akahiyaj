@@ -36,7 +36,7 @@ import com.dawitf.akahidegn.features.social.RideBuddyService.*
 import java.text.SimpleDateFormat
 import java.util.*
 // Enhanced UI Components
-import com.dawitf.akahidegn.ui.components.SwipeToActionCard
+import com.dawitf.akahidegn.ui.components.SwipeableCard
 import com.dawitf.akahidegn.ui.components.SwipeAction
 import com.dawitf.akahidegn.ui.components.LongPressContextMenu
 import com.dawitf.akahidegn.ui.components.ContextMenuItem
@@ -304,20 +304,20 @@ private fun BuddyCard(
 ) {
     var showRatingDialog by remember { mutableStateOf(false) }
     
-    SwipeToActionCard(
-        onLeftSwipe = onRemove,
-        onRightSwipe = { showRatingDialog = true },
+    SwipeableCard(
+        onSwipeLeft = onRemove,
+        onSwipeRight = { showRatingDialog = true },
         leftAction = SwipeAction(
             icon = Icons.Default.Delete,
             backgroundColor = MaterialTheme.colorScheme.error,
-            contentColor = MaterialTheme.colorScheme.onError,
-            text = "Remove"
+            iconColor = MaterialTheme.colorScheme.onError,
+            label = "Remove"
         ),
         rightAction = SwipeAction(
             icon = Icons.Default.Star,
             backgroundColor = Color(0xFFFFD700),
-            contentColor = Color.Black,
-            text = "Rate"
+            iconColor = Color.Black,
+            label = "Rate"
         )
     ) {
         Row(

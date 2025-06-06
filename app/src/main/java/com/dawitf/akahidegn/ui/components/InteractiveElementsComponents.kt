@@ -132,6 +132,7 @@ private fun ContextMenuDialog(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun ContextMenuItemComponent(
     item: ContextMenuItem,
@@ -261,6 +262,7 @@ fun EnhancedFloatingActionButton(
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun MultiFAB(
     mainIcon: ImageVector = Icons.Filled.Add,
@@ -291,14 +293,24 @@ fun MultiFAB(
         ) {
             // Sub-actions
             actions.forEachIndexed { index, action ->
+                var isItemVisible by remember { mutableStateOf(false) }
+                
+                LaunchedEffect(isExpanded) {
+                    if (isExpanded) {
+                        delay((index * 50).toLong())
+                        isItemVisible = true
+                    } else {
+                        isItemVisible = false
+                    }
+                }
+                
                 androidx.compose.animation.AnimatedVisibility(
-                    visible = isExpanded,
+                    visible = isExpanded && isItemVisible,
                     enter = androidx.compose.animation.slideInVertically(
                         initialOffsetY = { it / 2 },
                         animationSpec = spring(
                             dampingRatio = Spring.DampingRatioMediumBouncy,
-                            stiffness = Spring.StiffnessMedium,
-                            delayMillis = index * 50
+                            stiffness = Spring.StiffnessMedium
                         )
                     ) + androidx.compose.animation.fadeIn(),
                     exit = androidx.compose.animation.slideOutVertically(

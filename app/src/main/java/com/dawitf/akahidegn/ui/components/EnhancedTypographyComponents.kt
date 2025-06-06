@@ -19,20 +19,15 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlin.math.pow
+import kotlin.math.pow
 import com.dawitf.akahidegn.R
+import com.dawitf.akahidegn.ui.theme.AmharicFontFamily
 
 /**
  * Enhanced Typography Components with Amharic/Ethiopic Font Support
  * Provides dynamic text sizing and improved accessibility
  */
-
-// Noto Sans Ethiopic font family for proper Amharic text rendering
-val NotoSansEthiopic = FontFamily(
-    Font(R.font.noto_sans_ethiopic_regular, FontWeight.Normal),
-    Font(R.font.noto_sans_ethiopic_medium, FontWeight.Medium),
-    Font(R.font.noto_sans_ethiopic_semibold, FontWeight.SemiBold),
-    Font(R.font.noto_sans_ethiopic_bold, FontWeight.Bold)
-)
 
 @Composable
 fun rememberDynamicTextSize(): Float {
@@ -65,7 +60,7 @@ fun AdaptiveText(
     
     val adaptedStyle = if (isAmharic) {
         style.copy(
-            fontFamily = NotoSansEthiopic,
+            fontFamily = AmharicFontFamily,
             fontSize = finalFontSize * 1.1f, // Slightly larger for Amharic text
             lineHeight = finalFontSize * 1.4f // Better line spacing for Amharic
         )
@@ -234,7 +229,7 @@ fun DynamicSizeText(
     
     val adaptedStyle = if (isAmharic) {
         style.copy(
-            fontFamily = NotoSansEthiopic,
+            fontFamily = AmharicFontFamily,
             fontSize = calculatedSize.sp * 1.1f,
             lineHeight = calculatedSize.sp * 1.4f
         )
@@ -340,8 +335,8 @@ fun HighContrastText(
 
 // Extension function to calculate luminance
 private fun Color.luminance(): Float {
-    val r = if (red <= 0.03928f) red / 12.92f else kotlin.math.pow((red + 0.055f) / 1.055f, 2.4f).toFloat()
-    val g = if (green <= 0.03928f) green / 12.92f else kotlin.math.pow((green + 0.055f) / 1.055f, 2.4f).toFloat()
-    val b = if (blue <= 0.03928f) blue / 12.92f else kotlin.math.pow((blue + 0.055f) / 1.055f, 2.4f).toFloat()
+    val r = if (red <= 0.03928f) red / 12.92f else ((red + 0.055) / 1.055).pow(2.4).toFloat()
+    val g = if (green <= 0.03928f) green / 12.92f else ((green + 0.055) / 1.055).pow(2.4).toFloat()
+    val b = if (blue <= 0.03928f) blue / 12.92f else ((blue + 0.055) / 1.055).pow(2.4).toFloat()
     return 0.2126f * r + 0.7152f * g + 0.0722f * b
 }

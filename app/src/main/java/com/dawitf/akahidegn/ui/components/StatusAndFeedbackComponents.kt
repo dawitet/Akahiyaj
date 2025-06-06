@@ -232,8 +232,8 @@ fun CircularProgressWithText(
         contentAlignment = Alignment.Center
     ) {
         Canvas(modifier = Modifier.fillMaxSize()) {
-            val center = Offset(size.width / 2, size.height / 2)
-            val radius = (size.width - strokeWidth.value) / 2
+            val center = Offset(this.size.width / 2, this.size.height / 2)
+            val radius = (this.size.width - strokeWidth.toPx()) / 2
             
             // Background circle
             drawCircle(
@@ -254,7 +254,7 @@ fun CircularProgressWithText(
                     center.x - radius,
                     center.y - radius
                 ),
-                size = Size(radius * 2, radius * 2),
+                size = androidx.compose.ui.geometry.Size(radius * 2, radius * 2),
                 style = Stroke(strokeWidth.toPx(), cap = StrokeCap.Round)
             )
         }

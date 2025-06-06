@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
+// Theme mode setting is now in com.dawitf.akahidegn.ui.components.ThemeMode
+
 // Enhanced color palette
 object AkahidegnColors {
     // Primary colors - keeping original colors but enhanced
@@ -49,14 +51,8 @@ object AkahidegnColors {
 }
 
 // Accessibility settings
-data class AccessibilitySettings(
-    val isHighContrastEnabled: Boolean = false,
-    val isLargeTextEnabled: Boolean = false,
-    val isScreenReaderEnabled: Boolean = false,
-    val fontSizeMultiplier: Float = 1.0f
-)
-
-val LocalAccessibilitySettings = staticCompositionLocalOf { AccessibilitySettings() }
+// Using the new AccessibilitySettings from util package
+val LocalAccessibilitySettings = staticCompositionLocalOf { com.dawitf.akahidegn.util.AccessibilitySettings() }
 
 // Color.kt should now only contain:
 // val CharcoalGrey = ComposeColor(0xFF36454F)
@@ -145,18 +141,25 @@ private val HighContrastDarkColorScheme = darkColorScheme(
 fun AkahidegnTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
     dynamicColor: Boolean = false,
-    highContrast: Boolean = false,
-    accessibilitySettings: AccessibilitySettings = AccessibilitySettings(),
+    themeMode: com.dawitf.akahidegn.ui.components.ThemeMode = com.dawitf.akahidegn.ui.components.ThemeMode.SYSTEM,
+    accessibilitySettings: com.dawitf.akahidegn.util.AccessibilitySettings = com.dawitf.akahidegn.util.AccessibilitySettings(),
     content: @Composable () -> Unit
 ) {
+    // Determine if dark theme should be used based on themeMode
+    val effectiveDarkTheme = when (themeMode) {
+        com.dawitf.akahidegn.ui.components.ThemeMode.LIGHT -> false
+        com.dawitf.akahidegn.ui.components.ThemeMode.DARK -> true
+        com.dawitf.akahidegn.ui.components.ThemeMode.SYSTEM -> darkTheme
+    }
+    
     val colorScheme = when {
-        highContrast && darkTheme -> HighContrastDarkColorScheme
-        highContrast && !darkTheme -> HighContrastLightColorScheme
+        accessibilitySettings.enableHighContrast && effectiveDarkTheme -> HighContrastDarkColorScheme
+        accessibilitySettings.enableHighContrast && !effectiveDarkTheme -> HighContrastLightColorScheme
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
             val context = LocalContext.current
-            if (darkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
+            if (effectiveDarkTheme) dynamicDarkColorScheme(context) else dynamicLightColorScheme(context)
         }
-        darkTheme -> DarkThemeColorScheme
+        effectiveDarkTheme -> DarkThemeColorScheme
         else -> LightThemeColorScheme
     }
 
@@ -168,7 +171,7 @@ fun AkahidegnTheme(
 
             // The primary responsibility here is to set the icon appearance
             // based on the theme, assuming edge-to-edge is already enabled.
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !darkTheme
+            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !effectiveDarkTheme
 
             // If you want the navigation bar to also be transparent (or have a specific color)
             // and control its icons:
