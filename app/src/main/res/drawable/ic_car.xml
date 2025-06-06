@@ -1,0 +1,36 @@
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="120dp"
+    android:height="120dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    
+    <!-- Car body -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M18.92,6.01C18.72,5.42 18.16,5 17.5,5h-11C5.84,5 5.28,5.42 5.08,6.01L3,12v8c0,0.55 0.45,1 1,1h1c0.55,0 1,-0.45 1,-1v-1h12v1c0,0.55 0.45,1 1,1h1c0.55,0 1,-0.45 1,-1v-8L18.92,6.01z"/>
+    
+    <!-- Car windows -->
+    <path
+        android:fillColor="#E3F2FD"
+        android:pathData="M6.5,7h11c0.28,0 0.5,0.22 0.5,0.5v3c0,0.28 -0.22,0.5 -0.5,0.5h-11C6.22,11 6,10.78 6,10.5v-3C6,7.22 6.22,7 6.5,7z"/>
+    
+    <!-- Front wheel -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M7.5,14.5 A1.5,1.5 0 1,1 7.5,17.5 A1.5,1.5 0 1,1 7.5,14.5 Z"/>
+    
+    <!-- Rear wheel -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M16.5,14.5 A1.5,1.5 0 1,1 16.5,17.5 A1.5,1.5 0 1,1 16.5,14.5 Z"/>
+    
+    <!-- Front headlight -->
+    <path
+        android:fillColor="#FFEB3B"
+        android:pathData="M20,11.2 A0.8,0.8 0 1,1 20,12.8 A0.8,0.8 0 1,1 20,11.2 Z"/>
+    
+    <!-- Rear light -->
+    <path
+        android:fillColor="#F44336"
+        android:pathData="M4,11.2 A0.8,0.8 0 1,1 4,12.8 A0.8,0.8 0 1,1 4,11.2 Z"/>
+</vector>

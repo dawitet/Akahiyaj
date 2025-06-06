@@ -24,6 +24,10 @@ import coil.compose.AsyncImage
 import coil.request.ImageRequest
 import com.dawitf.akahidegn.Group // Import your Group data class
 import com.dawitf.akahidegn.R     // Import your R file
+// Enhanced UI Components
+import com.dawitf.akahidegn.ui.components.GlassmorphismCard
+import com.dawitf.akahidegn.ui.components.BouncyButton
+import com.dawitf.akahidegn.ui.components.StatusBadge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

@@ -61,7 +61,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dawitf.akahidegn.ui.components.CreateRideDialog
 import com.dawitf.akahidegn.ui.screens.ChatScreen
 import com.dawitf.akahidegn.ui.screens.NameInputScreen
-import com.dawitf.akahidegn.ui.screens.NewMainScreen
+import com.dawitf.akahidegn.ui.screens.MainScreen
 import com.dawitf.akahidegn.ui.social.RideBuddyScreen
 import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
 import com.dawitf.akahidegn.viewmodel.MainViewModel
@@ -286,7 +286,7 @@ class MainActivity : ComponentActivity() {
                             if (selectedGroupForChat != null && currentFirebaseUserId != null && currentUserDisplayName != null) {
                                 currentAppScreen = AppScreen.CHAT // Trigger recomposition
                             } else {
-                                NewMainScreen(
+                                MainScreen(
                                     groups = groups,
                                     isLoadingGroups = isLoadingGroups,
                                     recentSearches = recentSearches,
@@ -309,12 +309,12 @@ class MainActivity : ComponentActivity() {
                                     onCreateRideClicked = {
                                         if (currentFirebaseUserId == null) {
                                             Toast.makeText(this, getString(R.string.toast_user_not_authenticated), Toast.LENGTH_SHORT).show()
-                                            return@NewMainScreen
+                                            return@MainScreen
                                         }
                                         if (!hasLocationPermission() || activityCurrentLocation == null) {
                                             Toast.makeText(this, getString(R.string.toast_location_not_available_for_create), Toast.LENGTH_SHORT).show()
                                             requestPermissionsLogic() // Attempt to get permissions
-                                            return@NewMainScreen
+                                            return@MainScreen
                                         }
                                         // Start the create ride flow by showing the ad prompt first
                                         showAdPromptForCreateRideDialog = true

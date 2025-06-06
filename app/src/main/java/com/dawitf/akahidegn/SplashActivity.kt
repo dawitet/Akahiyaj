@@ -49,7 +49,7 @@ fun SplashScreen() {
     Column(
         modifier = Modifier
             .fillMaxSize()
-            .background(Color(0xFFF5F5F5))
+            .background(MaterialTheme.colorScheme.surface)
             .padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center
@@ -61,6 +61,15 @@ fun SplashScreen() {
             modifier = Modifier.size(120.dp)
         )
         
+        Spacer(modifier = Modifier.height(32.dp))
+        
+        // Car image in center
+        Image(
+            painter = painterResource(id = R.drawable.car_rideshare),
+            contentDescription = "Car with passengers",
+            modifier = Modifier.size(100.dp)
+        )
+        
         Spacer(modifier = Modifier.weight(1f))
         
         // Splash text
@@ -68,7 +77,7 @@ fun SplashScreen() {
             text = stringResource(id = R.string.splash_screen_text),
             fontSize = 16.sp,
             fontWeight = FontWeight.Bold,
-            color = Color.Black,
+            color = MaterialTheme.colorScheme.onSurface,
             textAlign = TextAlign.Center,
             lineHeight = 22.sp,
             modifier = Modifier.padding(bottom = 80.dp)

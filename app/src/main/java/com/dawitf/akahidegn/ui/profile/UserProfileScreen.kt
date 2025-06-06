@@ -1,8 +1,13 @@
 package com.dawitf.akahidegn.ui.profile
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.layout.            // User Name
+            BilingualText(
+                englishText = "${userProfile.firstName ?: ""} ${userProfile.lastName ?: ""}",
+                amharicText = "${userProfile.firstName ?: ""} ${userProfile.lastName ?: ""}", // Use same for now
+                style = MaterialTheme.typography.headlineMedium,
+                fontWeight = FontWeight.Bold
+            )rt androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -28,6 +33,13 @@ import com.dawitf.akahidegn.features.profile.*
 import com.dawitf.akahidegn.ui.theme.AkahidegnColors
 import java.text.NumberFormat
 import java.util.*
+// Enhanced UI Components
+import com.dawitf.akahidegn.ui.components.BilingualText
+import com.dawitf.akahidegn.ui.components.AnimatedPressableCard
+import com.dawitf.akahidegn.ui.components.GlassmorphismCard
+import com.dawitf.akahidegn.ui.components.StatusBadge
+import com.dawitf.akahidegn.ui.components.ShimmerProfileHeader
+import com.dawitf.akahidegn.ui.components.QuickActionButton
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -91,9 +103,14 @@ private fun ProfileHeader(
     userProfile: UserProfile?,
     onEditProfile: () -> Unit
 ) {
-    Card(
+    if (userProfile == null) {
+        ShimmerProfileHeader()
+        return
+    }
+    
+    GlassmorphismCard(
         modifier = Modifier.fillMaxWidth(),
-        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+        cornerRadius = 16.dp
     ) {
         Column(
             modifier = Modifier.padding(20.dp),
@@ -356,30 +373,45 @@ private fun QuickActionsSection(
             modifier = Modifier.fillMaxWidth()
         ) {
             Column {
-                QuickActionItem(
-                    title = "Settings",
-                    subtitle = "Manage your preferences",
-                    icon = Icons.Default.Settings,
-                    onClick = onSettings
-                )
+                AnimatedPressableCard(
+                    onClick = onSettings,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    QuickActionItem(
+                        title = "Settings",
+                        subtitle = "Manage your preferences",
+                        icon = Icons.Default.Settings,
+                        onClick = onSettings
+                    )
+                }
                 
                 HorizontalDivider()
                 
-                QuickActionItem(
-                    title = "Achievements",
-                    subtitle = "View your badges and progress",
-                    icon = Icons.Default.Star,
-                    onClick = onAchievements
-                )
+                AnimatedPressableCard(
+                    onClick = onAchievements,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    QuickActionItem(
+                        title = "Achievements",
+                        subtitle = "View your badges and progress",
+                        icon = Icons.Default.Star,
+                        onClick = onAchievements
+                    )
+                }
                 
                 HorizontalDivider()
                 
-                QuickActionItem(
-                    title = "Invite Friends",
-                    subtitle = "Share your referral code",
-                    icon = Icons.Default.Share,
-                    onClick = onReferrals
-                )
+                AnimatedPressableCard(
+                    onClick = onReferrals,
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    QuickActionItem(
+                        title = "Invite Friends",
+                        subtitle = "Share your referral code",
+                        icon = Icons.Default.Share,
+                        onClick = onReferrals
+                    )
+                }
             }
         }
     }

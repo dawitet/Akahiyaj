@@ -68,6 +68,7 @@ dependencies {
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
+    implementation("androidx.compose.material:material-icons-extended") // For additional Material Icons
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.androidx.hilt.work) // Ensure this is from your libs or specify version
     testImplementation(libs.junit)
@@ -124,6 +125,17 @@ dependencies {
     implementation("androidx.work:work-runtime-ktx:2.9.0")
     implementation("androidx.hilt:hilt-work:1.1.0")
     kapt("androidx.hilt:hilt-compiler:1.1.0")
+
+    // Advanced UI/UX Dependencies
+    implementation("androidx.compose.animation:animation:1.5.4")
+    implementation("androidx.compose.animation:animation-graphics:1.5.4")
+    implementation("com.google.accompanist:accompanist-placeholder-material:0.32.0") // For shimmer effects
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0") // For pull-to-refresh
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0") // For system UI control
+    implementation("androidx.compose.material:material-icons-core:1.5.4")
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4") // For Google Fonts including Noto Sans
+    implementation("androidx.activity:activity-compose:1.8.0") // For result contracts
+    implementation("androidx.compose.material3:material3-window-size-class:1.1.2") // For adaptive layouts
 
     // Add dependencies for WorkManager testing
     testImplementation("androidx.work:work-testing:2.9.0")

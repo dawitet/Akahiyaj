@@ -23,6 +23,11 @@ import com.dawitf.akahidegn.features.profile.Friend
 import com.dawitf.akahidegn.ui.theme.AkahidegnColors
 import java.text.SimpleDateFormat
 import java.util.*
+// Enhanced UI Components
+import com.dawitf.akahidegn.ui.components.AdvancedSearchBar
+import com.dawitf.akahidegn.ui.components.FilterChipRow
+import com.dawitf.akahidegn.ui.components.AnimatedPressableCard
+import com.dawitf.akahidegn.ui.components.StatusBadge
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +44,8 @@ fun SocialScreen(
     
     var selectedTab by remember { mutableIntStateOf(0) }
     val tabs = listOf("Friends", "Requests", "Discover")
+    var searchQuery by remember { mutableStateOf("") }
+    var activeFilters by remember { mutableStateOf(setOf<String>()) }
     
     Column(modifier = Modifier.fillMaxSize()) {
         // Top App Bar
@@ -58,6 +65,32 @@ fun SocialScreen(
                 }
             }
         )
+        
+        // Enhanced search bar
+        AdvancedSearchBar(
+            query = searchQuery,
+            onQueryChange = { searchQuery = it },
+            onSearch = { /* Handle search */ },
+            placeholder = "Search friends...",
+            isLoading = false,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+        
+        // Filter chips for friends
+        if (selectedTab == 0) {
+            FilterChipRow(
+                filters = listOf("Online", "Nearby", "Frequent Riders", "Recent"),
+                selectedFilters = activeFilters,
+                onFilterToggle = { filter ->
+                    activeFilters = if (filter in activeFilters) {
+                        activeFilters - filter
+                    } else {
+                        activeFilters + filter
+                    }
+                },
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+        }
         
         // Tab Row
         TabRow(selectedTabIndex = selectedTab) {
@@ -138,10 +171,9 @@ private fun FriendCard(
 ) {
     var showMenu by remember { mutableStateOf(false) }
     
-    Card(
-        modifier = Modifier
-            .fillMaxWidth(),
-        onClick = { onFriendProfile(friend.id) }
+    AnimatedPressableCard(
+        onClick = { onFriendProfile(friend.id) },
+        modifier = Modifier.fillMaxWidth()
     ) {
         Row(
             modifier = Modifier

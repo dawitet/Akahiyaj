@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">አካሂደኝ</string> <!-- Akahidegn -->
+    <string name="app_name">አካሂያጅ</string> <!-- Akahiyaj -->
 
     <!-- MainActivity / MainAppScreen -->
-    <string name="main_title">አካሂደኝ</string> <!-- Akahidegn App -->
+    <string name="main_title">አካሂያጅ</string> <!-- Akahiyaj App -->
     <string name="user_id_prefix">ተጠቃሚ:</string> <!-- User ID: -->
     <string name="authenticating_user">ማንነትን በማረጋገጥ ላይ...</string> <!-- Authenticating user... -->
     <string name="location_prefix">አካባቢ:</string> <!-- Location: -->

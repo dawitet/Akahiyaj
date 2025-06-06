@@ -35,6 +35,13 @@ import com.dawitf.akahidegn.R
 import com.dawitf.akahidegn.features.social.RideBuddyService.*
 import java.text.SimpleDateFormat
 import java.util.*
+// Enhanced UI Components
+import com.dawitf.akahidegn.ui.components.SwipeToActionCard
+import com.dawitf.akahidegn.ui.components.SwipeAction
+import com.dawitf.akahidegn.ui.components.LongPressContextMenu
+import com.dawitf.akahidegn.ui.components.ContextMenuItem
+import com.dawitf.akahidegn.ui.components.InteractiveStatusCard
+import com.dawitf.akahidegn.ui.components.ShimmerGroupList
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -122,12 +129,7 @@ fun RideBuddyScreen(
         
         // Content based on selected tab
         if (isLoading) {
-            Box(
-                modifier = Modifier.fillMaxSize(),
-                contentAlignment = Alignment.Center
-            ) {
-                CircularProgressIndicator()
-            }
+            ShimmerGroupList(itemCount = 5)
         } else {
             when (selectedTab) {
                 0 -> BuddiesTab(
@@ -301,13 +303,22 @@ private fun BuddyCard(
     onRate: (Float) -> Unit
 ) {
     var showRatingDialog by remember { mutableStateOf(false) }
-    var showMenu by remember { mutableStateOf(false) }
     
-    Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable { /* Navigate to buddy details */ },
-        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    SwipeToActionCard(
+        onLeftSwipe = onRemove,
+        onRightSwipe = { showRatingDialog = true },
+        leftAction = SwipeAction(
+            icon = Icons.Default.Delete,
+            backgroundColor = MaterialTheme.colorScheme.error,
+            contentColor = MaterialTheme.colorScheme.onError,
+            text = "Remove"
+        ),
+        rightAction = SwipeAction(
+            icon = Icons.Default.Star,
+            backgroundColor = Color(0xFFFFD700),
+            contentColor = Color.Black,
+            text = "Rate"
+        )
     ) {
         Row(
             modifier = Modifier
@@ -376,37 +387,29 @@ private fun BuddyCard(
                 }
             }
             
-            // Actions
-            Box {
-                IconButton(onClick = { showMenu = true }) {
-                    Icon(Icons.Default.MoreVert, contentDescription = "More options")
-                }
-                
-                DropdownMenu(
-                    expanded = showMenu,
-                    onDismissRequest = { showMenu = false }
-                ) {
-                    DropdownMenuItem(
-                        text = { Text("Rate Buddy") },
-                        onClick = {
-                            showMenu = false
-                            showRatingDialog = true
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.Star, contentDescription = null)
-                        }
+            // Enhanced context menu with long press
+            LongPressContextMenu(
+                items = listOf(
+                    ContextMenuItem(
+                        title = "Rate Buddy",
+                        icon = Icons.Default.Star,
+                        onClick = { showRatingDialog = true }
+                    ),
+                    ContextMenuItem(
+                        title = "View Profile",
+                        icon = Icons.Default.Person,
+                        onClick = { /* Navigate to profile */ }
+                    ),
+                    ContextMenuItem(
+                        title = "Remove Buddy",
+                        icon = Icons.Default.Delete,
+                        color = MaterialTheme.colorScheme.error,
+                        onClick = onRemove
                     )
-                    DropdownMenuItem(
-                        text = { Text("Remove Buddy") },
-                        onClick = {
-                            showMenu = false
-                            onRemove()
-                        },
-                        leadingIcon = {
-                            Icon(Icons.Default.Delete, contentDescription = null)
-                        }
-                    )
-                }
+                )
+            ) {
+                // Context menu trigger content
+                Icon(Icons.Default.MoreVert, contentDescription = "More options")
             }
         }
     }
