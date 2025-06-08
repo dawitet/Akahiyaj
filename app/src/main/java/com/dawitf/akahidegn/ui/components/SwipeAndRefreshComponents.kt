@@ -12,6 +12,7 @@ import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -69,7 +70,7 @@ fun EnhancedPullToRefresh(
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (source == NestedScrollSource.Drag && available.y < 0 && pullOffset > 0) {
+                if (source == NestedScrollSource.UserInput && available.y < 0 && pullOffset > 0) {
                     val consumed = pullOffset.coerceAtMost(-available.y)
                     pullOffset -= consumed
                     return Offset(0f, -consumed)
@@ -82,7 +83,7 @@ fun EnhancedPullToRefresh(
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
-                if (source == NestedScrollSource.Drag && available.y > 0) {
+                if (source == NestedScrollSource.UserInput && available.y > 0) {
                     val newOffset = (pullOffset + available.y).coerceAtMost(refreshThresholdPx * 1.5f)
                     
                     // Trigger haptic feedback when crossing threshold
@@ -481,7 +482,7 @@ private fun QuickActionItem(
             
             if (action.showArrow) {
                 Icon(
-                    imageVector = Icons.Filled.ArrowForward,
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
                     contentDescription = null,
                     tint = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.5f),
                     modifier = Modifier.size(20.dp)

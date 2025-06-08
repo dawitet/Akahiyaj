@@ -8,6 +8,7 @@ import com.dawitf.akahidegn.features.routing.RouteService
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.*
@@ -245,9 +246,9 @@ class SmartMatchingService @Inject constructor(
         val reasons = mutableListOf<String>()
         
         if (walkingDistance < 0.2) {
-            reasons.add("Very close pickup point (${String.format("%.1f", walkingDistance * 1000)}m walk)")
+            reasons.add("Very close pickup point (${String.format(Locale.getDefault(), "%.1f", walkingDistance * 1000)}m walk)")
         } else {
-            reasons.add("Pickup point ${String.format("%.1f", walkingDistance * 1000)}m away")
+            reasons.add("Pickup point ${String.format(Locale.getDefault(), "%.1f", walkingDistance * 1000)}m away")
         }
         
         if (timeDifference < 5) {

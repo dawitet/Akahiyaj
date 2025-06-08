@@ -92,6 +92,14 @@ class MainViewModel @Inject constructor(
     private val backgroundDispatcher = Dispatchers.IO
     private val computationDispatcher = Dispatchers.Default
 
+    // Enhanced error handling and resilience
+    private val _errorState = MutableStateFlow<String?>(null)
+    val errorState: StateFlow<String?> = _errorState.asStateFlow()
+    
+    private var retryCount = 0
+    private val maxRetries = 3
+    private val baseRetryDelayMs = 1000L
+    
     init {
         setupSearchQueryDebouncing()
         setupMemoryCleanup()
@@ -444,6 +452,45 @@ class MainViewModel @Inject constructor(
         }
         
         Log.d("MainViewModel", "Memory cleanup completed. Cache sizes - Groups: ${groupsCache.size}, Messages: ${_chatMessages.value.size}, Searches: ${recentSearchesCache.size}")
+    }
+
+    /**
+     * Execute operations with retry logic and exponential backoff
+     */
+    private suspend fun <T> executeWithRetry(
+        operationName: String,
+        operation: suspend () -> T
+    ): Result<T> = withContext(backgroundDispatcher) {
+        repeat(maxRetries) { attempt ->
+            try {
+                val result = operation()
+                if (attempt > 0) {
+                    Log.i("MainViewModel", "$operationName succeeded after $attempt retries")
+                }
+                retryCount = 0 // Reset on success
+                return@withContext Result.success(result)
+            } catch (e: Exception) {
+                Log.w("MainViewModel", "$operationName failed on attempt ${attempt + 1}: ${e.message}")
+                
+                if (attempt == maxRetries - 1) {
+                    // Last attempt failed
+                    _errorState.value = "Failed to $operationName after $maxRetries attempts"
+                    return@withContext Result.failure(e)
+                }
+                
+                // Exponential backoff: wait longer between retries
+                val delayMs = baseRetryDelayMs * (1 shl attempt) // 1s, 2s, 4s
+                kotlinx.coroutines.delay(delayMs)
+            }
+        }
+        Result.failure(Exception("Unexpected retry loop exit"))
+    }
+    
+    /**
+     * Clear error state
+     */
+    fun clearError() {
+        _errorState.value = null
     }
 
     override fun onCleared() {

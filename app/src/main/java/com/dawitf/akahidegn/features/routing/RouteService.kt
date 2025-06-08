@@ -9,6 +9,7 @@ import com.google.gson.annotations.SerializedName
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
+import java.util.Locale
 import okhttp3.OkHttpClient
 import okhttp3.Request
 import java.io.IOException
@@ -264,7 +265,7 @@ class RouteService @Inject constructor(
             "$meters m"
         } else {
             val km = meters / 1000.0
-            "%.1f km".format(km)
+            "%.1f km".format(Locale.getDefault(), km)
         }
     }
     

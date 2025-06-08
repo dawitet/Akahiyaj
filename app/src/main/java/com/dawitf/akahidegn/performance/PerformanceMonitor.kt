@@ -204,6 +204,56 @@ class PerformanceMonitor @Inject constructor(
         ))
     }
     
+    // Enhanced Performance Monitoring
+    private var lastFrameTime = 0L
+    private var frameDropCount = 0
+    private var totalFrames = 0
+    
+    /**
+     * Monitor frame rate and detect frame drops
+     */
+    fun trackFrameRate() {
+        val currentTime = SystemClock.elapsedRealtime()
+        if (lastFrameTime > 0) {
+            val frameDuration = currentTime - lastFrameTime
+            totalFrames++
+            
+            // Consider anything over 20ms as a dropped frame (60fps = ~16.67ms per frame)
+            if (frameDuration > 20) {
+                frameDropCount++
+                
+                // Log significant frame drops
+                if (frameDuration > 50) {
+                    analyticsService.trackCustomEvent("severe_frame_drop", mapOf(
+                        "duration_ms" to frameDuration,
+                        "drop_ratio" to (frameDropCount.toFloat() / totalFrames.toFloat())
+                    ))
+                }
+            }
+            
+            // Report every 1000 frames
+            if (totalFrames % 1000 == 0) {
+                val dropPercentage = (frameDropCount.toFloat() / totalFrames.toFloat()) * 100
+                analyticsService.trackCustomEvent("frame_performance", mapOf(
+                    "total_frames" to totalFrames,
+                    "dropped_frames" to frameDropCount,
+                    "drop_percentage" to dropPercentage
+                ))
+            }
+        }
+        lastFrameTime = currentTime
+    }
+    
+    /**
+     * Track app startup time and report performance metrics
+     */
+    fun trackAppStartup(startupType: String) {
+        analyticsService.trackCustomEvent("app_startup", mapOf(
+            "startup_type" to startupType,
+            "timestamp" to System.currentTimeMillis()
+        ))
+    }
+    
     // Cleanup
     fun cleanup() {
         activeTraces.values.forEach { trace ->

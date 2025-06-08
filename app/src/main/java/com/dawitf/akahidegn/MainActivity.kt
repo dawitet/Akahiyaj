@@ -957,9 +957,9 @@ class MainActivity : ComponentActivity() {
                 // lightColor = android.graphics.Color.RED
                 // enableVibration(true)
             }
-            val notificationManager: NotificationManager =
-                getSystemService(NOTIFICATION_SERVICE) as NotificationManager
-            notificationManager.createNotificationChannel(channel)
+            val notificationManager: NotificationManager? =
+                getSystemService(NOTIFICATION_SERVICE) as? NotificationManager
+            notificationManager?.createNotificationChannel(channel)
             Log.d("FCM_TAG", "Notification channel $fcmChannelId created.")
         }
     }
@@ -978,7 +978,12 @@ class MainActivity : ComponentActivity() {
 
     fun showLocalNotification(title: String, message: String) {
         Log.d("NOTIFICATION_TAG", "Attempting to show local notification: $title - $message")
-        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager = getSystemService(NOTIFICATION_SERVICE) as? NotificationManager
+        
+        if (notificationManager == null) {
+            Log.e("NOTIFICATION_TAG", "NotificationManager not available")
+            return
+        }
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
             if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
@@ -1041,7 +1046,7 @@ class MainActivity : ComponentActivity() {
 } // End of MainActivity Class
 
 // Helper extension function (should be top-level, outside the class)
-fun Double.format(digits: Int): String = "%.${digits}f".format(this, Locale.US)
+fun Double.format(digits: Int): String = "%.${digits}f".format(Locale.getDefault(), this)
 
 @Composable
 fun DebugMenuScreen(

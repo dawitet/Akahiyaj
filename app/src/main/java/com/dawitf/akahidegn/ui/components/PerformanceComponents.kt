@@ -4,7 +4,7 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.*
-import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.dawitf.akahidegn.Group
@@ -286,6 +286,75 @@ fun ResourceCleanup(
     DisposableEffect(Unit) {
         onDispose {
             onCleanup()
+        }
+    }
+}
+
+/**
+ * Advanced performance utilities for memory and resource optimization
+ */
+
+/**
+ * Optimized collection utilities for better memory management
+ */
+class OptimizedCollections {
+    companion object {
+        /**
+         * Create a memory-efficient list with limited capacity
+         */
+        fun <T> createBoundedList(maxSize: Int): MutableList<T> {
+            return object : ArrayList<T>() {
+                override fun add(element: T): Boolean {
+                    if (size >= maxSize) {
+                        removeAt(0) // Remove oldest element
+                    }
+                    return super.add(element)
+                }
+            }
+        }
+        
+        /**
+         * Create a LRU cache with automatic cleanup
+         */
+        fun <K, V> createLRUCache(maxSize: Int): MutableMap<K, V> {
+            return object : LinkedHashMap<K, V>(maxSize, 0.75f, true) {
+                override fun removeEldestEntry(eldest: MutableMap.MutableEntry<K, V>?): Boolean {
+                    return size > maxSize
+                }
+            }
+        }
+    }
+}
+
+/**
+ * Resource cleanup helper for preventing memory leaks
+ */
+object ResourceCleanupHelper {
+    /**
+     * Execute cleanup tasks safely
+     */
+    fun safeCleanup(vararg cleanupTasks: () -> Unit) {
+        cleanupTasks.forEach { task ->
+            try {
+                task()
+            } catch (e: Exception) {
+                // Log error but don't crash the app
+                // In production, this would be logged to analytics
+            }
+        }
+    }
+    
+    /**
+     * Clean up collections efficiently
+     */
+    fun <T> cleanupCollection(collection: MutableCollection<T>, 
+                             shouldKeep: (T) -> Boolean = { false }) {
+        val iterator = collection.iterator()
+        while (iterator.hasNext()) {
+            val item = iterator.next()
+            if (!shouldKeep(item)) {
+                iterator.remove()
+            }
         }
     }
 }

@@ -8,6 +8,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.outlined.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -168,7 +169,7 @@ fun AnimatedErrorIcon(
         ErrorType.PERMISSION -> Icons.Default.Lock to MaterialTheme.colorScheme.error
         ErrorType.SERVER -> Icons.Default.Cloud to MaterialTheme.colorScheme.error
         ErrorType.VALIDATION -> Icons.Default.Error to MaterialTheme.colorScheme.error
-        ErrorType.UNKNOWN -> Icons.Default.HelpOutline to MaterialTheme.colorScheme.onSurfaceVariant
+        ErrorType.UNKNOWN -> Icons.AutoMirrored.Outlined.Help to MaterialTheme.colorScheme.onSurfaceVariant
     }
     
     Card(
@@ -324,7 +325,7 @@ fun ErrorBottomSheet(
                                 ErrorType.PERMISSION -> Icons.Default.Lock
                                 ErrorType.SERVER -> Icons.Default.Cloud
                                 ErrorType.VALIDATION -> Icons.Default.Error
-                                ErrorType.UNKNOWN -> Icons.Default.HelpOutline
+                                ErrorType.UNKNOWN -> Icons.AutoMirrored.Outlined.Help
                             },
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.error,

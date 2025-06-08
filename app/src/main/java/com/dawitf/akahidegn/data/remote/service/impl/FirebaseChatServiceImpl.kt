@@ -56,7 +56,7 @@ class FirebaseChatServiceImpl @Inject constructor(
                 
                 val messageWithId = message.copy(
                     messageId = messageRef.key ?: "",
-                    timestamp = ServerValue.TIMESTAMP as Long? ?: System.currentTimeMillis()
+                    timestamp = System.currentTimeMillis() // Use current time instead of ServerValue.TIMESTAMP cast
                 )
                 
                 messageRef.setValue(messageWithId).await()

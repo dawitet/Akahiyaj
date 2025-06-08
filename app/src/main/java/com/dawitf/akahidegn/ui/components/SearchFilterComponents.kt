@@ -14,6 +14,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -50,7 +51,7 @@ enum class GroupSortOption(val label: String) {
 }
 
 enum class GroupFilterType(val label: String, val icon: ImageVector) {
-    ALL("ሁሉም", Icons.Default.List),
+    ALL("ሁሉም", Icons.AutoMirrored.Filled.List),
     DEPARTING_SOON("በቅርቡ የሚነሳ", Icons.Default.AccessTime),
     AVAILABLE_SEATS("ተለዋዋጭ ስፍራ", Icons.Default.AirlineSeatReclineNormal),
     PREMIUM("ፕሬሚየም", Icons.Default.Star),

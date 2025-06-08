@@ -1,6 +1,9 @@
 package com.dawitf.akahidegn.integration
 
 import android.content.Context
+import androidx.work.WorkManager
+import androidx.work.WorkRequest
+import androidx.work.Operation
 import com.dawitf.akahidegn.Group
 import com.dawitf.akahidegn.core.result.Result
 import com.dawitf.akahidegn.debug.GroupCleanupDebugHelper
@@ -45,10 +48,14 @@ class GroupCleanupIntegrationTest {
         groupRepository = mockk(relaxed = true)
         groupCleanupScheduler = mockk(relaxed = true)
         
-        // Mock WorkManager
-        mockkStatic(androidx.work.WorkManager::class)
-        every { androidx.work.WorkManager.getInstance(any()) } returns mockk(relaxed = true)
+        // Enhanced WorkManager mocking for new version
+        mockkStatic(WorkManager::class)
+        val mockWorkManager = mockk<WorkManager>(relaxed = true)
+        every { WorkManager.getInstance(any()) } returns mockWorkManager
+        every { mockWorkManager.enqueue(any<WorkRequest>()) } returns mockk<Operation>(relaxed = true)
+        every { mockWorkManager.cancelAllWorkByTag(any<String>()) } returns mockk<Operation>(relaxed = true)
         
+        // Create a real GroupCleanupDebugHelper instead of mocking it
         debugHelper = GroupCleanupDebugHelper(context, groupCleanupScheduler, groupRepository)
     }
 

@@ -166,17 +166,20 @@ fun AkahidegnTheme(
     val view = LocalView.current
     if (!view.isInEditMode) {
         SideEffect {
-            val window = (view.context as Activity).window
-            // WindowCompat.setDecorFitsSystemWindows(window, false) // THIS SHOULD BE IN Activity's onCreate
+            val activity = view.context as? Activity
+            if (activity != null) {
+                val window = activity.window
+                // WindowCompat.setDecorFitsSystemWindows(window, false) // THIS SHOULD BE IN Activity's onCreate
 
-            // The primary responsibility here is to set the icon appearance
-            // based on the theme, assuming edge-to-edge is already enabled.
-            WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !effectiveDarkTheme
+                // The primary responsibility here is to set the icon appearance
+                // based on the theme, assuming edge-to-edge is already enabled.
+                WindowCompat.getInsetsController(window, view).isAppearanceLightStatusBars = !effectiveDarkTheme
 
-            // If you want the navigation bar to also be transparent (or have a specific color)
-            // and control its icons:
-            // window.navigationBarColor = android.graphics.Color.TRANSPARENT // If making transparent
-            // WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
+                // If you want the navigation bar to also be transparent (or have a specific color)
+                // and control its icons:
+                // window.navigationBarColor = android.graphics.Color.TRANSPARENT // If making transparent
+                // WindowCompat.getInsetsController(window, view).isAppearanceLightNavigationBars = !darkTheme
+            }
         }
     }
 

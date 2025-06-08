@@ -280,7 +280,7 @@ private fun RideStatsSection(
                     Spacer(modifier = Modifier.height(8.dp))
                     
                     LinearProgressIndicator(
-                        progress = completionRate / 100f,
+                        progress = { completionRate / 100f },
                         modifier = Modifier.fillMaxWidth(),
                         color = AkahidegnColors.Success
                     )
@@ -675,7 +675,7 @@ private fun formatMemberSince(joinDate: Long?): String {
 
 private fun formatDistance(distance: Double): String {
     return when {
-        distance >= 1000 -> String.format("%.1f", distance / 1000)
+        distance >= 1000 -> String.format(Locale.getDefault(), "%.1f", distance / 1000)
         else -> distance.toInt().toString()
     }
 }

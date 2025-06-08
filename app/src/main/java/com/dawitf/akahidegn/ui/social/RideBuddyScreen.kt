@@ -11,6 +11,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.icons.outlined.*
 import androidx.compose.material3.*
@@ -83,7 +84,7 @@ fun RideBuddyScreen(
             },
             navigationIcon = {
                 IconButton(onClick = onNavigateBack) {
-                    Icon(Icons.Default.ArrowBack, contentDescription = "Back")
+                    Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Back")
                 }
             },
             actions = {
@@ -225,7 +226,7 @@ private fun BuddyStatsCard(
                 )
                 StatItem(
                     label = "Avg Rating",
-                    value = if (stats.averageBuddyRating > 0) "%.1f".format(stats.averageBuddyRating) else "N/A",
+                    value = if (stats.averageBuddyRating > 0) "%.1f".format(Locale.getDefault(), stats.averageBuddyRating) else "N/A",
                     icon = Icons.Default.Star
                 )
                 StatItem(
@@ -666,7 +667,7 @@ private fun RegularGroupCard(
                                 onLeave()
                             },
                             leadingIcon = {
-                                Icon(Icons.Default.ExitToApp, contentDescription = null)
+                                Icon(Icons.AutoMirrored.Filled.ExitToApp, contentDescription = null)
                             }
                         )
                     }
