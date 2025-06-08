@@ -365,13 +365,6 @@ private fun SwipeActionButton(
     }
 }
 
-data class SwipeAction(
-    val icon: ImageVector,
-    val label: String,
-    val backgroundColor: Color,
-    val iconColor: Color = Color.White
-)
-
 @Composable
 fun QuickActionsMenu(
     visible: Boolean,

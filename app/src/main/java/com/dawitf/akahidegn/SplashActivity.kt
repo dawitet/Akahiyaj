@@ -46,41 +46,46 @@ class SplashActivity : ComponentActivity() {
 
 @Composable
 fun SplashScreen() {
-    Column(
+    Box(
         modifier = Modifier
             .fillMaxSize()
-            .background(MaterialTheme.colorScheme.surface)
-            .padding(32.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-        verticalArrangement = Arrangement.Center
+            .background(MaterialTheme.colorScheme.surface),
+        contentAlignment = Alignment.Center
     ) {
-        // Logo
-        Image(
-            painter = painterResource(id = R.drawable.akahidegn_splash_logo),
-            contentDescription = stringResource(id = R.string.app_name),
-            modifier = Modifier.size(120.dp)
-        )
-        
-        Spacer(modifier = Modifier.height(32.dp))
-        
-        // Car image in center
-        Image(
-            painter = painterResource(id = R.drawable.car_rideshare),
-            contentDescription = "Car with passengers",
-            modifier = Modifier.size(100.dp)
-        )
-        
-        Spacer(modifier = Modifier.weight(1f))
-        
-        // Splash text
-        Text(
-            text = stringResource(id = R.string.splash_screen_text),
-            fontSize = 16.sp,
-            fontWeight = FontWeight.Bold,
-            color = MaterialTheme.colorScheme.onSurface,
-            textAlign = TextAlign.Center,
-            lineHeight = 22.sp,
-            modifier = Modifier.padding(bottom = 80.dp)
-        )
+        Column(
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            // Logo at top
+            Image(
+                painter = painterResource(id = R.drawable.akahidegn_splash_logo),
+                contentDescription = stringResource(id = R.string.app_name),
+                modifier = Modifier.size(120.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(48.dp))
+            
+            // Car image - much bigger and prominently centered
+            Image(
+                painter = painterResource(id = R.drawable.car_rideshare),
+                contentDescription = "Car with passengers",
+                modifier = Modifier
+                    .size(300.dp)
+                    .padding(8.dp)
+            )
+            
+            Spacer(modifier = Modifier.height(48.dp))
+            
+            // Splash text at bottom
+            Text(
+                text = stringResource(id = R.string.splash_screen_text),
+                fontSize = 18.sp,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.onSurface,
+                textAlign = TextAlign.Center,
+                lineHeight = 24.sp,
+                modifier = Modifier.padding(horizontal = 32.dp)
+            )
+        }
     }
 }

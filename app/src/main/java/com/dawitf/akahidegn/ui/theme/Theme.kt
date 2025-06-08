@@ -62,13 +62,13 @@ val LocalAccessibilitySettings = staticCompositionLocalOf { com.dawitf.akahidegn
 
 // Enhanced Dark Theme with high contrast support
 private val DarkThemeColorScheme = darkColorScheme(
-    primary = MustardYellow,
-    onPrimary = CharcoalGrey,
-    secondary = CharcoalGrey,
-    onSecondary = MustardYellow,
-    tertiary = RoyalBlue,
-    onTertiary = Cream,
-    background = RoyalBlue,
+    primary = CharcoalGrey,
+    onPrimary = Cream,
+    secondary = MustardYellow,
+    onSecondary = CharcoalGrey,
+    tertiary = MustardYellow,
+    onTertiary = CharcoalGrey,
+    background = CharcoalGrey,
     onBackground = Cream,
     surface = CharcoalGrey,
     onSurface = Cream,
@@ -80,18 +80,18 @@ private val DarkThemeColorScheme = darkColorScheme(
 
 // Enhanced Light Theme
 private val LightThemeColorScheme = lightColorScheme(
-    primary = CharcoalGrey,
-    onPrimary = Cream,
+    primary = RoyalBlue,
+    onPrimary = Color.White,
     secondary = MustardYellow,
     onSecondary = CharcoalGrey,
-    tertiary = MustardYellow,
-    onTertiary = CharcoalGrey,
+    tertiary = CharcoalGrey,
+    onTertiary = Cream,
     background = Cream,
     onBackground = CharcoalGrey,
     surface = Cream,
     onSurface = CharcoalGrey,
     surfaceVariant = Cream,
-    outline = CharcoalGrey,
+    outline = RoyalBlue,
     error = AkahidegnColors.Error,
     onError = Color.White
 )

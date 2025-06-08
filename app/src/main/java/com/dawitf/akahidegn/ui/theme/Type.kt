@@ -2,16 +2,12 @@ package com.dawitf.akahidegn.ui.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
-import com.dawitf.akahidegn.R
 
-// Amharic-optimized font family - using only Normal weight to avoid font loading issues
-val AmharicFontFamily = FontFamily(
-    Font(R.font.noto_sans_ethiopic_regular, FontWeight.Normal)
-)
+// Use system default font family to avoid font loading crashes
+val AmharicFontFamily = FontFamily.Default
 
 // Enhanced Typography with Amharic support and accessibility
 val Typography = Typography(
