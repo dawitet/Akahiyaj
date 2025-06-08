@@ -8,8 +8,9 @@ import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
+import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
@@ -342,78 +343,117 @@ fun MainScreen(
                             }
                         }
                         
-                        // Enhanced Horizontal Carousel with smooth animations
-                        LazyRow(
-                            horizontalArrangement = Arrangement.spacedBy(16.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp),
+                        // Enhanced Vertical Bento Grid with smooth animations
+                        LazyVerticalGrid(
+                            columns = GridCells.Fixed(2),
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            horizontalArrangement = Arrangement.spacedBy(12.dp),
+                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
                             modifier = Modifier.animateContentSize()
                         ) {
-                            items(groups.size + (groups.size / 2)) { index ->
-                                val realIndex = index - (index / 3)
+                            // Create list with groups and ads interspersed
+                            val itemsList = mutableListOf<Any>()
+                            var index = 0
+                            
+                            while (index < groups.size) {
+                                // Add two groups
+                                if (index < groups.size) {
+                                    itemsList.add(groups[index])
+                                    index++
+                                }
+                                if (index < groups.size) {
+                                    itemsList.add(groups[index])
+                                    index++
+                                }
                                 
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = slideInHorizontally(
-                                        initialOffsetX = { it },
-                                        animationSpec = spring(
-                                            dampingRatio = Spring.DampingRatioMediumBouncy,
-                                            stiffness = Spring.StiffnessLow
-                                        )
-                                    ) + fadeIn()
-                                ) {
-                                    if (index % 3 == 2 && index > 0) {
-                                        // Enhanced banner ad with glassmorphism
-                                        Box(
-                                            modifier = Modifier
-                                                .glassCard(alpha = 0.15f)
-                                                .clip(RoundedCornerShape(16.dp))
+                                // Add ad after every 2 groups (if there are more groups)
+                                if (index < groups.size) {
+                                    itemsList.add("AD")
+                                }
+                            }
+                            
+                            itemsList.forEachIndexed { listIndex, item ->
+                                if (item == "AD") {
+                                    // Full width banner ad spanning both columns
+                                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
+                                        AnimatedVisibility(
+                                            visible = true,
+                                            enter = slideInVertically(
+                                                initialOffsetY = { it },
+                                                animationSpec = spring(
+                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                    stiffness = Spring.StiffnessLow
+                                                )
+                                            ) + fadeIn()
                                         ) {
-                                            CarouselBannerAd()
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .height(120.dp)
+                                                    .glassCard(alpha = 0.15f)
+                                                    .clip(RoundedCornerShape(16.dp))
+                                            ) {
+                                                CarouselBannerAd()
+                                            }
                                         }
-                                    } else if (realIndex < groups.size) {
-                                        // Enhanced group card with interactions
-                                        var cardScale by remember { mutableStateOf(1f) }
-                                        val animatedScale by animateFloatAsState(
-                                            targetValue = cardScale,
-                                            animationSpec = spring(
-                                                dampingRatio = Spring.DampingRatioMediumBouncy
-                                            ),
-                                            label = "card_scale"
-                                        )
-                                        
-                                        Box(
-                                            modifier = Modifier
-                                                .scale(animatedScale)
-                                                .pointerInput(Unit) {
-                                                    detectTapGestures(
-                                                        onPress = {
-                                                            cardScale = 0.95f
-                                                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                            tryAwaitRelease()
-                                                            cardScale = 1f
-                                                        },
-                                                        onTap = {
-                                                            onGroupClick(groups[realIndex])
-                                                        }
-                                                    )
-                                                }
+                                    }
+                                } else {
+                                    // Group card
+                                    item {
+                                        val group = item as Group
+                                        AnimatedVisibility(
+                                            visible = true,
+                                            enter = slideInVertically(
+                                                initialOffsetY = { it },
+                                                animationSpec = spring(
+                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                    stiffness = Spring.StiffnessLow
+                                                )
+                                            ) + fadeIn()
                                         ) {
-                                            RideGroupCard(
-                                                group = groups[realIndex],
-                                                onClick = { onGroupClick(groups[realIndex]) }
+                                            var cardScale by remember { mutableStateOf(1f) }
+                                            val animatedScale by animateFloatAsState(
+                                                targetValue = cardScale,
+                                                animationSpec = spring(
+                                                    dampingRatio = Spring.DampingRatioMediumBouncy
+                                                ),
+                                                label = "card_scale"
                                             )
+                                            
+                                            Box(
+                                                modifier = Modifier
+                                                    .scale(animatedScale)
+                                                    .pointerInput(Unit) {
+                                                        detectTapGestures(
+                                                            onPress = {
+                                                                cardScale = 0.95f
+                                                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                                                tryAwaitRelease()
+                                                                cardScale = 1f
+                                                            },
+                                                            onTap = {
+                                                                onGroupClick(group)
+                                                            }
+                                                        )
+                                                    }
+                                            ) {
+                                                RideGroupCard(
+                                                    group = group,
+                                                    onClick = { onGroupClick(group) }
+                                                )
+                                            }
                                         }
                                     }
                                 }
                             }
                             
                             // Bottom spacing for FAB with smooth transition
-                            item {
+                            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
                                 AnimatedVisibility(
                                     visible = true,
                                     enter = fadeIn()
                                 ) {
-                                    Spacer(modifier = Modifier.width(100.dp))
+                                    Spacer(modifier = Modifier.height(100.dp))
                                 }
                             }
                         }

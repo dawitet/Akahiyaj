@@ -4,6 +4,8 @@ import androidx.compose.animation.core.*
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
+import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
@@ -124,15 +126,24 @@ fun ShimmerGroupCard(
 @Composable
 fun ShimmerGroupList(
     modifier: Modifier = Modifier,
-    itemCount: Int = 5
+    itemCount: Int = 6
 ) {
-    LazyColumn(
+    LazyVerticalGrid(
+        columns = GridCells.Fixed(2),
         modifier = modifier.fillMaxSize(),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-        contentPadding = PaddingValues(vertical = 16.dp)
+        verticalArrangement = Arrangement.spacedBy(12.dp),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+        contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp)
     ) {
         items(itemCount) {
             ShimmerGroupCard()
+        }
+        
+        // Add shimmer banner ad placeholder every 3rd row (after 2 cards)
+        if (itemCount > 4) {
+            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
+                ShimmerBannerAd()
+            }
         }
     }
 }
@@ -376,4 +387,61 @@ fun PulsingShimmer(
                 MaterialTheme.colorScheme.surfaceVariant.copy(alpha = alpha)
             )
     )
+}
+
+@Composable
+fun ShimmerBannerAd(
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(120.dp),
+        shape = RoundedCornerShape(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surface
+        ),
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Row(
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(16.dp),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(12.dp)
+        ) {
+            // Left content
+            Column(
+                modifier = Modifier.weight(1f),
+                verticalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.7f)
+                        .height(16.dp),
+                    cornerRadius = 4.dp
+                )
+                
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.5f)
+                        .height(12.dp),
+                    cornerRadius = 4.dp
+                )
+                
+                ShimmerBox(
+                    modifier = Modifier
+                        .fillMaxWidth(0.3f)
+                        .height(20.dp),
+                    cornerRadius = 10.dp
+                )
+            }
+            
+            // Right icon/image placeholder
+            ShimmerBox(
+                modifier = Modifier.size(60.dp),
+                cornerRadius = 8.dp
+            )
+        }
+    }
 }
