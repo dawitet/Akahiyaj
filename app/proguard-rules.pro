@@ -11,6 +11,11 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
+# R8 optimization configuration
+-optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
+-optimizationpasses 5
+-allowaccessmodification
+
 # Firebase rules
 -keep class com.google.firebase.** { *; }
 -keep class com.google.android.gms.** { *; }
@@ -49,8 +54,14 @@
 # Room database rules
 -keep class androidx.room.** { *; }
 -keep class * extends androidx.room.RoomDatabase { *; }
--keep @androidx.room.Entity class *
--keep @androidx.room.Dao class *
+
+# Memory optimization for R8
+-dontusemixedcaseclassnames
+-dontskipnonpubliclibraryclasses
+-verbose
+
+# Additional rule to prevent R8 from running out of memory
+-dontpreverify
 
 # Keep crash reporting information
 -keepattributes LineNumberTable,SourceFile
