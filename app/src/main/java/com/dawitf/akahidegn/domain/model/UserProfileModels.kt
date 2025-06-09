@@ -75,21 +75,6 @@ data class PrivacySettings(
 )
 
 /**
- * Notification settings for user.
- */
-data class NotificationSettings(
-    val pushNotifications: Boolean = true,
-    val emailNotifications: Boolean = true,
-    val smsNotifications: Boolean = false,
-    val tripReminders: Boolean = true,
-    val newMessageAlerts: Boolean = true,
-    val marketingEmails: Boolean = false,
-    val quietHoursEnabled: Boolean = false,
-    val quietHoursStart: String = "22:00", // 10 PM
-    val quietHoursEnd: String = "07:00"    // 7 AM
-)
-
-/**
  * Account status enumeration.
  */
 enum class AccountStatus {

@@ -12,6 +12,7 @@ import com.dawitf.akahidegn.data.local.entity.GroupEntity
 import com.dawitf.akahidegn.data.local.entity.GroupEntityEnhanced
 import com.dawitf.akahidegn.data.local.entity.RecentSearchEntity
 import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.data.mapper.toEnhancedEntity
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.*
@@ -94,32 +95,7 @@ class OfflineManager @Inject constructor(
     // Caching methods for offline access
     suspend fun cacheGroupsForOfflineAccess(groups: List<Group>) {
         val enhancedGroups = groups.map { group ->
-            GroupEntityEnhanced(
-                groupId = group.groupId ?: "",
-                creatorId = group.creatorId,
-                creatorCloudflareId = group.creatorCloudflareId,
-                destinationName = group.destinationName,
-                pickupLat = group.pickupLat,
-                pickupLng = group.pickupLng,
-                timestamp = group.timestamp,
-                maxMembers = group.maxMembers,
-                memberCount = group.memberCount,
-                imageUrl = group.imageUrl,
-                pricePerPerson = 25.0, // Default price
-                departureTime = group.timestamp,
-                availableSeats = maxOf(0, group.maxMembers - group.memberCount),
-                description = "",
-                contactInfo = "",
-                vehicleType = "",
-                route = null,
-                tags = null,
-                rating = 0f,
-                reviewCount = 0,
-                isActive = true,
-                lastUpdated = System.currentTimeMillis(),
-                distanceFromUser = null,
-                popularityScore = 0f
-            )
+            group.toEnhancedEntity()
         }
         groupDao.insertGroups(enhancedGroups)
     }
@@ -245,11 +221,11 @@ class OfflineManager @Inject constructor(
     suspend fun getOfflineDataSize(): Long {
         // Calculate approximate size of offline data
         val groupCount = groupDao.getGroupCount()
-        val searchCount = PreferenceManager.getRecentSearchCount(context)
+        val searchCount = searchDao.getRecentSearchCount().toLong()
         val preferencesCount = userPreferencesDao.getUserPreferencesCount()
         
         // Rough estimation: each group ~2KB, each search ~100B, each preference ~500B
-        return (groupCount * 2048) + (searchCount * 100) + (preferencesCount * 500)
+        return (groupCount * 2048L) + (searchCount * 100L) + (preferencesCount * 500L)
     }
     
     // Persistence for sync actions
@@ -321,20 +297,19 @@ data class OfflineContent(
 // Extension function to convert GroupEntityEnhanced to GroupEntity
 private fun GroupEntityEnhanced.toGroupEntity(): GroupEntity {
     return GroupEntity(
-        id = this.id,
-        creatorId = this.creatorId,
-        creatorName = this.creatorName,
-        from = this.from,
-        to = this.to,
-        departureTime = this.departureTime,
-        availableSeats = this.availableSeats,
-        totalSeats = this.totalSeats,
-        pricePerPerson = this.pricePerPerson,
-        description = this.description,
-        createdTime = this.createdTime,
+        id = this.groupId,
+        creatorUserId = this.creatorId ?: "",
+        name = "",
+        description = this.description ?: "",
+        destination = this.destinationName ?: "",
+        date = "",
+        time = "",
+        latitude = this.pickupLat ?: 0.0,
+        longitude = this.pickupLng ?: 0.0,
+        memberCount = this.memberCount,
+        maxMembers = this.maxMembers,
         isActive = this.isActive,
-        latitude = this.latitude,
-        longitude = this.longitude,
-        members = this.members
+        createdAt = this.timestamp ?: System.currentTimeMillis(),
+        updatedAt = this.lastUpdated
     )
 }

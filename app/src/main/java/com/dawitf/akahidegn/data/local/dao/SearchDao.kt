@@ -15,6 +15,9 @@ interface SearchDao {
     @Query("SELECT * FROM recent_searches ORDER BY timestamp DESC LIMIT :limit")
     suspend fun getRecentSearches(limit: Int = 10): List<RecentSearchEntity>
     
+    @Query("SELECT COUNT(*) FROM recent_searches")
+    suspend fun getRecentSearchCount(): Int
+    
     @Query("SELECT * FROM recent_searches WHERE query LIKE '%' || :query || '%' ORDER BY usageCount DESC, timestamp DESC LIMIT :limit")
     suspend fun searchRecentSearches(query: String, limit: Int = 5): List<RecentSearchEntity>
     

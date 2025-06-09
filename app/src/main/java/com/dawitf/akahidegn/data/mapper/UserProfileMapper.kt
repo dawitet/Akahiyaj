@@ -64,12 +64,12 @@ object UserProfileMapper {
     fun preferencesToEntity(domain: UserPreferences, userId: String): UserProfilePreferencesEntity {
         return UserProfilePreferencesEntity(
             userId = userId,
-            notificationsEnabled = domain.notificationSettings.pushNotifications,
+            notificationsEnabled = domain.notificationSettings.notificationsEnabled,
             locationSharingEnabled = true, // Default value
             autoJoinEnabled = false, // Default value  
             preferredLanguage = domain.preferredLanguage,
             theme = "SYSTEM", // Default value
-            soundEnabled = domain.notificationSettings.pushNotifications,
+            soundEnabled = domain.notificationSettings.soundEnabled,
             vibrationEnabled = true, // Default value
             createdAt = System.currentTimeMillis(),
             updatedAt = System.currentTimeMillis()
@@ -80,12 +80,12 @@ object UserProfileMapper {
         return UserPreferences(
             preferredLanguage = entity.preferredLanguage,
             notificationSettings = NotificationSettings(
-                pushNotifications = entity.notificationsEnabled,
-                emailNotifications = entity.notificationsEnabled,
-                smsNotifications = false,
-                tripReminders = entity.notificationsEnabled,
-                newMessageAlerts = entity.notificationsEnabled,
-                marketingEmails = false
+                notificationsEnabled = entity.notificationsEnabled,
+                chatNotificationsEnabled = entity.notificationsEnabled,
+                tripNotificationsEnabled = entity.notificationsEnabled,
+                systemNotificationsEnabled = entity.notificationsEnabled,
+                soundEnabled = entity.soundEnabled,
+                vibrationEnabled = entity.vibrationEnabled
             )
         )
     }

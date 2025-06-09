@@ -153,7 +153,7 @@ class UserProfileRepositoryImpl @Inject constructor(
             
             Result.Success(reviews)
         } catch (e: Exception) {
-            Result.Error(e)
+            Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to load reviews"))
         }
     }
 
@@ -426,14 +426,14 @@ class UserProfileRepositoryImpl @Inject constructor(
         }
     }
 
-    private fun getAchievementCategory(achievementId: String): AchievementCategory {
+    private fun getAchievementCategory(achievementId: String): com.dawitf.akahidegn.features.profile.AchievementCategory {
         return when (achievementId) {
-            "first_trip", "trip_master" -> AchievementCategory.MILESTONE
-            "early_bird", "night_owl" -> AchievementCategory.STREAK
-            "eco_warrior" -> AchievementCategory.ENVIRONMENTAL
-            "social_butterfly", "reliable_rider" -> AchievementCategory.SOCIAL
-            "helpful_driver", "safe_driver", "speed_demon" -> AchievementCategory.SAFETY
-            else -> AchievementCategory.MILESTONE
+            "first_trip", "trip_master" -> com.dawitf.akahidegn.features.profile.AchievementCategory.RIDES
+            "early_bird", "night_owl" -> com.dawitf.akahidegn.features.profile.AchievementCategory.STREAKS
+            "eco_warrior" -> com.dawitf.akahidegn.features.profile.AchievementCategory.ECO_FRIENDLY
+            "social_butterfly", "reliable_rider" -> com.dawitf.akahidegn.features.profile.AchievementCategory.SOCIAL
+            "helpful_driver", "safe_driver", "speed_demon" -> com.dawitf.akahidegn.features.profile.AchievementCategory.SAVINGS
+            else -> com.dawitf.akahidegn.features.profile.AchievementCategory.SPECIAL
         }
     }
 

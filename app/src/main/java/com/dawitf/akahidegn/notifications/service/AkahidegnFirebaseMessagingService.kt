@@ -64,7 +64,7 @@ class AkahidegnFirebaseMessagingService : FirebaseMessagingService() {
         
         // Check if notifications are enabled for this type
         CoroutineScope(Dispatchers.IO).launch {
-            val preferences = PreferenceManager.getNotificationPreferences()
+            val preferences = PreferenceManager.getNotificationPreferences(this@AkahidegnFirebaseMessagingService)
             if (shouldShowNotification(notificationData, preferences)) {
                 showNotification(notificationData)
             }
@@ -114,38 +114,49 @@ class AkahidegnFirebaseMessagingService : FirebaseMessagingService() {
     
     private suspend fun shouldShowNotification(
         notificationData: NotificationData,
-        preferences: com.dawitf.akahidegn.notifications.model.NotificationPreferences
+        preferences: com.dawitf.akahidegn.domain.model.NotificationSettings
     ): Boolean {
+        if (!preferences.notificationsEnabled) return false
+        
         return when (notificationData.type) {
-            NotificationType.GROUP_JOIN_REQUEST -> preferences.groupJoinRequests
+            NotificationType.GROUP_JOIN_REQUEST, 
             NotificationType.GROUP_MEMBER_JOINED,
-            NotificationType.GROUP_MEMBER_LEFT -> preferences.groupActivity
-            NotificationType.GROUP_CHAT_MESSAGE -> preferences.chatMessages
+            NotificationType.GROUP_MEMBER_LEFT -> preferences.chatNotificationsEnabled
+            NotificationType.GROUP_CHAT_MESSAGE -> preferences.chatNotificationsEnabled
             NotificationType.TRIP_REMINDER,
-            NotificationType.TRIP_STARTING_SOON -> preferences.tripReminders
-            NotificationType.TRIP_CANCELLED -> preferences.tripAlerts
-            NotificationType.SYSTEM_ANNOUNCEMENT -> preferences.systemAnnouncements
-            NotificationType.PROMOTION -> preferences.promotions
+            NotificationType.TRIP_STARTING_SOON,
+            NotificationType.TRIP_CANCELLED -> preferences.tripNotificationsEnabled
+            NotificationType.SYSTEM_ANNOUNCEMENT,
+            NotificationType.PROMOTION -> preferences.systemNotificationsEnabled
         } && !isInQuietHours(preferences)
     }
     
-    private fun isInQuietHours(preferences: com.dawitf.akahidegn.notifications.model.NotificationPreferences): Boolean {
-        val quietHours = preferences.quietHours ?: return false
-        if (!quietHours.enabled) return false
+    private fun isInQuietHours(preferences: com.dawitf.akahidegn.domain.model.NotificationSettings): Boolean {
+        if (!preferences.quietHoursEnabled) return false
         
         val calendar = java.util.Calendar.getInstance()
         val currentHour = calendar.get(java.util.Calendar.HOUR_OF_DAY)
         val currentMinute = calendar.get(java.util.Calendar.MINUTE)
         val currentTimeMinutes = currentHour * 60 + currentMinute
         
-        val startTimeMinutes = quietHours.startHour * 60 + quietHours.startMinute
-        val endTimeMinutes = quietHours.endHour * 60 + quietHours.endMinute
+        val startHourMinutes = parseTimeString(preferences.quietHoursStart)
+        val endHourMinutes = parseTimeString(preferences.quietHoursEnd)
         
-        return if (startTimeMinutes <= endTimeMinutes) {
-            currentTimeMinutes in startTimeMinutes..endTimeMinutes
+        return if (startHourMinutes <= endHourMinutes) {
+            currentTimeMinutes in startHourMinutes..endHourMinutes
         } else {
-            currentTimeMinutes >= startTimeMinutes || currentTimeMinutes <= endTimeMinutes
+            currentTimeMinutes >= startHourMinutes || currentTimeMinutes <= endHourMinutes
         }
+    }
+    
+    private fun parseTimeString(timeString: String): Int {
+        val parts = timeString.split(":")
+        if (parts.size == 2) {
+            val hour = parts[0].toIntOrNull() ?: 0
+            val minute = parts[1].toIntOrNull() ?: 0
+            return hour * 60 + minute
+        }
+        return 0
     }
     
     private suspend fun showNotification(notificationData: NotificationData) {
@@ -169,13 +180,13 @@ class AkahidegnFirebaseMessagingService : FirebaseMessagingService() {
                 .setCategory(getNotificationCategory(notificationData.type))
             
             // Add sound if enabled
-            val preferences = PreferenceManager.getNotificationPreferences()
-            if (preferences.sound) {
+            val preferences = PreferenceManager.getNotificationPreferences(this@AkahidegnFirebaseMessagingService)
+            if (preferences.soundEnabled) {
                 builder.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION))
             }
             
             // Add vibration if enabled
-            if (preferences.vibration) {
+            if (preferences.vibrationEnabled) {
                 builder.setVibrate(longArrayOf(0, 250, 250, 250))
             }
             

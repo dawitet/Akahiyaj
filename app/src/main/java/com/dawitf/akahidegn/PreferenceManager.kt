@@ -12,6 +12,7 @@ object PreferenceManager {
     private const val KEY_USER_DISPLAY_NAME = "user_display_name"
     private const val KEY_RECENT_SEARCHES = "recent_searches"
     private const val MAX_RECENT_SEARCHES = 5
+    private const val KEY_NOTIFICATION_PREFERENCES = "notification_preferences" // Added key
 
 
     private fun getPreferences(context: Context): SharedPreferences {
@@ -58,5 +59,21 @@ object PreferenceManager {
     // Get the count of recent searches
     fun getRecentSearchCount(context: Context): Int {
         return getRecentSearches(context).size
+    }
+
+    // Notification Preferences
+    fun saveNotificationPreferences(context: Context, settings: com.dawitf.akahidegn.domain.model.NotificationSettings) {
+        val json = Gson().toJson(settings)
+        getPreferences(context).edit().putString(KEY_NOTIFICATION_PREFERENCES, json).apply()
+    }
+
+    fun getNotificationPreferences(context: Context): com.dawitf.akahidegn.domain.model.NotificationSettings {
+        val json = getPreferences(context).getString(KEY_NOTIFICATION_PREFERENCES, null)
+        return if (json != null) {
+            val type = object : TypeToken<com.dawitf.akahidegn.domain.model.NotificationSettings>() {}.type
+            Gson().fromJson(json, type)
+        } else {
+            com.dawitf.akahidegn.domain.model.NotificationSettings() // Return default settings if not found
+        }
     }
 }
