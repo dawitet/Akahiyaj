@@ -22,6 +22,33 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
 
+// High contrast color schemes for accessibility
+val HighContrastDarkColorScheme = darkColorScheme(
+    primary = Color(0xFFFFFFFF),
+    onPrimary = Color(0xFF000000),
+    primaryContainer = Color(0xFF000000),
+    onPrimaryContainer = Color(0xFFFFFFFF),
+    secondary = Color(0xFFFFFFFF),
+    onSecondary = Color(0xFF000000),
+    background = Color(0xFF000000),
+    onBackground = Color(0xFFFFFFFF),
+    surface = Color(0xFF000000),
+    onSurface = Color(0xFFFFFFFF)
+)
+
+val HighContrastLightColorScheme = lightColorScheme(
+    primary = Color(0xFF000000),
+    onPrimary = Color(0xFFFFFFFF),
+    primaryContainer = Color(0xFFFFFFFF),
+    onPrimaryContainer = Color(0xFF000000),
+    secondary = Color(0xFF000000),
+    onSecondary = Color(0xFFFFFFFF),
+    background = Color(0xFFFFFFFF),
+    onBackground = Color(0xFF000000),
+    surface = Color(0xFFFFFFFF),
+    onSurface = Color(0xFF000000)
+)
+
 // Theme mode setting is now in com.dawitf.akahidegn.ui.components.ThemeMode
 
 // Enhanced color palette
@@ -97,46 +124,8 @@ private val LightThemeColorScheme = lightColorScheme(
     onError = Color.White
 )
 
-// High contrast color schemes for accessibility
-private val HighContrastLightColorScheme = lightColorScheme(
-    primary = Color.Black,
-    onPrimary = Color.White,
-    primaryContainer = Color.Black,
-    onPrimaryContainer = Color.White,
-    secondary = Color(0xFF000080),
-    onSecondary = Color.White,
-    secondaryContainer = Color(0xFF000080),
-    onSecondaryContainer = Color.White,
-    surface = Color.White,
-    onSurface = Color.Black,
-    background = Color.White,
-    onBackground = Color.Black,
-    surfaceVariant = Color(0xFFF0F0F0),
-    onSurfaceVariant = Color.Black,
-    error = Color(0xFF8B0000),
-    onError = Color.White,
-    outline = Color.Black
-)
-
-private val HighContrastDarkColorScheme = darkColorScheme(
-    primary = Color.White,
-    onPrimary = Color.Black,
-    primaryContainer = Color.White,
-    onPrimaryContainer = Color.Black,
-    secondary = Color.Yellow,
-    onSecondary = Color.Black,
-    secondaryContainer = Color.Yellow,
-    onSecondaryContainer = Color.Black,
-    surface = Color.Black,
-    onSurface = Color.White,
-    background = Color.Black,
-    onBackground = Color.White,
-    surfaceVariant = Color(0xFF1A1A1A),
-    onSurfaceVariant = Color.White,
-    error = Color.Red,
-    onError = Color.Black,
-    outline = Color.White
-)
+// High contrast color schemes imported from EnhancedTheme
+// Note: These are defined in EnhancedTheme.kt to avoid duplication
 
 @Composable
 fun AkahidegnTheme(

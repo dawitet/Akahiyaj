@@ -43,7 +43,7 @@ fun UserProfileScreen(
     onRideHistory: () -> Unit = {},
     onAchievements: () -> Unit = {},
     onReferrals: () -> Unit = {},
-    viewModel: UserProfileViewModel = hiltViewModel()
+    viewModel: ProfileFeatureViewModel = hiltViewModel()
 ) {
     val userProfile by viewModel.userProfile.collectAsState()
     val rideStats by viewModel.rideStats.collectAsState()

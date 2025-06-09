@@ -1,0 +1,288 @@
+package com.dawitf.akahidegn.ui.screens.search
+
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+import androidx.hilt.navigation.compose.hiltViewModel
+import androidx.paging.compose.collectAsLazyPagingItems
+import androidx.paging.compose.items
+import com.dawitf.akahidegn.domain.model.SearchFilters
+import com.dawitf.akahidegn.ui.components.search.EnhancedSearchBar
+import com.dawitf.akahidegn.ui.components.search.FilterDialog
+import com.dawitf.akahidegn.viewmodel.EnhancedSearchViewModel
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun EnhancedSearchScreen(
+    onNavigateToGroup: (String) -> Unit,
+    viewModel: EnhancedSearchViewModel = hiltViewModel()
+) {
+    val uiState by viewModel.uiState.collectAsState()
+    val searchResults = viewModel.searchResults.collectAsLazyPagingItems()
+    
+    var showFilterDialog by remember { mutableStateOf(false) }
+    
+    LaunchedEffect(Unit) {
+        viewModel.loadInitialData()
+    }
+    
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .padding(16.dp)
+    ) {
+        // Enhanced search bar with autocomplete
+        EnhancedSearchBar(
+            query = uiState.query,
+            onQueryChange = { query ->
+                viewModel.updateQuery(query)
+                if (query.length >= 2) {
+                    viewModel.loadSuggestions(query)
+                }
+            },
+            onSearch = { query ->
+                viewModel.performSearch(query)
+            },
+            suggestions = uiState.suggestions,
+            onSuggestionClick = { suggestion ->
+                viewModel.selectSuggestion(suggestion)
+            },
+            onClearRecentSearches = {
+                viewModel.clearRecentSearches()
+            },
+            isLoading = uiState.isLoadingSuggestions,
+            modifier = Modifier.fillMaxWidth()
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        // Active filters indicator
+        if (uiState.filters.hasActiveFilters()) {
+            ActiveFiltersChip(
+                filters = uiState.filters,
+                onClearFilters = {
+                    viewModel.clearFilters()
+                },
+                onShowFilters = {
+                    showFilterDialog = true
+                }
+            )
+            
+            Spacer(modifier = Modifier.height(8.dp))
+        }
+        
+        // Search results
+        when {
+            uiState.isLoading -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator()
+                }
+            }
+            
+            uiState.error != null -> {
+                ErrorMessage(
+                    error = uiState.error,
+                    onRetry = {
+                        viewModel.performSearch(uiState.query)
+                    }
+                )
+            }
+            
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    contentPadding = PaddingValues(vertical = 8.dp)
+                ) {
+                    items(searchResults) { group ->
+                        group?.let {
+                            EnhancedGroupCard(
+                                group = it,
+                                onClick = { onNavigateToGroup(it.groupId) },
+                                userLat = uiState.userLocation?.latitude,
+                                userLng = uiState.userLocation?.longitude
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+    
+    // Filter dialog
+    if (showFilterDialog) {
+        FilterDialog(
+            filters = uiState.filters,
+            onFiltersChange = { filters ->
+                viewModel.updateFilters(filters)
+            },
+            onDismiss = {
+                showFilterDialog = false
+            },
+            onApply = {
+                showFilterDialog = false
+                viewModel.applyFilters()
+            },
+            onClear = {
+                viewModel.clearFilters()
+            }
+        )
+    }
+}
+
+@Composable
+private fun ActiveFiltersChip(
+    filters: SearchFilters,
+    onClearFilters: () -> Unit,
+    onShowFilters: () -> Unit
+) {
+    Row(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        AssistChip(
+            onClick = onShowFilters,
+            label = {
+                Text("ፍተሻ ማጣሪያዎች")
+            },
+            leadingIcon = {
+                Icon(
+                    imageVector = androidx.compose.material.icons.Icons.Default.FilterList,
+                    contentDescription = null
+                )
+            }
+        )
+        
+        if (filters.hasActiveFilters()) {
+            FilterChip(
+                selected = true,
+                onClick = onClearFilters,
+                label = {
+                    Text("ሁሉንም አጽዳ")
+                },
+                trailingIcon = {
+                    Icon(
+                        imageVector = androidx.compose.material.icons.Icons.Default.Close,
+                        contentDescription = null
+                    )
+                }
+            )
+        }
+    }
+}
+
+@Composable
+private fun ErrorMessage(
+    error: String,
+    onRetry: () -> Unit
+) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
+        Text(
+            text = error,
+            style = MaterialTheme.typography.bodyLarge,
+            color = MaterialTheme.colorScheme.error
+        )
+        
+        Spacer(modifier = Modifier.height(16.dp))
+        
+        Button(onClick = onRetry) {
+            Text("እንደገና ሞክር")
+        }
+    }
+}
+
+@Composable
+private fun EnhancedGroupCard(
+    group: com.dawitf.akahidegn.data.local.entity.GroupEntityEnhanced,
+    onClick: () -> Unit,
+    userLat: Double?,
+    userLng: Double?
+) {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(4.dp),
+        onClick = onClick,
+        elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.Top
+            ) {
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = group.destinationName ?: "Unknown Destination",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    
+                    if (group.description != null) {
+                        Text(
+                            text = group.description,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 2
+                        )
+                    }
+                }
+                
+                if (group.pricePerPerson != null) {
+                    Text(
+                        text = "${group.pricePerPerson.toInt()} ብር",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+            }
+            
+            Spacer(modifier = Modifier.height(8.dp))
+            
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.SpaceBetween
+            ) {
+                // Member count
+                Text(
+                    text = "${group.memberCount}/${group.maxMembers} አባላት",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant
+                )
+                
+                // Available seats
+                if (group.availableSeats > 0) {
+                    Text(
+                        text = "${group.availableSeats} ነፃ መቀመጫ",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary
+                    )
+                }
+                
+                // Distance
+                if (group.distanceFromUser != null) {
+                    Text(
+                        text = com.dawitf.akahidegn.util.LocationUtils.formatDistance(group.distanceFromUser),
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
+                }
+            }
+        }
+    }
+}

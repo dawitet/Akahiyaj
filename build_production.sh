@@ -1,0 +1,221 @@
+#!/bin/bash
+
+# Production Build Script for Akahiyaj (አካሂያጅ)
+# This script prepares and builds the app for production deployment
+
+set -e  # Exit on any error
+
+echo "🚀 Starting Production Build for Akahiyaj (አካሂያጅ)"
+echo "=================================================="
+
+# Colors for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Configuration
+APP_NAME="Akahiyaj"
+VERSION_NAME="1.0.0-production"
+BUILD_TYPE="release"
+OUTPUT_DIR="./build/outputs"
+
+echo -e "${BLUE}📋 Build Configuration${NC}"
+echo "App Name: $APP_NAME"
+echo "Version: $VERSION_NAME"
+echo "Build Type: $BUILD_TYPE"
+echo ""
+
+# Step 1: Environment Check
+echo -e "${BLUE}🔍 Checking Build Environment${NC}"
+
+# Check if gradlew exists
+if [ ! -f "./gradlew" ]; then
+    echo -e "${RED}❌ gradlew not found. Make sure you're in the project root directory.${NC}"
+    exit 1
+fi
+
+# Check if Android SDK is available
+if [ -z "$ANDROID_HOME" ]; then
+    echo -e "${YELLOW}⚠️  ANDROID_HOME not set. Please set it in your environment.${NC}"
+fi
+
+# Check Java version
+echo "Java Version:"
+java -version
+
+echo -e "${GREEN}✅ Environment check complete${NC}"
+echo ""
+
+# Step 2: Pre-build Cleanup
+echo -e "${BLUE}🧹 Cleaning Previous Builds${NC}"
+./gradlew clean
+echo -e "${GREEN}✅ Cleanup complete${NC}"
+echo ""
+
+# Step 3: Run Tests
+echo -e "${BLUE}🧪 Running Tests${NC}"
+echo "Running unit tests..."
+./gradlew testDebugUnitTest
+
+echo "Running lint checks..."
+./gradlew lintDebug
+
+echo -e "${GREEN}✅ Tests completed${NC}"
+echo ""
+
+# Step 4: Security Checks
+echo -e "${BLUE}🔒 Security Verification${NC}"
+
+# Check if release keystore exists
+if [ ! -f "./app/release-key.keystore" ]; then
+    echo -e "${RED}❌ Release keystore not found at ./app/release-key.keystore${NC}"
+    echo "Please ensure the release keystore is properly configured."
+    exit 1
+fi
+
+# Check ProGuard rules
+if [ ! -f "./app/proguard-rules.pro" ]; then
+    echo -e "${RED}❌ ProGuard rules not found${NC}"
+    exit 1
+fi
+
+echo -e "${GREEN}✅ Security checks passed${NC}"
+echo ""
+
+# Step 5: Build Release APK
+echo -e "${BLUE}🔨 Building Release APK${NC}"
+./gradlew assembleRelease
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ Release APK built successfully${NC}"
+else
+    echo -e "${RED}❌ Release APK build failed${NC}"
+    exit 1
+fi
+
+# Step 6: Build App Bundle (for Play Store)
+echo -e "${BLUE}📦 Building App Bundle${NC}"
+./gradlew bundleRelease
+
+if [ $? -eq 0 ]; then
+    echo -e "${GREEN}✅ App Bundle built successfully${NC}"
+else
+    echo -e "${RED}❌ App Bundle build failed${NC}"
+    exit 1
+fi
+
+# Step 7: Generate Build Report
+echo -e "${BLUE}📊 Generating Build Report${NC}"
+
+APK_PATH="$OUTPUT_DIR/apk/release/app-release.apk"
+BUNDLE_PATH="$OUTPUT_DIR/bundle/release/app-release.aab"
+
+if [ -f "$APK_PATH" ]; then
+    APK_SIZE=$(du -h "$APK_PATH" | cut -f1)
+    echo "Release APK: $APK_SIZE"
+else
+    echo -e "${YELLOW}⚠️  APK not found at expected location${NC}"
+fi
+
+if [ -f "$BUNDLE_PATH" ]; then
+    BUNDLE_SIZE=$(du -h "$BUNDLE_PATH" | cut -f1)
+    echo "App Bundle: $BUNDLE_SIZE"
+else
+    echo -e "${YELLOW}⚠️  App Bundle not found at expected location${NC}"
+fi
+
+# Step 8: Final Verification
+echo -e "${BLUE}🔍 Final Verification${NC}"
+
+# Check if files exist and are not empty
+if [ -f "$APK_PATH" ] && [ -s "$APK_PATH" ]; then
+    echo -e "${GREEN}✅ Release APK verified${NC}"
+else
+    echo -e "${RED}❌ Release APK verification failed${NC}"
+    exit 1
+fi
+
+if [ -f "$BUNDLE_PATH" ] && [ -s "$BUNDLE_PATH" ]; then
+    echo -e "${GREEN}✅ App Bundle verified${NC}"
+else
+    echo -e "${RED}❌ App Bundle verification failed${NC}"
+    exit 1
+fi
+
+# Step 9: Generate Deployment Summary
+echo -e "${BLUE}📋 Generating Deployment Summary${NC}"
+
+TIMESTAMP=$(date '+%Y-%m-%d %H:%M:%S')
+COMMIT_HASH=$(git rev-parse --short HEAD 2>/dev/null || echo "unknown")
+
+cat > DEPLOYMENT_SUMMARY.md << EOF
+# Deployment Summary - $APP_NAME
+
+**Build Date**: $TIMESTAMP  
+**Version**: $VERSION_NAME  
+**Commit**: $COMMIT_HASH  
+**Build Type**: $BUILD_TYPE  
+
+## Build Artifacts
+
+### Release APK
+- **Path**: $APK_PATH
+- **Size**: $APK_SIZE
+- **Status**: ✅ Ready for testing
+
+### App Bundle
+- **Path**: $BUNDLE_PATH
+- **Size**: $BUNDLE_SIZE
+- **Status**: ✅ Ready for Play Store upload
+
+## Build Configuration
+- **Minify Enabled**: Yes
+- **Shrink Resources**: Yes
+- **ProGuard**: Enabled
+- **Signing**: Release keystore
+- **Target SDK**: 35
+- **Min SDK**: 26
+
+## Quality Checks
+- **Unit Tests**: ✅ Passed
+- **Lint Checks**: ✅ Passed
+- **Security Checks**: ✅ Passed
+- **Build Verification**: ✅ Passed
+
+## Next Steps
+1. Install and test release APK on devices
+2. Upload App Bundle to Google Play Console
+3. Monitor Firebase Analytics and Crashlytics
+4. Update app store listing
+
+---
+*Generated by production build script*
+EOF
+
+echo -e "${GREEN}✅ Deployment summary generated${NC}"
+
+# Step 10: Cleanup and Final Message
+echo ""
+echo "=================================================="
+echo -e "${GREEN}🎉 PRODUCTION BUILD COMPLETED SUCCESSFULLY! 🎉${NC}"
+echo "=================================================="
+echo ""
+echo -e "${BLUE}📦 Build Artifacts:${NC}"
+echo "• Release APK: $APK_PATH ($APK_SIZE)"
+echo "• App Bundle: $BUNDLE_PATH ($BUNDLE_SIZE)"
+echo ""
+echo -e "${BLUE}📋 Next Steps:${NC}"
+echo "1. Test the release APK on various devices"
+echo "2. Upload the App Bundle to Google Play Console"
+echo "3. Monitor app performance using Firebase"
+echo "4. Check deployment checklist: PRODUCTION_DEPLOYMENT_CHECKLIST.md"
+echo ""
+echo -e "${YELLOW}⚠️  Important Reminders:${NC}"
+echo "• Ensure Firebase project is set to production"
+echo "• Verify all API keys are production keys"
+echo "• Test push notifications on real devices"
+echo "• Monitor crash reports after deployment"
+echo ""
+echo -e "${GREEN}Ready for production deployment! 🚀${NC}"

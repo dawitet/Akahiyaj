@@ -62,6 +62,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
+import com.dawitf.akahidegn.data.datastore.dataStore
 import androidx.lifecycle.lifecycleScope
 import com.dawitf.akahidegn.ui.components.ThemeMode
 import com.dawitf.akahidegn.ui.components.ThemeToggleCard
@@ -75,8 +76,19 @@ import com.dawitf.akahidegn.ui.screens.ChatScreen
 import com.dawitf.akahidegn.ui.screens.NameInputScreen
 import com.dawitf.akahidegn.ui.screens.MainScreen
 import com.dawitf.akahidegn.ui.social.RideBuddyScreen
+import com.dawitf.akahidegn.ui.social.SocialScreen
+import com.dawitf.akahidegn.ui.activity.RecentActivityScreen
+import com.dawitf.akahidegn.ui.settings.SettingsScreen
+import com.dawitf.akahidegn.ui.profile.UserProfileScreen
 import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
 import com.dawitf.akahidegn.viewmodel.MainViewModel
+import com.dawitf.akahidegn.analytics.AnalyticsManager
+import com.dawitf.akahidegn.localization.LocalizationManager
+import com.dawitf.akahidegn.offline.OfflineManager
+import com.dawitf.akahidegn.accessibility.AccessibilityManager
+import com.dawitf.akahidegn.performance.ImageCacheManager
+import com.dawitf.akahidegn.performance.PerformanceManager
+import com.dawitf.akahidegn.performance.NetworkOptimizationManager
 import dagger.hilt.android.AndroidEntryPoint
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
@@ -114,11 +126,13 @@ import kotlinx.coroutines.withContext
 import java.util.Locale
 import com.dawitf.akahidegn.ChatMessage
 import com.dawitf.akahidegn.debug.GroupCleanupDebugHelper
+import com.dawitf.akahidegn.production.DatabaseOptimizationManager
+import com.dawitf.akahidegn.production.ProductionAnalyticsManager
+import com.dawitf.akahidegn.production.ProductionErrorHandler
+import com.dawitf.akahidegn.production.ProductionNotificationManager
 import javax.inject.Inject
 
 // Data classes (ChatMessage, Group) - consider moving to a 'data' package
-// Extension property for DataStore
-val android.content.Context.dataStore: DataStore<Preferences> by preferencesDataStore(name = "settings")
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -131,13 +145,72 @@ class MainActivity : ComponentActivity() {
     fun navigateToRecentActivity() {
         currentAppScreen = AppScreen.RECENT_ACTIVITY
     }
+
+    // Function to navigate to user profile screen
+    fun navigateToUserProfile() {
+        currentAppScreen = AppScreen.USER_PROFILE
+    }
+
+    // Function to navigate to social screen
+    fun navigateToSocial() {
+        currentAppScreen = AppScreen.SOCIAL
+    }
+
+    // Function to navigate to enhanced search screen
+    fun navigateToEnhancedSearch() {
+        currentAppScreen = AppScreen.ENHANCED_SEARCH
+    }
+
+    // Function to navigate to activity history screen
+    fun navigateToActivityHistory() {
+        currentAppScreen = AppScreen.ACTIVITY_HISTORY
+    }
+
+    // Function to navigate to accessibility settings
+    fun navigateToAccessibilitySettings() {
+        currentAppScreen = AppScreen.ACCESSIBILITY_SETTINGS
+    }
     // Theme preferences key
     companion object {
         val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
     }
 
+        // Manager classes dependency injection
     @Inject
     lateinit var groupCleanupDebugHelper: GroupCleanupDebugHelper
+
+    @Inject
+    lateinit var analyticsManager: AnalyticsManager
+
+    @Inject
+    lateinit var localizationManager: LocalizationManager
+
+    @Inject
+    lateinit var offlineManager: OfflineManager
+
+    @Inject
+    lateinit var accessibilityManager: AccessibilityManager
+
+    @Inject
+    lateinit var imageCacheManager: ImageCacheManager
+
+    @Inject
+    lateinit var performanceManager: PerformanceManager
+
+    @Inject
+    lateinit var networkOptimizationManager: NetworkOptimizationManager
+
+    @Inject
+    lateinit var databaseOptimizationManager: DatabaseOptimizationManager
+    
+    @Inject
+    lateinit var productionAnalyticsManager: ProductionAnalyticsManager
+    
+    @Inject
+    lateinit var productionErrorHandler: ProductionErrorHandler
+    
+    @Inject
+    lateinit var productionNotificationManager: ProductionNotificationManager
 
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var activeGroupsRef: DatabaseReference
@@ -166,7 +239,20 @@ class MainActivity : ComponentActivity() {
 
     private val snackbarHostState = SnackbarHostState()
 
-    private enum class AppScreen { ASK_NAME, MAIN_CONTENT, CHAT, RIDE_BUDDIES, DEBUG_MENU, SETTINGS, RECENT_ACTIVITY }
+    private enum class AppScreen { 
+        ASK_NAME, 
+        MAIN_CONTENT, 
+        CHAT, 
+        RIDE_BUDDIES, 
+        DEBUG_MENU, 
+        SETTINGS, 
+        RECENT_ACTIVITY,
+        USER_PROFILE,
+        SOCIAL,
+        ENHANCED_SEARCH,
+        ACTIVITY_HISTORY,
+        ACCESSIBILITY_SETTINGS
+    }
     private var currentAppScreen by mutableStateOf(AppScreen.ASK_NAME)
 
     // Debug mode flag - set to true during testing
@@ -216,6 +302,27 @@ class MainActivity : ComponentActivity() {
             Log.e("FIREBASE_INIT", "Failed to initialize Firebase: ${e.message}", e)
             Toast.makeText(this, "Firebase initialization error: ${e.message}", Toast.LENGTH_LONG).show()
             // Consider finishing activity or showing a persistent error UI
+        }
+
+        // Initialize performance optimizations
+        lifecycleScope.launch {
+            try {
+                // Start performance monitoring
+                performanceManager.startMonitoring()
+                
+                // Initialize network optimization
+                networkOptimizationManager.startOptimization()
+                
+                // Initialize analytics tracking
+                analyticsManager.trackAppStart()
+                
+                // Initialize offline capabilities
+                offlineManager.initialize()
+                
+                Log.d("PERFORMANCE", "Performance optimizations initialized successfully")
+            } catch (e: Exception) {
+                Log.e("PERFORMANCE", "Failed to initialize performance optimizations: ${e.message}", e)
+            }
         }
 
         fusedLocationClient = LocationServices.getFusedLocationProviderClient(this)
@@ -362,12 +469,12 @@ class MainActivity : ComponentActivity() {
                                         // Start the create ride flow by showing the ad prompt first
                                         showAdPromptForCreateRideDialog = true
                                     },
-                                    onNavigateToSettings = { /* TODO */ },
-                                    onNavigateToProfile = { /* TODO */ },
-                                    onNavigateToBookmarks = { /* TODO */ },
-                                    onNavigateToChat = { /* TODO */ },
-                                    onNavigateToNotifications = { /* TODO */ },
-                                    onNavigateToHistory = { /* TODO */ }
+                                    onNavigateToSettings = { navigateToSettings() },
+                                    onNavigateToProfile = { navigateToUserProfile() },
+                                    onNavigateToBookmarks = { /* TODO: Implement bookmarks */ },
+                                    onNavigateToChat = { /* TODO: Implement chat navigation */ },
+                                    onNavigateToNotifications = { /* TODO: Implement notifications */ },
+                                    onNavigateToHistory = { navigateToActivityHistory() }
                                 )
 
                                 // Ad Prompt Dialog for creating a ride
@@ -477,6 +584,73 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
+                        AppScreen.USER_PROFILE -> {
+                            UserProfileScreen(
+                                onEditProfile = {
+                                    // Navigate to edit profile screen if needed
+                                },
+                                onSettings = { navigateToSettings() }
+                            )
+                        }
+                        AppScreen.SOCIAL -> {
+                            SocialScreen(
+                                onNavigateBack = {
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                },
+                                onFriendProfile = { userId ->
+                                    // Navigate to friend's profile
+                                },
+                                onAddFriend = {
+                                    // Handle add friend action
+                                },
+                                onLeaderboard = {
+                                    // Navigate to leaderboard if needed
+                                }
+                            )
+                        }
+                        AppScreen.ENHANCED_SEARCH -> {
+                            // TODO: Implement basic search screen or redirect to main
+                            val groups by mainViewModel.groups.collectAsState()
+                            val searchQuery by mainViewModel.searchQuery.collectAsState()
+                            val isLoading by mainViewModel.isLoadingGroups.collectAsState()
+                            
+                            MainScreen(
+                                groups = groups,
+                                searchQuery = searchQuery,
+                                onSearchQueryChange = { mainViewModel.updateSearchQuery(it) },
+                                selectedFilters = com.dawitf.akahidegn.ui.components.SearchFilters(),
+                                onFiltersChange = { /* TODO: Implement filters */ },
+                                onGroupClick = { group -> 
+                                    // Navigate to group details
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                },
+                                isLoading = isLoading,
+                                onRefreshGroups = { mainViewModel.refreshGroups() },
+                                onCreateGroup = { /* TODO: Navigate to create group */ },
+                                onNavigateToSettings = { navigateToSettings() },
+                                onNavigateToProfile = { currentAppScreen = AppScreen.USER_PROFILE },
+                                onNavigateToBookmarks = { /* TODO: Navigate to bookmarks */ },
+                                onNavigateToChat = { /* TODO: Navigate to chat */ },
+                                onNavigateToNotifications = { /* TODO: Navigate to notifications */ },
+                                onNavigateToHistory = { currentAppScreen = AppScreen.ACTIVITY_HISTORY }
+                            )
+                        }
+                        AppScreen.ACTIVITY_HISTORY -> {
+                            RecentActivityScreen(
+                                onNavigateBack = {
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                }
+                            )
+                        }
+                        AppScreen.ACCESSIBILITY_SETTINGS -> {
+                            SettingsScreen(
+                                currentThemeMode = com.dawitf.akahidegn.ui.components.ThemeMode.SYSTEM,
+                                onThemeChanged = { /* TODO: Handle theme change */ },
+                                onNavigateBack = {
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                }
+                            )
+                        }
                     }
                 }
             }
@@ -573,18 +747,29 @@ class MainActivity : ComponentActivity() {
                 createGroupInFirebase(destination) { success, messageOrGroupId ->
                     if (success) {
                         Toast.makeText(this@MainActivity, getString(R.string.toast_group_created_successfully, messageOrGroupId?.take(6) ?: "N/A"), Toast.LENGTH_SHORT).show()
+                        // Refresh the groups list to show the newly created group
+                        mainViewModel.refreshGroups()
                     } else {
                         Toast.makeText(this@MainActivity, getString(R.string.toast_failed_to_create_group, messageOrGroupId ?: "Unknown error"), Toast.LENGTH_SHORT).show()
                     }
-                    // ViewModel will automatically refresh the group list
                 }
             }
         } else {
             Log.d("ADMOB_TAG", "Rewarded ad for create group wasn't ready when requested.")
             Toast.makeText(this@MainActivity, getString(R.string.toast_rewarded_ad_not_ready), Toast.LENGTH_SHORT).show()
             loadRewardedAd() // Attempt to load an ad for next time
-            // Decide if you want to allow group creation without ad as a fallback, or just inform the user.
-            // For now, it just shows a toast and doesn't create the group.
+            
+            // Fallback: Allow group creation without ad after a short delay
+            android.os.Handler(android.os.Looper.getMainLooper()).postDelayed({
+                createGroupInFirebase(destination) { success, messageOrGroupId ->
+                    if (success) {
+                        Toast.makeText(this@MainActivity, "ቡድን ተፈጥሯል - የማስታወቂያ ችግር ነበር", Toast.LENGTH_SHORT).show()
+                        mainViewModel.refreshGroups()
+                    } else {
+                        Toast.makeText(this@MainActivity, getString(R.string.toast_failed_to_create_group, messageOrGroupId ?: "Unknown error"), Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }, 2000) // 2 second delay to show the ad loading message first
         }
     }
 

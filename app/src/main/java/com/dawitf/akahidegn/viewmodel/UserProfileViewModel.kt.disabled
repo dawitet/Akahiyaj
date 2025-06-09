@@ -1,0 +1,191 @@
+package com.dawitf.akahidegn.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import com.dawitf.akahidegn.core.result.Result
+import com.dawitf.akahidegn.domain.model.UserProfile
+import com.dawitf.akahidegn.domain.model.UserAchievement
+import com.dawitf.akahidegn.domain.model.UserReview
+import com.dawitf.akahidegn.domain.model.TripHistoryItem
+import com.dawitf.akahidegn.domain.model.UserAnalytics
+import com.dawitf.akahidegn.domain.model.UserPreferences
+import com.dawitf.akahidegn.domain.repository.UserProfileRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+@HiltViewModel
+class UserProfileViewModel @Inject constructor(
+    private val userProfileRepository: UserProfileRepository
+) : ViewModel() {
+
+    private val _uiState = MutableStateFlow(UserProfileUiState())
+    val uiState: StateFlow<UserProfileUiState> = _uiState.asStateFlow()
+
+    private val _profileImage = MutableStateFlow<String?>(null)
+    val profileImage: StateFlow<String?> = _profileImage.asStateFlow()
+
+    fun loadUserProfile(userId: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            
+            try {
+                val profileDeferred = async { userProfileRepository.getUserProfile(userId) }
+                val achievementsDeferred = async { userProfileRepository.getUserAchievements(userId) }
+                val reviewsDeferred = async { userProfileRepository.getUserReviews(userId) }
+                val tripsDeferred = async { userProfileRepository.getUserTripHistory(userId) }
+                val analyticsDeferred = async { userProfileRepository.getUserAnalytics(userId) }
+
+                val profile = profileDeferred.await()
+                val achievements = achievementsDeferred.await()
+                val reviews = reviewsDeferred.await()
+                val trips = tripsDeferred.await()
+                val analytics = analyticsDeferred.await()
+
+                when {
+                    profile is Result.Success && 
+                    achievements is Result.Success && 
+                    reviews is Result.Success && 
+                    trips is Result.Success && 
+                    analytics is Result.Success -> {
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            userProfile = profile.data,
+                            achievements = achievements.data,
+                            reviews = reviews.data,
+                            tripHistory = trips.data,
+                            analytics = analytics.data,
+                            error = null
+                        )
+                    }
+                    else -> {
+                        val errorMessage = when {
+                            profile is Result.Error -> profile.exception.message
+                            achievements is Result.Error -> achievements.exception.message
+                            reviews is Result.Error -> reviews.exception.message
+                            trips is Result.Error -> trips.exception.message
+                            analytics is Result.Error -> analytics.exception.message
+                            else -> "Unknown error occurred"
+                        }
+                        _uiState.value = _uiState.value.copy(
+                            isLoading = false,
+                            error = errorMessage
+                        )
+                    }
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Failed to load profile"
+                )
+            }
+        }
+    }
+
+    fun updateUserProfile(updatedProfile: UserProfile) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUpdating = true)
+            
+            when (val result = userProfileRepository.updateUserProfile(updatedProfile)) {
+                is Result.Success -> {
+                    _uiState.value = _uiState.value.copy(
+                        isUpdating = false,
+                        userProfile = result.data,
+                        error = null
+                    )
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isUpdating = false,
+                        error = result.exception.message ?: "Failed to update profile"
+                    )
+                }
+            }
+        }
+    }
+
+    fun uploadProfileImage(imageUri: String) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isUploadingImage = true)
+            
+            when (val result = userProfileRepository.uploadProfileImage(imageUri)) {
+                is Result.Success -> {
+                    _profileImage.value = result.data
+                    _uiState.value = _uiState.value.copy(
+                        isUploadingImage = false,
+                        error = null
+                    )
+                    
+                    // Update user profile with new image URL
+                    _uiState.value.userProfile?.let { profile ->
+                        updateUserProfile(profile.copy(profileImageUrl = result.data))
+                    }
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        isUploadingImage = false,
+                        error = result.exception.message ?: "Failed to upload image"
+                    )
+                }
+            }
+        }
+    }
+
+    fun unlockAchievement(achievementId: String) {
+        viewModelScope.launch {
+            when (val result = userProfileRepository.unlockAchievement(achievementId)) {
+                is Result.Success -> {
+                    val currentAchievements = _uiState.value.achievements.toMutableList()
+                    currentAchievements.add(result.data)
+                    _uiState.value = _uiState.value.copy(achievements = currentAchievements)
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        error = result.exception.message ?: "Failed to unlock achievement"
+                    )
+                }
+            }
+        }
+    }
+
+    fun submitReview(review: UserReview) {
+        viewModelScope.launch {
+            when (val result = userProfileRepository.submitReview(review)) {
+                is Result.Success -> {
+                    val currentReviews = _uiState.value.reviews.toMutableList()
+                    currentReviews.add(0, result.data) // Add to beginning
+                    _uiState.value = _uiState.value.copy(reviews = currentReviews)
+                }
+                is Result.Error -> {
+                    _uiState.value = _uiState.value.copy(
+                        error = result.exception.message ?: "Failed to submit review"
+                    )
+                }
+            }
+        }
+    }
+
+    fun clearError() {
+        _uiState.value = _uiState.value.copy(error = null)
+    }
+
+    fun refreshProfile() {
+        _uiState.value.userProfile?.let { profile ->
+            loadUserProfile(profile.userId)
+        }
+    }
+}
+
+data class UserProfileUiState(
+    val isLoading: Boolean = false,
+    val isUpdating: Boolean = false,
+    val isUploadingImage: Boolean = false,
+    val userProfile: UserProfile? = null,
+    val achievements: List<UserAchievement> = emptyList(),
+    val reviews: List<UserReview> = emptyList(),
+    val tripHistory: List<TripHistoryItem> = emptyList(),
+    val analytics: UserAnalytics? = null,
+    val error: String? = null
+)

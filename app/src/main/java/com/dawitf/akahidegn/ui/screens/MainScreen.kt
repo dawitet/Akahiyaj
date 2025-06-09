@@ -218,6 +218,40 @@ fun MainScreen(
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
                     
+                    // Amharic tagline above search bar
+                    AnimatedVisibility(
+                        visible = true,
+                        enter = slideInVertically() + fadeIn(),
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .glassCard(alpha = 0.15f),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
+                            ),
+                            shape = RoundedCornerShape(16.dp)
+                        ) {
+                            Text(
+                                text = "የታክሲ ሰልፍ ረጅም ከሆነ ከሌሎች ሰዎች ጋር በመሆን ራይድ/ፈረስ ጠርተው በአንድ ሰው ሂሳብ በመሄድ ዋጋውን ይካፈሉ",
+                                style = MaterialTheme.typography.bodySmall.copy(
+                                    fontWeight = FontWeight.Medium,
+                                    letterSpacing = 0.3.sp,
+                                    lineHeight = 18.sp
+                                ),
+                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(horizontal = 16.dp, vertical = 12.dp),
+                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                            )
+                        }
+                    }
+                    
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
                     // Enhanced Search Bar with glassmorphism and animations
                     AnimatedVisibility(
                         visible = true,
@@ -343,9 +377,9 @@ fun MainScreen(
                             }
                         }
                         
-                        // Enhanced Vertical Bento Grid with smooth animations
+                        // Enhanced Vertical List with smooth animations
                         LazyVerticalGrid(
-                            columns = GridCells.Fixed(2),
+                            columns = GridCells.Fixed(1),
                             verticalArrangement = Arrangement.spacedBy(12.dp),
                             horizontalArrangement = Arrangement.spacedBy(12.dp),
                             contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
@@ -356,26 +390,22 @@ fun MainScreen(
                             var index = 0
                             
                             while (index < groups.size) {
-                                // Add two groups
-                                if (index < groups.size) {
-                                    itemsList.add(groups[index])
-                                    index++
-                                }
+                                // Add one group per row
                                 if (index < groups.size) {
                                     itemsList.add(groups[index])
                                     index++
                                 }
                                 
-                                // Add ad after every 2 groups (if there are more groups)
-                                if (index < groups.size) {
+                                // Add ad after every 3 groups (since we have more vertical space)
+                                if (index % 3 == 0 && index < groups.size) {
                                     itemsList.add("AD")
                                 }
                             }
                             
                             itemsList.forEachIndexed { listIndex, item ->
                                 if (item == "AD") {
-                                    // Full width banner ad spanning both columns
-                                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
+                                    // Full width banner ad spanning the single column
+                                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(1) }) {
                                         AnimatedVisibility(
                                             visible = true,
                                             enter = slideInVertically(
@@ -448,7 +478,7 @@ fun MainScreen(
                             }
                             
                             // Bottom spacing for FAB with smooth transition
-                            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(2) }) {
+                            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(1) }) {
                                 AnimatedVisibility(
                                     visible = true,
                                     enter = fadeIn()

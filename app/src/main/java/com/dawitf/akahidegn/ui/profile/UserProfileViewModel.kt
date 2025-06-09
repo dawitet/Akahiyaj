@@ -11,7 +11,7 @@ import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 @HiltViewModel
-class UserProfileViewModel @Inject constructor(
+class ProfileFeatureViewModel @Inject constructor(
     private val userProfileService: UserProfileService,
     private val analyticsService: AnalyticsService
 ) : ViewModel() {

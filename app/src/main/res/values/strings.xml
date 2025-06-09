@@ -126,5 +126,186 @@
     <string name="toast_please_enter_destination">እባክዎ መድረሻዎን ያስገቡ።</string> <!-- Please enter your destination. -->
     <string name="toast_invalid_max_members_range">የአባላት ብዛት በ%1$s እና %2$s መካከል መሆን አለበት።</string>
     <string name="toast_auth_failed_firebase_reason">የማንነት ማረጋገጫ አልተሳካም: %1$s</string>
-    <string name="notification_permission_needed">ማሳወቂያዎችን ለማሳየት ፍቃድ ያስፈልጋል።</string>
+
+    <!-- Accessibility and Settings -->
+    <string name="accessibility_settings">የተመረሳሽነት ቅንጅቶች</string>
+    <string name="account_settings">የመለያ ቅንጅቶች</string>
+    <string name="app_settings">የመተግበሪያ ቅንጅቶች</string>
+    <string name="settings">ቅንጅቶች</string>
+    <string name="theme">ገጽታ</string>
+    <string name="language">ቋንቋ</string>
+    <string name="dark_mode">ሸሞናዊ ሁኔታ</string>
+    <string name="light_mode">ብሩህ ሁኔታ</string>
+    <string name="system_theme">የስርዓት ገጽታ</string>
+    <string name="high_contrast_mode">ከፍተኛ ንፅፅር ሁኔታ</string>
+    <string name="large_text">ከፍተኛ ጽሑፍ</string>
+    <string name="notifications">ማሳወቂያዎች</string>
+    <string name="notification_settings">የማሳወቂያ ቅንጅቶች</string>
+    <string name="enable_notifications">ማሳወቂያዎችን አብራ</string>
+    <string name="sound_enabled">ድምፅ ተሞልቷል</string>
+    <string name="vibration_enabled">ንዛዛ ተሞልቷል</string>
+    <string name="privacy_settings">የግላዊነት ቅንጅቶች</string>
+    <string name="location_sharing_enabled">የአካባቢ መጋራት ተሞልቷል</string>
+    
+    <!-- Trip and Group related -->
+    <string name="trip_history">የጉዞ ታሪክ</string>
+    <string name="recent_trips">ያለፉት ጉዞዎች</string>
+    <string name="completed_trips">የተጠናቀቁ ጉዞዎች</string>
+    <string name="cancelled_trips">የተሰረዙ ጉዞዎች</string>
+    <string name="total_trips">ጠቅላላ ጉዞዎች</string>
+    <string name="trips_shared">የተጋሩ ጉዞዎች</string>
+    <string name="trip_cost">የጉዞ ወጪ</string>
+    <string name="trip_date">የጉዞ ቀን</string>
+    <string name="trip_distance">የጉዞ ርቀት</string>
+    <string name="trip_duration">የጉዞ ጊዜ</string>
+    <string name="departure_time">የመነሳት ጊዜ</string>
+    <string name="arrival_time">የመድረስ ጊዜ</string>
+    <string name="destination">መድረሻ</string>
+    <string name="current_location">የአሁኑ አካባቢ</string>
+    <string name="as_driver">እንደ ሹፌር</string>
+    <string name="as_passenger">እንደ ተሳፋሪ</string>
+    
+    <!-- User Profile -->
+    <string name="user_profile">የተጠቃሚ መገለጫ</string>
+    <string name="profile">መገለጫ</string>
+    <string name="edit_profile">መገለጫን አርትዕ</string>
+    <string name="profile_picture">የመገለጫ ምስል</string>
+    <string name="change_profile_picture">የመገለጫ ምስልን ቀይር</string>
+    <string name="full_name">ሙሉ ስም</string>
+    <string name="email">ኢሜይል</string>
+    <string name="phone_number">ስልክ ቁጥር</string>
+    <string name="bio">ባዮግራፊ</string>
+    <string name="member_since">አባል ከ</string>
+    <string name="rating">ደረጃ</string>
+    <string name="reviews">ግምገማዎች</string>
+    
+    <!-- Achievements -->
+    <string name="achievements">ስኬቶች</string>
+    <string name="achievement_unlocked">ስኬት ተከፍቷል</string>
+    <string name="achievement_first_trip">የመጀመሪያ ጉዞ</string>
+    <string name="achievement_early_bird">ቀጠንተኛ ወፍ</string>
+    <string name="achievement_night_owl">የሌሊት ጉጉት</string>
+    <string name="achievement_eco_warrior">የአካባቢ ተዋጊ</string>
+    <string name="achievement_safe_driver">ደህንነቱ የተጠበቀ ሹፌር</string>
+    <string name="achievement_helpful_driver">ተሳ ፊ ሹፌር</string>
+    <string name="achievement_reliable_rider">አስተማማኝ ተሳፋሪ</string>
+    <string name="achievement_social_butterfly">ማህበራዊ ቢራቢሮ</string>
+    <string name="achievement_trip_master">የጉዞ ኬተኛ</string>
+    
+    <!-- Filters and Search -->
+    <string name="search">ፈልግ</string>
+    <string name="search_hint">መድረሻ ወይም አካባቢ ፈልግ</string>
+    <string name="filter">ማጣሪያ</string>
+    <string name="apply_filters">ማጣሪያዎችን ተግበር</string>
+    <string name="clear_filters">ማጣሪያዎችን ጽዳ</string>
+    <string name="distance_filter">የርቀት ማጣሪያ</string>
+    <string name="price_filter">የዋጋ ማጣሪያ</string>
+    <string name="time_filter">የጊዜ ማጣሪያ</string>
+    <string name="availability_filter">የመገኘት ማጣሪያ</string>
+    <string name="sort_by">አደራጅ በ</string>
+    <string name="sort_by_distance">በርቀት አደራጅ</string>
+    <string name="sort_by_price">በዋጋ አደራጅ</string>
+    <string name="sort_by_time">በጊዜ አደራጅ</string>
+    <string name="sort_by_popularity">በተወዳጅነት አደራጅ</string>
+    
+    <!-- Buttons and Actions -->
+    <string name="edit_button">አርትዕ</string>
+    <string name="delete_button">ሰርዝ</string>
+    <string name="save_button">አስቀምጥ</string> <!-- Note: This should be defined in existing file -->
+    <string name="done_button">ጨርስ</string>
+    <string name="next_button">ቀጣይ</string>
+    <string name="previous_button">ቀዳሚ</string>
+    <string name="back_button">ተመለስ</string>
+    <string name="share_button">ሼር</string>
+    <string name="dialog_button_confirm">አረጋግጥ</string>
+    <string name="dialog_button_delete">ሰርዝ</string>
+    <string name="dialog_button_save">አስቀምጥ</string>
+    
+    <!-- Authentication -->
+    <string name="sign_in">ግባ</string>
+    <string name="sign_up">ይመዝገቡ</string>
+    <string name="sign_out">ውጣ</string>
+    <string name="password">የመተላለፊያ ቃል</string>
+    <string name="confirm_password">የመተላለፊያ ቃል አረጋግጥ</string>
+    <string name="forgot_password">የመተላለፊያ ቃልን ረሳሁ</string>
+    
+    <!-- Vehicle and Driver Info -->
+    <string name="vehicle_info">የተሽከርካሪ መረጃ</string>
+    <string name="vehicle_model">የተሽከርካሪ ሞዴል</string>
+    <string name="vehicle_color">የተሽከርካሪ ቀለም</string>
+    <string name="license_plate">የንንቓ ጋ ቢላዋ</string>
+    <string name="driver_info">የሹፌር መረጃ</string>
+    <string name="driver_license">የሹፌር ፍቃድ</string>
+    <string name="experience_years">የልምድ ዓመታት</string>
+    
+    <!-- Rating and Reviews -->
+    <string name="rate_trip">ጉዞን ደረጃ ስጥ</string>
+    <string name="rate_driver">ሹፌርን ደረጃ ስጥ</string>
+    <string name="rate_passenger">ተሳፋሪን ደረጃ ስጥ</string>
+    <string name="leave_review">ግምገማ ተው</string>
+    <string name="review_comment">የግምገማ አስተያየት</string>
+    <string name="excellent">እጅግ በጣም ጥሩ</string>
+    <string name="good">ጥሩ</string>
+    <string name="average">መካከለኛ</string>
+    <string name="poor">ደካማ</string>
+    <string name="terrible">አሰቃቂ</string>
+    
+    <!-- Statistics and Info -->
+    <string name="money_saved">የተቆጠበ ገንዘብ</string>
+    <string name="carbon_footprint_saved">የተቆጠበ የካርቦን አሳት</string>
+    <string name="favorite_destinations">ተወዳጅ መድረሻዎች</string>
+    <string name="birr_currency">ብር</string>
+    <string name="hours_unit">ሰዓታት</string>
+    <string name="minutes_unit">ደቂቃዎች</string>
+    
+    <!-- Offline and Network -->
+    <string name="offline_mode">ከመስመር ውጪ ሁኔታ</string>
+    <string name="offline_message">ከመስመር ውጪ ነዎት</string>
+    <string name="no_internet_connection">የኢንተርኔት ግንኙነት የለም</string>
+    <string name="cached_data">የተከማቸ መረጃ</string>
+    <string name="sync_when_online">መስመር ላይ ሲሆኑ ስምሩ</string>
+    
+    <!-- Notifications Types -->
+    <string name="trip_notifications">የጉዞ ማሳወቂያዎች</string>
+    <string name="group_notifications">የቡድን ማሳወቂያዎች</string>
+    <string name="marketing_notifications">የገበያ ማሳወቂያዎች</string>
+    
+    <!-- Additional Settings -->
+    <string name="auto_join_enabled">ራሳዊ መቀላቀል ተብ ዓል</string>
+    <string name="voice_guidance">የድምፅ መመሪያ</string>
+    
+    <!-- Status Messages -->
+    <string name="loading">በመጫን ላይ</string>
+    <string name="saving">በማስቀመጥ ላይ</string>
+    <string name="error_generic">ስህተት ተፈጥሯል</string>
+    <string name="error_loading">በመጫን ላይ ስህተት</string>
+    <string name="error_network">የኔትወርክ ስህተት</string>
+    <string name="error_saving">በማስቀመጥ ላይ ስህተት</string>
+    <string name="success_generic">በተሳካ ሁኔታ ተጠናቋል</string>
+    <string name="try_again_later">በኋላ እንደገና ይሞክሩ</string>
+    <string name="location_permission_required">የአካባቢ ፍቃድ ያስፈልጋል</string>
+    
+    <!-- Navigation -->
+    <string name="back">ተመለስ</string> <!-- Back -->
+    
+    <!-- Font and Accessibility -->
+    <string name="font_size">የቅርጸ-ቁምፊ መጠን</string> <!-- Font Size -->
+    <string name="high_contrast_description">ከፍተኛ ንፅፅር ሁነታ</string> <!-- High contrast mode -->
+    <string name="screen_reader_support">ስክሪን ሪደር ድጋፍ</string> <!-- Screen reader support -->
+    <string name="screen_reader_description">ተደራሽነት ተግባሮች</string> <!-- Accessibility features -->
+    <string name="additional_options">ተጨማሪ አማራጮች</string> <!-- Additional options -->
+    <string name="accessibility_note">ተደራሽነት ማሳሰቢያ</string> <!-- Accessibility note -->
+    
+    <!-- Activity History -->
+    <string name="activity_history_title">የእንቅስቃሴ ታሪክ</string> <!-- Activity History -->
+    <string name="no_trip_history">የጉዞ ታሪክ የለም</string> <!-- No trip history -->
+    <string name="no_trip_history_description">ገና ምንም ጉዞ አላደረጉም</string> <!-- You haven't made any trips yet -->
+    <string name="driver_name">የሾፌር ስም: %1$s</string> <!-- Driver name: %1$s -->
+    <string name="currency_symbol">ብር</string> <!-- ETB currency symbol -->
+    <string name="notification_permission_needed">የማሳወቂያ ፍቃድ ያስፈልጋል</string> <!-- Notification permission needed -->
+    
+    <!-- Icons and drawables -->
+    <string name="close">ዝጋ</string> <!-- Close -->
+    
+    <!-- ...existing strings... -->
 </resources>

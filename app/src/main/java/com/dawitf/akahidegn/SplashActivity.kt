@@ -23,6 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
+import com.dawitf.akahidegn.ui.theme.FontSize
 
 @AndroidEntryPoint
 class SplashActivity : ComponentActivity() {
@@ -31,7 +32,11 @@ class SplashActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         
         setContent {
-            AkahidegnTheme {
+            // Use the enhanced theme with explicit parameters
+            com.dawitf.akahidegn.ui.theme.AkahidegnTheme(
+                darkTheme = false,
+                dynamicColor = false
+            ) {
                 SplashScreen()
             }
         }

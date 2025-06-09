@@ -5,7 +5,7 @@ import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import com.dawitf.akahidegn.Group
-import com.dawitf.akahidegn.dataStore
+import com.dawitf.akahidegn.data.datastore.dataStore
 import com.dawitf.akahidegn.ui.components.ActivityType
 import com.dawitf.akahidegn.ui.components.BookmarkedGroup
 import com.dawitf.akahidegn.ui.components.RecentActivity

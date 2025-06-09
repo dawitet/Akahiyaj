@@ -54,4 +54,9 @@ object PreferenceManager {
         val json = Gson().toJson(searches)
         getPreferences(context).edit().putString(KEY_RECENT_SEARCHES, json).apply()
     }
+
+    // Get the count of recent searches
+    fun getRecentSearchCount(context: Context): Int {
+        return getRecentSearches(context).size
+    }
 }

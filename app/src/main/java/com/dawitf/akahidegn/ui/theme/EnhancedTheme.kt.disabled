@@ -1,0 +1,252 @@
+package com.dawitf.akahidegn.ui.theme
+
+import android.os.Build
+import androidx.compose.foundation.isSystemInDarkTheme
+import androidx.compose.material3.*
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
+
+// Light theme colors
+private val LightPrimary = Color(0xFF006A6B)
+private val LightOnPrimary = Color(0xFFFFFFFF)
+private val LightPrimaryContainer = Color(0xFF6FF6F7)
+private val LightOnPrimaryContainer = Color(0xFF002020)
+private val LightSecondary = Color(0xFF4A6363)
+private val LightOnSecondary = Color(0xFFFFFFFF)
+private val LightSecondaryContainer = Color(0xFFCCE8E7)
+private val LightOnSecondaryContainer = Color(0xFF051F1F)
+private val LightTertiary = Color(0xFF456179)
+private val LightOnTertiary = Color(0xFFFFFFFF)
+private val LightTertiaryContainer = Color(0xFFCCE5FF)
+private val LightOnTertiaryContainer = Color(0xFF001E31)
+private val LightError = Color(0xFFBA1A1A)
+private val LightErrorContainer = Color(0xFFFFDAD6)
+private val LightOnError = Color(0xFFFFFFFF)
+private val LightOnErrorContainer = Color(0xFF410002)
+private val LightBackground = Color(0xFFFAFDFD)
+private val LightOnBackground = Color(0xFF191C1C)
+private val LightSurface = Color(0xFFFAFDFD)
+private val LightOnSurface = Color(0xFF191C1C)
+private val LightSurfaceVariant = Color(0xFFDAE5E4)
+private val LightOnSurfaceVariant = Color(0xFF3F4947)
+private val LightOutline = Color(0xFF6F7977)
+private val LightInverseOnSurface = Color(0xFFEFF1F1)
+private val LightInverseSurface = Color(0xFF2D3131)
+private val LightInversePrimary = Color(0xFF4DDADB)
+
+// Dark theme colors
+private val DarkPrimary = Color(0xFF4DDADB)
+private val DarkOnPrimary = Color(0xFF003738)
+private val DarkPrimaryContainer = Color(0xFF004F50)
+private val DarkOnPrimaryContainer = Color(0xFF6FF6F7)
+private val DarkSecondary = Color(0xFFB1CBCB)
+private val DarkOnSecondary = Color(0xFF1C3535)
+private val DarkSecondaryContainer = Color(0xFF334B4B)
+private val DarkOnSecondaryContainer = Color(0xFFCCE8E7)
+private val DarkTertiary = Color(0xFFAEC9E6)
+private val DarkOnTertiary = Color(0xFF113447)
+private val DarkTertiaryContainer = Color(0xFF2C4A60)
+private val DarkOnTertiaryContainer = Color(0xFFCCE5FF)
+private val DarkError = Color(0xFFFFB4AB)
+private val DarkErrorContainer = Color(0xFF93000A)
+private val DarkOnError = Color(0xFF690005)
+private val DarkOnErrorContainer = Color(0xFFFFDAD6)
+private val DarkBackground = Color(0xFF0F1414)
+private val DarkOnBackground = Color(0xFFDFE3E3)
+private val DarkSurface = Color(0xFF0F1414)
+private val DarkOnSurface = Color(0xFFDFE3E3)
+private val DarkSurfaceVariant = Color(0xFF3F4947)
+private val DarkOnSurfaceVariant = Color(0xFFBFC9C7)
+private val DarkOutline = Color(0xFF899391)
+private val DarkInverseOnSurface = Color(0xFF0F1414)
+private val DarkInverseSurface = Color(0xFFDFE3E3)
+private val DarkInversePrimary = Color(0xFF006A6B)
+
+// High contrast colors
+private val HighContrastLightPrimary = Color(0xFF003738)
+private val HighContrastLightOnPrimary = Color(0xFFFFFFFF)
+private val HighContrastLightBackground = Color(0xFFFFFFFF)
+private val HighContrastLightOnBackground = Color(0xFF000000)
+private val HighContrastLightSurface = Color(0xFFFFFFFF)
+private val HighContrastLightOnSurface = Color(0xFF000000)
+
+private val HighContrastDarkPrimary = Color(0xFF9CFFFF)
+private val HighContrastDarkOnPrimary = Color(0xFF000000)
+private val HighContrastDarkBackground = Color(0xFF000000)
+private val HighContrastDarkOnBackground = Color(0xFFFFFFFF)
+private val HighContrastDarkSurface = Color(0xFF000000)
+private val HighContrastDarkOnSurface = Color(0xFFFFFFFF)
+
+val LightColorScheme = lightColorScheme(
+    primary = LightPrimary,
+    onPrimary = LightOnPrimary,
+    primaryContainer = LightPrimaryContainer,
+    onPrimaryContainer = LightOnPrimaryContainer,
+    secondary = LightSecondary,
+    onSecondary = LightOnSecondary,
+    secondaryContainer = LightSecondaryContainer,
+    onSecondaryContainer = LightOnSecondaryContainer,
+    tertiary = LightTertiary,
+    onTertiary = LightOnTertiary,
+    tertiaryContainer = LightTertiaryContainer,
+    onTertiaryContainer = LightOnTertiaryContainer,
+    error = LightError,
+    errorContainer = LightErrorContainer,
+    onError = LightOnError,
+    onErrorContainer = LightOnErrorContainer,
+    background = LightBackground,
+    onBackground = LightOnBackground,
+    surface = LightSurface,
+    onSurface = LightOnSurface,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    outline = LightOutline,
+    inverseOnSurface = LightInverseOnSurface,
+    inverseSurface = LightInverseSurface,
+    inversePrimary = LightInversePrimary,
+)
+
+val DarkColorScheme = darkColorScheme(
+    primary = DarkPrimary,
+    onPrimary = DarkOnPrimary,
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+    secondary = DarkSecondary,
+    onSecondary = DarkOnSecondary,
+    secondaryContainer = DarkSecondaryContainer,
+    onSecondaryContainer = DarkOnSecondaryContainer,
+    tertiary = DarkTertiary,
+    onTertiary = DarkOnTertiary,
+    tertiaryContainer = DarkTertiaryContainer,
+    onTertiaryContainer = DarkOnTertiaryContainer,
+    error = DarkError,
+    errorContainer = DarkErrorContainer,
+    onError = DarkOnError,
+    onErrorContainer = DarkOnErrorContainer,
+    background = DarkBackground,
+    onBackground = DarkOnBackground,
+    surface = DarkSurface,
+    onSurface = DarkOnSurface,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline,
+    inverseOnSurface = DarkInverseOnSurface,
+    inverseSurface = DarkInverseSurface,
+    inversePrimary = DarkInversePrimary,
+)
+
+val HighContrastLightColorScheme = lightColorScheme(
+    primary = HighContrastLightPrimary,
+    onPrimary = HighContrastLightOnPrimary,
+    background = HighContrastLightBackground,
+    onBackground = HighContrastLightOnBackground,
+    surface = HighContrastLightSurface,
+    onSurface = HighContrastLightOnSurface,
+    // Use other colors from regular light scheme
+    primaryContainer = LightPrimaryContainer,
+    onPrimaryContainer = LightOnPrimaryContainer,
+    secondary = LightSecondary,
+    onSecondary = LightOnSecondary,
+    secondaryContainer = LightSecondaryContainer,
+    onSecondaryContainer = LightOnSecondaryContainer,
+    tertiary = LightTertiary,
+    onTertiary = LightOnTertiary,
+    tertiaryContainer = LightTertiaryContainer,
+    onTertiaryContainer = LightOnTertiaryContainer,
+    error = LightError,
+    errorContainer = LightErrorContainer,
+    onError = LightOnError,
+    onErrorContainer = LightOnErrorContainer,
+    surfaceVariant = LightSurfaceVariant,
+    onSurfaceVariant = LightOnSurfaceVariant,
+    outline = LightOutline,
+    inverseOnSurface = LightInverseOnSurface,
+    inverseSurface = LightInverseSurface,
+    inversePrimary = LightInversePrimary,
+)
+
+val HighContrastDarkColorScheme = darkColorScheme(
+    primary = HighContrastDarkPrimary,
+    onPrimary = HighContrastDarkOnPrimary,
+    background = HighContrastDarkBackground,
+    onBackground = HighContrastDarkOnBackground,
+    surface = HighContrastDarkSurface,
+    onSurface = HighContrastDarkOnSurface,
+    // Use other colors from regular dark scheme
+    primaryContainer = DarkPrimaryContainer,
+    onPrimaryContainer = DarkOnPrimaryContainer,
+    secondary = DarkSecondary,
+    onSecondary = DarkOnSecondary,
+    secondaryContainer = DarkSecondaryContainer,
+    onSecondaryContainer = DarkOnSecondaryContainer,
+    tertiary = DarkTertiary,
+    onTertiary = DarkOnTertiary,
+    tertiaryContainer = DarkTertiaryContainer,
+    onTertiaryContainer = DarkOnTertiaryContainer,
+    error = DarkError,
+    errorContainer = DarkErrorContainer,
+    onError = DarkOnError,
+    onErrorContainer = DarkOnErrorContainer,
+    surfaceVariant = DarkSurfaceVariant,
+    onSurfaceVariant = DarkOnSurfaceVariant,
+    outline = DarkOutline,
+    inverseOnSurface = DarkInverseOnSurface,
+    inverseSurface = DarkInverseSurface,
+    inversePrimary = DarkInversePrimary,
+)
+
+@Composable
+fun AkahidegnTheme(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    dynamicColor: Boolean = true,
+    highContrast: Boolean = false,
+    fontSize: FontSize = FontSize.MEDIUM,
+    content: @Composable () -> Unit
+) {
+    val colorScheme = when {
+        dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
+            val context = LocalContext.current
+            when {
+                highContrast && darkTheme -> HighContrastDarkColorScheme
+                highContrast && !darkTheme -> HighContrastLightColorScheme
+                darkTheme -> dynamicDarkColorScheme(context)
+                else -> dynamicLightColorScheme(context)
+            }
+        }
+        highContrast -> {
+            when {
+                darkTheme -> HighContrastDarkColorScheme
+                else -> HighContrastLightColorScheme
+            }
+        }
+        darkTheme -> DarkColorScheme
+        else -> LightColorScheme
+    }
+    
+    val typography = Typography().run {
+        copy(
+            displayLarge = displayLarge.copy(fontSize = displayLarge.fontSize * fontSize.scaleFactor),
+            displayMedium = displayMedium.copy(fontSize = displayMedium.fontSize * fontSize.scaleFactor),
+            displaySmall = displaySmall.copy(fontSize = displaySmall.fontSize * fontSize.scaleFactor),
+            headlineLarge = headlineLarge.copy(fontSize = headlineLarge.fontSize * fontSize.scaleFactor),
+            headlineMedium = headlineMedium.copy(fontSize = headlineMedium.fontSize * fontSize.scaleFactor),
+            headlineSmall = headlineSmall.copy(fontSize = headlineSmall.fontSize * fontSize.scaleFactor),
+            titleLarge = titleLarge.copy(fontSize = titleLarge.fontSize * fontSize.scaleFactor),
+            titleMedium = titleMedium.copy(fontSize = titleMedium.fontSize * fontSize.scaleFactor),
+            titleSmall = titleSmall.copy(fontSize = titleSmall.fontSize * fontSize.scaleFactor),
+            bodyLarge = bodyLarge.copy(fontSize = bodyLarge.fontSize * fontSize.scaleFactor),
+            bodyMedium = bodyMedium.copy(fontSize = bodyMedium.fontSize * fontSize.scaleFactor),
+            bodySmall = bodySmall.copy(fontSize = bodySmall.fontSize * fontSize.scaleFactor),
+            labelLarge = labelLarge.copy(fontSize = labelLarge.fontSize * fontSize.scaleFactor),
+            labelMedium = labelMedium.copy(fontSize = labelMedium.fontSize * fontSize.scaleFactor),
+            labelSmall = labelSmall.copy(fontSize = labelSmall.fontSize * fontSize.scaleFactor)
+        )
+    }
+    
+    MaterialTheme(
+        colorScheme = colorScheme,
+        typography = typography,
+        content = content
+    )
+}

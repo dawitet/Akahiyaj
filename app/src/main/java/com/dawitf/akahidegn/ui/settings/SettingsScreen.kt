@@ -15,7 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.platform.LocalContext
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
-import com.dawitf.akahidegn.dataStore
+import com.dawitf.akahidegn.data.datastore.dataStore
 import com.dawitf.akahidegn.MainActivity
 import com.dawitf.akahidegn.ui.components.ThemeToggleCard
 import com.dawitf.akahidegn.ui.components.BilingualText

@@ -6,6 +6,8 @@ import androidx.hilt.work.HiltWorkerFactory
 import androidx.work.Configuration
 import com.dawitf.akahidegn.service.GroupCleanupScheduler
 import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.auth.ktx.auth
+import com.google.firebase.ktx.Firebase
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -26,15 +28,49 @@ class AkahidegnApplication : Application(), Configuration.Provider {
     override fun onCreate() {
         super.onCreate()
         
-        // Enable Firebase Database persistence
+        // Initialize Firebase Database persistence first
+        initializeFirebaseDatabase()
+        
+        // Initialize Firebase Authentication
+        initializeFirebaseAuth()
+        
+        // Schedule group cleanup task
+        initializeGroupCleanup()
+    }
+    
+    private fun initializeFirebaseDatabase() {
         try {
             FirebaseDatabase.getInstance().setPersistenceEnabled(true)
             Log.d("APP_INIT", "Firebase Database persistence enabled")
         } catch (e: Exception) {
             Log.w("APP_INIT", "Firebase persistence setup failed or already enabled: ${e.message}")
         }
-        
-        // Schedule group cleanup task
+    }
+    
+    private fun initializeFirebaseAuth() {
+        try {
+            // Initialize Firebase Auth with anonymous sign-in
+            val auth = Firebase.auth
+            
+            // Sign in anonymously if not already authenticated
+            if (auth.currentUser == null) {
+                auth.signInAnonymously()
+                    .addOnCompleteListener { task ->
+                        if (task.isSuccessful) {
+                            Log.d("APP_INIT", "Firebase Anonymous Auth successful")
+                        } else {
+                            Log.e("APP_INIT", "Firebase Anonymous Auth failed", task.exception)
+                        }
+                    }
+            } else {
+                Log.d("APP_INIT", "User already authenticated: ${auth.currentUser?.uid}")
+            }
+        } catch (e: Exception) {
+            Log.e("APP_INIT", "Failed to initialize Firebase Auth: ${e.message}", e)
+        }
+    }
+    
+    private fun initializeGroupCleanup() {
         try {
             groupCleanupScheduler.scheduleGroupCleanup()
             Log.d("APP_INIT", "Group cleanup scheduler initialized")

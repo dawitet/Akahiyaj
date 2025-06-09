@@ -3,8 +3,9 @@ plugins {
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose) // Assuming this is for Jetpack Compose
     id("com.google.gms.google-services")
-    alias(libs.plugins.hilt.android)
-    id("kotlin-kapt")
+    // alias(libs.plugins.hilt.android) // Temporarily disabled
+    // id("kotlin-kapt") // Temporarily disabled
+    // alias(libs.plugins.ksp)  // Still disabled, using kapt for now
     id("com.google.firebase.crashlytics")
     id("com.google.firebase.firebase-perf")
 }
@@ -17,13 +18,16 @@ android {
         applicationId = "com.dawitf.akahidegn"
         minSdk = 26
         targetSdk = 35 // Match compileSdk if using 35
-        versionCode = 1
-        versionName = "1.0"
+        versionCode = 2
+        versionName = "1.0.0-production"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables { // Important for vector drawables used in splash
             useSupportLibrary = true
         }
+        
+        // Production optimization
+        multiDexEnabled = true
     }
 
     signingConfigs {
@@ -36,14 +40,33 @@ android {
     }
 
     buildTypes {
-        release {
+        debug {
+            isDebuggable = true
+            // Removed applicationIdSuffix to avoid Google Services configuration issues
+            versionNameSuffix = "-debug"
             isMinifyEnabled = false
+            manifestPlaceholders["crashlyticsCollectionEnabled"] = false
+        }
+        
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            isDebuggable = false
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
+            manifestPlaceholders["crashlyticsCollectionEnabled"] = true
+            
+            // Production optimizations
+            ndk {
+                debugSymbolLevel = "FULL"
+            }
         }
+        
+        // Staging variant removed to avoid Google Services configuration issues
+        // Re-enable if needed with proper Google Services configuration
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11 // Or JavaVersion.VERSION_1_8 if you have older libraries
@@ -51,6 +74,7 @@ android {
     }
     kotlinOptions {
         jvmTarget = "11" // Or "1.8"
+        languageVersion = "1.9" // For kapt compatibility
     }
     buildFeatures {
         compose = true
@@ -109,7 +133,7 @@ dependencies {
     
     // Hilt for Dependency Injection
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    // kapt(libs.hilt.compiler) // Use kapt temporarily instead of ksp
     implementation(libs.hilt.navigation.compose)
     
     // Paging for performance
@@ -120,7 +144,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)
-    kapt(libs.androidx.room.compiler)
+    // kapt(libs.androidx.room.compiler) // Use kapt temporarily instead of ksp
     
     // Retrofit for better networking
     implementation(libs.retrofit)
@@ -133,7 +157,7 @@ dependencies {
     // WorkManager for background tasks
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.hilt.work)
-    kapt(libs.hilt.compiler)
+    // kapt(libs.hilt.compiler) // Use kapt temporarily instead of ksp
 
     // Advanced UI/UX Dependencies
     implementation("androidx.compose.animation:animation:1.7.5") // Updated

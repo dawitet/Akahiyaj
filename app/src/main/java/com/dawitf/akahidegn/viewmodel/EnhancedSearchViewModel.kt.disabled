@@ -1,0 +1,224 @@
+package com.dawitf.akahidegn.viewmodel
+
+import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
+import androidx.paging.PagingData
+import androidx.paging.cachedIn
+import com.dawitf.akahidegn.data.local.entity.GroupEntityEnhanced
+import com.dawitf.akahidegn.domain.model.*
+import com.dawitf.akahidegn.domain.repository.EnhancedGroupRepository
+import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.launch
+import javax.inject.Inject
+
+data class SearchUiState(
+    val query: String = "",
+    val filters: SearchFilters = SearchFilters(),
+    val suggestions: List<AutocompleteSuggestion> = emptyList(),
+    val isLoading: Boolean = false,
+    val isLoadingSuggestions: Boolean = false,
+    val error: String? = null,
+    val userLocation: UserLocation? = null
+)
+
+data class UserLocation(
+    val latitude: Double,
+    val longitude: Double
+)
+
+@HiltViewModel
+class EnhancedSearchViewModel @Inject constructor(
+    private val repository: EnhancedGroupRepository
+) : ViewModel() {
+    
+    private val _uiState = MutableStateFlow(SearchUiState())
+    val uiState: StateFlow<SearchUiState> = _uiState.asStateFlow()
+    
+    private val _searchTrigger = MutableStateFlow(SearchTrigger("", SearchFilters()))
+    
+    val searchResults: Flow<PagingData<GroupEntityEnhanced>> = _searchTrigger
+        .debounce(300) // Debounce search requests
+        .distinctUntilChanged()
+        .flatMapLatest { trigger ->
+            if (trigger.query.isBlank() && !trigger.filters.hasActiveFilters()) {
+                // Return empty results if no query or filters
+                flowOf(PagingData.empty())
+            } else {
+                repository.getGroupsWithFilters(
+                    filters = trigger.filters,
+                    userLocation = _uiState.value.userLocation?.let { 
+                        it.latitude to it.longitude 
+                    }
+                ).catch { error ->
+                    _uiState.value = _uiState.value.copy(
+                        error = error.message ?: "Unknown error occurred"
+                    )
+                    emit(PagingData.empty())
+                }
+            }
+        }
+        .cachedIn(viewModelScope)
+    
+    fun loadInitialData() {
+        viewModelScope.launch {
+            try {
+                // Load user location if available
+                // In a real app, you would get this from location services
+                // For now, we'll use a placeholder
+                _uiState.value = _uiState.value.copy(
+                    userLocation = UserLocation(9.0054, 38.7619) // Addis Ababa coordinates
+                )
+                
+                // Preload popular destinations
+                repository.preloadNearbyGroups(9.0054, 38.7619, 10.0)
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = e.message ?: "Failed to load initial data"
+                )
+            }
+        }
+    }
+    
+    fun updateQuery(query: String) {
+        _uiState.value = _uiState.value.copy(query = query)
+    }
+    
+    fun loadSuggestions(query: String) {
+        if (query.length < 2) {
+            _uiState.value = _uiState.value.copy(suggestions = emptyList())
+            return
+        }
+        
+        viewModelScope.launch {
+            try {
+                _uiState.value = _uiState.value.copy(isLoadingSuggestions = true)
+                
+                val suggestions = repository.getAutocompleteSuggestions(
+                    query = query,
+                    limit = 10
+                )
+                
+                _uiState.value = _uiState.value.copy(
+                    suggestions = suggestions,
+                    isLoadingSuggestions = false
+                )
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoadingSuggestions = false,
+                    error = e.message ?: "Failed to load suggestions"
+                )
+            }
+        }
+    }
+    
+    fun selectSuggestion(suggestion: AutocompleteSuggestion) {
+        _uiState.value = _uiState.value.copy(
+            query = suggestion.text,
+            suggestions = emptyList()
+        )
+        
+        // Save recent search
+        viewModelScope.launch {
+            repository.saveRecentSearch(
+                RecentSearch(
+                    id = System.currentTimeMillis().toString(),
+                    query = suggestion.text,
+                    destination = suggestion.subtitle ?: suggestion.text,
+                    timestamp = System.currentTimeMillis(),
+                    usageCount = 1
+                )
+            )
+        }
+        
+        // Update filters with destination
+        val updatedFilters = _uiState.value.filters.copy(
+            destination = suggestion.text
+        )
+        _uiState.value = _uiState.value.copy(filters = updatedFilters)
+        
+        // Trigger search
+        performSearch(suggestion.text)
+    }
+    
+    fun performSearch(query: String) {
+        if (query.isBlank() && !_uiState.value.filters.hasActiveFilters()) {
+            return
+        }
+        
+        _uiState.value = _uiState.value.copy(
+            isLoading = true,
+            error = null,
+            suggestions = emptyList()
+        )
+        
+        // Update search trigger to refresh results
+        _searchTrigger.value = SearchTrigger(query, _uiState.value.filters)
+        
+        viewModelScope.launch {
+            try {
+                // Save search query if it's not empty
+                if (query.isNotBlank()) {
+                    repository.saveRecentSearch(
+                        RecentSearch(
+                            id = System.currentTimeMillis().toString(),
+                            query = query,
+                            destination = query,
+                            timestamp = System.currentTimeMillis(),
+                            usageCount = 1
+                        )
+                    )
+                }
+                
+                _uiState.value = _uiState.value.copy(isLoading = false)
+                
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = e.message ?: "Search failed"
+                )
+            }
+        }
+    }
+    
+    fun updateFilters(filters: SearchFilters) {
+        _uiState.value = _uiState.value.copy(filters = filters)
+    }
+    
+    fun applyFilters() {
+        _searchTrigger.value = SearchTrigger(_uiState.value.query, _uiState.value.filters)
+    }
+    
+    fun clearFilters() {
+        val clearedFilters = SearchFilters()
+        _uiState.value = _uiState.value.copy(filters = clearedFilters)
+        _searchTrigger.value = SearchTrigger(_uiState.value.query, clearedFilters)
+    }
+    
+    fun clearRecentSearches() {
+        viewModelScope.launch {
+            try {
+                repository.clearRecentSearches()
+                // Reload suggestions if currently showing
+                if (_uiState.value.query.length >= 2) {
+                    loadSuggestions(_uiState.value.query)
+                }
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    error = e.message ?: "Failed to clear recent searches"
+                )
+            }
+        }
+    }
+    
+    fun retryLastSearch() {
+        performSearch(_uiState.value.query)
+    }
+}
+
+private data class SearchTrigger(
+    val query: String,
+    val filters: SearchFilters
+)

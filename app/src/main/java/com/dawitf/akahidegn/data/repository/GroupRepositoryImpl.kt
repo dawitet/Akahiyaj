@@ -28,7 +28,7 @@ class GroupRepositoryImpl @Inject constructor(
                 enablePlaceholders = false,
                 prefetchDistance = 5
             ),
-            remoteMediator = GroupRemoteMediator(localDataSource, remoteDataSource),
+            remoteMediator = GroupRemoteMediator(remoteDataSource, localDataSource),
             pagingSourceFactory = { localDataSource.getAllGroupsPaged() }
         ).flow.map { pagingData ->
             pagingData.map { it.toDomainModel() }
@@ -232,8 +232,8 @@ class GroupRepositoryImpl @Inject constructor(
 // Simple RemoteMediator for demonstration
 @OptIn(ExperimentalPagingApi::class)
 class GroupRemoteMediator(
-    private val localDataSource: GroupDao,
-    private val remoteDataSource: FirebaseGroupService
+    private val remoteDataSource: FirebaseGroupService,
+    private val localDataSource: GroupDao
 ) : RemoteMediator<Int, com.dawitf.akahidegn.data.local.entity.GroupEntity>() {
 
     override suspend fun load(
