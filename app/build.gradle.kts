@@ -49,7 +49,7 @@ android {
         }
         
         release {
-            // Temporarily disable minification to get a working build
+            // Temporarily disable minification due to R8 XML parsing issue
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = false

@@ -11,10 +11,21 @@
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
 
-# R8 optimization configuration
+# R8 optimization configuration - more conservative to avoid XML parsing issues
 -optimizations !code/simplification/arithmetic,!code/simplification/cast,!field/*,!class/merging/*
--optimizationpasses 5
+-optimizationpasses 3
 -allowaccessmodification
+-dontpreverify
+
+# Android support library
+-keep class androidx.** { *; }
+-dontwarn androidx.**
+
+# XML parsing and reflection safety
+-keepattributes *Annotation*
+-keepattributes Signature
+-keepattributes InnerClasses
+-keepattributes EnclosingMethod
 
 # Firebase rules
 -keep class com.google.firebase.** { *; }
@@ -40,6 +51,7 @@
 -keep class dagger.hilt.** { *; }
 -keep class javax.inject.** { *; }
 -keep class * extends dagger.hilt.android.lifecycle.HiltViewModel { *; }
+-dontwarn dagger.hilt.**
 
 # Compose rules
 -keep class androidx.compose.** { *; }
@@ -49,6 +61,36 @@
 -keep class retrofit2.** { *; }
 -keep class okhttp3.** { *; }
 -dontwarn retrofit2.**
+-dontwarn okhttp3.**
+
+# Kotlin coroutines
+-keep class kotlinx.coroutines.** { *; }
+-dontwarn kotlinx.coroutines.**
+
+# Keep enum classes
+-keepclassmembers enum * {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+# AdMob rules
+-keep class com.google.android.gms.ads.** { *; }
+-dontwarn com.google.android.gms.ads.**
+
+# Room database
+-keep class androidx.room.** { *; }
+-dontwarn androidx.room.**
+
+# WorkManager
+-keep class androidx.work.** { *; }
+-dontwarn androidx.work.**
+
+# Keep manifest components
+-keep public class * extends android.app.Activity
+-keep public class * extends android.app.Application
+-keep public class * extends android.app.Service
+-keep public class * extends android.content.BroadcastReceiver
+-keep public class * extends android.content.ContentProvider
 -dontwarn okhttp3.**
 
 # Room database rules
