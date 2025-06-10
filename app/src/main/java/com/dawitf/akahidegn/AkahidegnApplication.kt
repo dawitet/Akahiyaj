@@ -49,24 +49,10 @@ class AkahidegnApplication : Application(), Configuration.Provider {
     
     private fun initializeFirebaseAuth() {
         try {
-            // Initialize Firebase Auth with anonymous sign-in
-            val auth = Firebase.auth
-            
-            // Sign in anonymously if not already authenticated
-            if (auth.currentUser == null) {
-                auth.signInAnonymously()
-                    .addOnCompleteListener { task ->
-                        if (task.isSuccessful) {
-                            Log.d("APP_INIT", "Firebase Anonymous Auth successful")
-                        } else {
-                            Log.e("APP_INIT", "Firebase Anonymous Auth failed", task.exception)
-                        }
-                    }
-            } else {
-                Log.d("APP_INIT", "User already authenticated: ${auth.currentUser?.uid}")
-            }
+            Firebase.auth
+            Log.d("APP_INIT", "Firebase Authentication initialized")
         } catch (e: Exception) {
-            Log.e("APP_INIT", "Failed to initialize Firebase Auth: ${e.message}", e)
+            Log.e("APP_INIT", "Firebase Authentication initialization failed: ${e.message}")
         }
     }
     
@@ -75,7 +61,7 @@ class AkahidegnApplication : Application(), Configuration.Provider {
             groupCleanupScheduler.scheduleGroupCleanup()
             Log.d("APP_INIT", "Group cleanup scheduler initialized")
         } catch (e: Exception) {
-            Log.e("APP_INIT", "Failed to initialize group cleanup scheduler: ${e.message}")
+            Log.e("APP_INIT", "Group cleanup scheduler initialization failed: ${e.message}")
         }
     }
 }

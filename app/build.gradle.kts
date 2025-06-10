@@ -1,28 +1,28 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose) // Assuming this is for Jetpack Compose
+    id("org.jetbrains.kotlin.kapt")
+    alias(libs.plugins.hilt.android)
+    alias(libs.plugins.ksp)
+    id("org.jetbrains.kotlin.plugin.compose")
     id("com.google.gms.google-services")
-    // alias(libs.plugins.hilt.android) // Temporarily disabled
-    // id("kotlin-kapt") // Temporarily disabled
-    // alias(libs.plugins.ksp)  // Still disabled, using kapt for now
     id("com.google.firebase.crashlytics")
     id("com.google.firebase.firebase-perf")
 }
 
 android {
     namespace = "com.dawitf.akahidegn"
-    compileSdk = 35 // Or your preferred SDK, 34 is latest stable, 35 is beta
+    compileSdk = 35
 
     defaultConfig {
         applicationId = "com.dawitf.akahidegn"
         minSdk = 26
-        targetSdk = 35 // Match compileSdk if using 35
+        targetSdk = 35
         versionCode = 2
         versionName = "1.0.0-production"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        vectorDrawables { // Important for vector drawables used in splash
+        vectorDrawables {
             useSupportLibrary = true
         }
         
@@ -49,7 +49,6 @@ android {
         }
         
         release {
-            // Temporarily disable minification due to R8 XML parsing issue
             isMinifyEnabled = false
             isShrinkResources = false
             isDebuggable = false
@@ -73,15 +72,19 @@ android {
         // Re-enable if needed with proper Google Services configuration
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11 // Or JavaVersion.VERSION_1_8 if you have older libraries
-        targetCompatibility = JavaVersion.VERSION_11 // Or JavaVersion.VERSION_1_8
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11" // Or "1.8"
-        languageVersion = "1.9" // For kapt compatibility
+        jvmTarget = "17"
+        freeCompilerArgs += listOf(
+            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
+        )
     }
     buildFeatures {
         compose = true
+        buildConfig = true
         // viewBinding = true // Not strictly needed for this SplashActivity, but good for other XML layouts
     }
     // If you are using libs.versions.toml, ensure versions for appcompat and constraintlayout are defined there.
@@ -93,6 +96,16 @@ android {
         // Abort on error
         abortOnError = false
     }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.8"
+    }
+
+    packaging {
+        resources {
+            excludes += "/META-INF/{AL2.0,LGPL2.1}"
+        }
+    }
 }
 
 dependencies {
@@ -100,12 +113,12 @@ dependencies {
     implementation(libs.androidx.core.splashscreen)
 
     // Dependencies needed for the custom SplashActivity.kt and activity_splash.xml
-    implementation("androidx.appcompat:appcompat:1.7.0") // Updated for security
-    implementation("androidx.constraintlayout:constraintlayout:2.2.0") // Updated
+    implementation("androidx.appcompat:appcompat:1.6.1")
+    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
 
     // Your existing dependencies
     implementation(libs.androidx.lifecycle.runtime.ktx) // Now using version catalog
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.8.7") // Updated
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation(libs.androidx.activity.compose)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
@@ -116,18 +129,18 @@ dependencies {
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.androidx.hilt.work) // Ensure this is from your libs or specify version
     testImplementation(libs.junit)
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.8.0") // Updated
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.7.3")
     testImplementation("androidx.arch.core:core-testing:2.2.0")
-    testImplementation("org.mockito:mockito-core:5.14.2") // Updated for security
-    testImplementation("io.mockk:mockk:1.13.14") // Latest version
+    testImplementation("org.mockito:mockito-core:5.7.0")
+    testImplementation("io.mockk:mockk:1.13.8")
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("io.coil-kt:coil-compose:2.7.0") // Updated to available version
-    implementation("com.google.code.gson:gson:2.11.0")
+    implementation("io.coil-kt:coil-compose:2.5.0")
+    implementation("com.google.code.gson:gson:2.10.1")
 
 
     implementation(platform(libs.firebase.bom)) // Updated to latest BOM version
@@ -139,13 +152,16 @@ dependencies {
     implementation("com.google.firebase:firebase-installations-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-perf-ktx")
-    implementation("com.google.android.gms:play-services-location:21.3.0") // Latest stable version
-    implementation("com.google.android.gms:play-services-ads:23.6.0") // Updated
+    implementation("com.google.android.gms:play-services-location:21.1.0") // Latest stable version
+    implementation("com.google.android.gms:play-services-ads:22.6.0") // Updated
     
-    // Hilt for Dependency Injection
+    // Hilt for Dependency Injection - simplified for Ethiopian market
     implementation(libs.hilt.android)
-    // kapt(libs.hilt.compiler) // Use kapt temporarily instead of ksp
+    kapt(libs.hilt.compiler)
+    implementation(libs.androidx.hilt.work)
     implementation(libs.hilt.navigation.compose)
+    // Removed complex hilt lifecycle viewmodel - using simpler approach
+    kapt("androidx.hilt:hilt-compiler:1.1.0")
     
     // Paging for performance
     implementation(libs.androidx.paging.runtime)
@@ -163,7 +179,7 @@ dependencies {
     implementation(libs.okhttp.logging)
     
     // DataStore for secure preferences
-    implementation("androidx.datastore:datastore-preferences:1.1.1") // Updated
+    implementation("androidx.datastore:datastore-preferences:1.0.0")
     
     // WorkManager for background tasks
     implementation(libs.androidx.work.runtime)
@@ -171,17 +187,25 @@ dependencies {
     // kapt(libs.hilt.compiler) // Use kapt temporarily instead of ksp
 
     // Advanced UI/UX Dependencies
-    implementation("androidx.compose.animation:animation:1.7.5") // Updated
-    implementation("androidx.compose.animation:animation-graphics:1.7.5") // Updated
-    implementation("com.google.accompanist:accompanist-placeholder-material:0.34.0") // Updated
-    implementation("com.google.accompanist:accompanist-swiperefresh:0.34.0") // Updated
-    implementation("com.google.accompanist:accompanist-systemuicontroller:0.34.0") // Updated
-    implementation("androidx.compose.material:material-icons-core:1.7.5") // Updated
-    implementation("androidx.compose.ui:ui-text-google-fonts:1.7.5") // Updated
-    implementation("androidx.activity:activity-compose:1.9.3") // Updated
-    implementation("androidx.compose.material3:material3-window-size-class:1.3.1") // Updated
+    implementation("androidx.compose.animation:animation:1.5.4")
+    implementation("androidx.compose.animation:animation-graphics:1.5.4")
+    implementation("com.google.accompanist:accompanist-placeholder-material:0.32.0")
+    implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
+    implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
+    implementation("androidx.compose.material:material-icons-core:1.5.4")
+    implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4")
+    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.compose.material3:material3-window-size-class:1.1.2")
 
     // Add dependencies for WorkManager testing
     testImplementation(libs.androidx.work.testing)
     testImplementation("androidx.test:core:1.6.1") // Updated
+}
+
+kapt {
+    correctErrorTypes = true
+    useBuildCache = true
+    arguments {
+        arg("room.schemaLocation", "$projectDir/schemas")
+    }
 }

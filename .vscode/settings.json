@@ -8,26 +8,14 @@
     // GitHub Copilot Chat settings
     "github.copilot.enable": {
         "*": true,
-        "yaml": true,
-        "plaintext": true,
-        "markdown": true,
         "kotlin": true,
         "java": true,
-        "json": true,
         "xml": true
     },
     
-    // Enable Copilot completions
+    // Enable Copilot completions and chat
     "github.copilot.editor.enableAutoCompletions": true,
-    
-    // Enable Copilot chat
     "github.copilot.chat.enabled": true,
-    
-    // Additional Copilot settings for better Android development
-    "github.copilot.advanced": {
-        "debug.overrideEngine": "codex",
-        "length": 1000
-    },
     
     // Android development specific settings
     "kotlin.suggest.returnTypes": true,
@@ -38,29 +26,17 @@
         "*.gradle.kts": "kotlin"
     },
     
-    // IMPORTANT SECURITY WARNINGS:
-    // - chat.tools.autoApprove bypasses safety confirmations
-    // - Only use in trusted development environments
-    // - Be extra careful with file modifications and terminal commands
-    
-    // Optional: Enable experimental features
-    "workbench.enableExperiments": true,
-    
-    // Enhanced Copilot agent mode settings
-    "github.copilot.chat.followUps": "on",
-    "github.copilot.chat.localeOverride": "en",
-    
-    // Terminal integration for better command execution
+    // Terminal integration
     "terminal.integrated.enableMultiLinePasteWarning": false,
     
-    // Enhanced file watching for better Copilot context
+    // Enhanced file watching
     "files.watcherExclude": {
         "**/build/**": true,
         "**/.gradle/**": true,
         "**/.kotlin/**": true
     },
     
-    // Improved search for Copilot context gathering
+    // Improved search
     "search.exclude": {
         "**/build": true,
         "**/.gradle": true,

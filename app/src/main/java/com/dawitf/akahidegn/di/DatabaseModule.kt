@@ -1,10 +1,11 @@
 package com.dawitf.akahidegn.di
 
 import android.content.Context
-import androidx.room.Room
 import com.dawitf.akahidegn.data.local.dao.ChatMessageDao
 import com.dawitf.akahidegn.data.local.dao.GroupDao
+import com.dawitf.akahidegn.data.local.dao.UserPreferencesDao
 import com.dawitf.akahidegn.data.local.database.AkahidegnDatabase
+import com.dawitf.akahidegn.production.DatabaseOptimizationManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -18,24 +19,29 @@ object DatabaseModule {
 
     @Provides
     @Singleton
-    fun provideAkahidegnDatabase(@ApplicationContext context: Context): AkahidegnDatabase {
-        return Room.databaseBuilder(
-            context,
-            AkahidegnDatabase::class.java,
-            AkahidegnDatabase.DATABASE_NAME
-        )
-        .addMigrations(AkahidegnDatabase.MIGRATION_1_2)
-        .fallbackToDestructiveMigration() // Only for development
-        .build()
+    fun provideAkahidegnDatabase(
+        @ApplicationContext context: Context
+    ): AkahidegnDatabase {
+        return AkahidegnDatabase.getInstance(context)
     }
 
     @Provides
+    @Singleton
     fun provideGroupDao(database: AkahidegnDatabase): GroupDao {
         return database.groupDao()
     }
 
     @Provides
+    @Singleton
     fun provideChatMessageDao(database: AkahidegnDatabase): ChatMessageDao {
         return database.chatMessageDao()
     }
+
+    @Provides
+    @Singleton
+    fun provideUserPreferencesDao(database: AkahidegnDatabase): com.dawitf.akahidegn.data.local.dao.UserPreferencesDao {
+        return database.userPreferencesDao()
+    }
+
+    // DatabaseOptimizationManager moved to ProductionModule to avoid duplicates
 }

@@ -189,7 +189,7 @@ private fun FriendCard(
         ) {
             // Profile Photo
             AsyncImage(
-                model = friend.profilePhotoUrl ?: "",
+                model = friend.photoUrl ?: "",
                 contentDescription = "Profile photo",
                 modifier = Modifier
                     .size(48.dp)
@@ -210,38 +210,10 @@ private fun FriendCard(
                 )
                 
                 Text(
-                    text = "${friend.totalRides} rides • ${friend.mutualFriends} mutual friends",
+                    text = "Friend",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
-                
-                // Online status
-                if (friend.isOnline) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        horizontalArrangement = Arrangement.spacedBy(4.dp)
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .size(8.dp)
-                                .clip(CircleShape)
-                                .background(AkahidegnColors.Success)
-                        )
-                        Text(
-                            text = "Online",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = AkahidegnColors.Success
-                        )
-                    }
-                } else {
-                    friend.lastSeen?.let { lastSeen ->
-                        Text(
-                            text = "Last seen ${formatLastSeen(lastSeen)}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                }
             }
             
             // Actions menu

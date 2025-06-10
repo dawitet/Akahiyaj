@@ -28,21 +28,7 @@ class ProfileFeatureViewModel @Inject constructor(
             started = SharingStarted.WhileSubscribed(5000),
             initialValue = null
         )
-    
-    val achievements: StateFlow<List<Achievement>> = userProfileService.getUserAchievements()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = emptyList()
-        )
-    
-    val carbonFootprint: StateFlow<CarbonFootprintData?> = userProfileService.getCarbonFootprintData()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
-    
+
     val friends: StateFlow<List<Friend>> = userProfileService.getFriends()
         .stateIn(
             scope = viewModelScope,
@@ -50,12 +36,8 @@ class ProfileFeatureViewModel @Inject constructor(
             initialValue = emptyList()
         )
     
-    val referralStats: StateFlow<ReferralStats?> = userProfileService.getReferralStats()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
+    // Referral system removed for simplification
+    // val referralStats: StateFlow<ReferralStats?> = userProfileService.getReferralStats()
     
     init {
         loadUserProfile()
@@ -129,7 +111,7 @@ class ProfileFeatureViewModel @Inject constructor(
             when (val result = userProfileService.updateUserPreferences(preferences)) {
                 is Result.Success -> {
                     analyticsService.trackEvent("preferences_updated", mapOf(
-                        "theme" to preferences.theme.name,
+                        "theme" to preferences.theme,
                         "language" to preferences.language
                     ))
                 }
@@ -142,6 +124,8 @@ class ProfileFeatureViewModel @Inject constructor(
         }
     }
     
+    // Referral code generation removed for simplification
+    /*
     fun generateReferralCode() {
         viewModelScope.launch {
             when (val result = userProfileService.generateReferralCode()) {
@@ -159,6 +143,7 @@ class ProfileFeatureViewModel @Inject constructor(
             }
         }
     }
+    */
     
     fun sendFriendRequest(userId: String) {
         viewModelScope.launch {

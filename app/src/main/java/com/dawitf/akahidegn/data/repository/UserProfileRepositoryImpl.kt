@@ -6,13 +6,10 @@ import com.dawitf.akahidegn.core.result.Result
 import com.dawitf.akahidegn.data.local.dao.UserPreferencesDao
 import com.dawitf.akahidegn.data.mapper.toEntity
 import com.dawitf.akahidegn.domain.model.UserProfile
-import com.dawitf.akahidegn.domain.model.UserAchievement
 import com.dawitf.akahidegn.domain.model.UserReview
 import com.dawitf.akahidegn.domain.model.TripHistoryItem
 import com.dawitf.akahidegn.domain.model.UserAnalytics
 import com.dawitf.akahidegn.domain.model.UserPreferences
-import com.dawitf.akahidegn.domain.model.AchievementCategory
-import com.dawitf.akahidegn.domain.model.AchievementRarity
 import com.dawitf.akahidegn.domain.model.NotificationSettings
 import com.dawitf.akahidegn.domain.repository.UserProfileRepository
 import com.google.firebase.auth.FirebaseAuth
@@ -26,6 +23,9 @@ import kotlinx.coroutines.tasks.await
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
+import com.dawitf.akahidegn.features.profile.RideStatistics
+import com.dawitf.akahidegn.data.repository.model.UserProfileUpdate
+import com.dawitf.akahidegn.data.repository.model.Ride
 
 @Singleton
 class UserProfileRepositoryImpl @Inject constructor(
@@ -42,37 +42,28 @@ class UserProfileRepositoryImpl @Inject constructor(
 
     override suspend fun getUserProfile(userId: String): Result<UserProfile> {
         return try {
-            val document = usersCollection.document(userId).get().await()
-            if (document.exists()) {
-                val profile = document.toObject(UserProfile::class.java)
-                profile?.let {
-                    Result.Success(it)
-                } ?: Result.Error(AppError.UnknownError("Failed to parse user profile"))
+            val snapshot = usersCollection.document(userId).get().await()
+            if (snapshot.exists()) {
+                val profile = snapshot.toObject(UserProfile::class.java)
+                if (profile != null) {
+                    Result.Success(profile)
+                } else {
+                    Result.Error(AppError.ValidationError.NotFound("Profile data is invalid"))
+                }
             } else {
                 Result.Error(AppError.ValidationError.NotFound("User profile not found"))
             }
         } catch (e: Exception) {
-            Result.Error(AppError.UnknownError(e.message ?: "Failed to get user profile"))
+            Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to get user profile"))
         }
     }
 
     override suspend fun updateUserProfile(userProfile: UserProfile): Result<UserProfile> {
         return try {
-            val updates = mapOf(
-                "displayName" to userProfile.displayName,
-                "email" to userProfile.email,
-                "phoneNumber" to userProfile.phoneNumber,
-                "bio" to userProfile.bio,
-                "profilePictureUrl" to userProfile.profilePictureUrl,
-                "preferences" to userProfile.preferences,
-                "lastActiveDate" to System.currentTimeMillis()
-            )
-            
-            usersCollection.document(userProfile.userId).update(updates).await()
-            
-            Result.Success(userProfile.copy(lastActiveDate = System.currentTimeMillis()))
+            usersCollection.document(userProfile.userId).set(userProfile).await()
+            Result.Success(userProfile)
         } catch (e: Exception) {
-            Result.Error(AppError.UnknownError(e.message ?: "Failed to update user profile"))
+            Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to update profile"))
         }
     }
 
@@ -94,6 +85,8 @@ class UserProfileRepositoryImpl @Inject constructor(
         }
     }
 
+    // Achievement methods removed for simplification
+    /*
     override suspend fun getUserAchievements(userId: String): Result<List<UserAchievement>> {
         return try {
             val snapshot = achievementsCollection
@@ -137,6 +130,7 @@ class UserProfileRepositoryImpl @Inject constructor(
             Result.Error(AppError.UnknownError(e.message ?: "Failed to unlock achievement"))
         }
     }
+    */
 
     override suspend fun getUserReviews(userId: String): Result<List<UserReview>> {
         return try {
@@ -312,6 +306,8 @@ class UserProfileRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
+    // Achievement observation method removed for simplification
+    /*
     override fun observeUserAchievements(userId: String): Flow<List<UserAchievement>> = callbackFlow {
         val listener = achievementsCollection
             .whereEqualTo("userId", userId)
@@ -331,11 +327,12 @@ class UserProfileRepositoryImpl @Inject constructor(
         
         awaitClose { listener.remove() }
     }
+    */
 
     override fun observeUserReviews(userId: String): Flow<List<UserReview>> = callbackFlow {
         val listener = reviewsCollection
-            .whereEqualTo("targetUserId", userId)
-            .orderBy("timestamp", com.google.firebase.firestore.Query.Direction.DESCENDING)
+            .whereEqualTo("revieweeId", userId)
+            .orderBy("createdAt", com.google.firebase.firestore.Query.Direction.DESCENDING)
             .limit(50)
             .addSnapshotListener { snapshot, error ->
                 if (error != null) {
@@ -352,6 +349,42 @@ class UserProfileRepositoryImpl @Inject constructor(
         
         awaitClose { listener.remove() }
     }
+
+    override fun getRideStats(): Flow<RideStatistics?> = callbackFlow {
+        val userId = getCurrentUserId() ?: throw IllegalStateException("User not logged in")
+        
+        val listener = firestore.collection("rides")
+            .whereEqualTo("userId", userId)
+            .addSnapshotListener { snapshot, error ->
+                if (error != null) {
+                    close(error)
+                    return@addSnapshotListener
+                }
+                
+                val rides = snapshot?.documents?.mapNotNull { doc ->
+                    doc.toObject(Ride::class.java)
+                } ?: emptyList()
+                
+                val stats = RideStatistics(
+                    totalRides = rides.size,
+                    totalDistance = rides.sumOf { it.distance },
+                    totalSpent = rides.sumOf { it.earnings }, // Using earnings as total spent for now
+                    averageRating = rides.mapNotNull { it.rating }.average().toFloat(),
+                    totalTimeSaved = rides.sumOf { it.duration.toLong() }, // Convert to Long
+                    carbonSaved = rides.sumOf { it.distance * 0.21 } // Simple carbon calculation
+                )
+                
+                trySend(stats)
+            }
+        
+        awaitClose { listener.remove() }
+    }
+
+    // Achievement system removed for simplicity
+    // override fun getAchievements(): Flow<List<Achievement>> = ...
+
+    // Carbon footprint tracking removed for simplicity
+    // override fun getCarbonFootprint(): Flow<CarbonFootprintData?> = ...
 
     // Helper methods
     private suspend fun updateUserRating(userId: String) {
@@ -426,6 +459,8 @@ class UserProfileRepositoryImpl @Inject constructor(
         }
     }
 
+    // Achievement methods removed for simplification
+    /*
     private fun getAchievementCategory(achievementId: String): com.dawitf.akahidegn.features.profile.AchievementCategory {
         return when (achievementId) {
             "first_trip", "trip_master" -> com.dawitf.akahidegn.features.profile.AchievementCategory.RIDES
@@ -445,5 +480,28 @@ class UserProfileRepositoryImpl @Inject constructor(
             "speed_demon", "safe_driver", "trip_master" -> AchievementRarity.LEGENDARY
             else -> AchievementRarity.COMMON
         }
+    }
+    */
+
+    private fun getCurrentUserId(): String? {
+        // TODO: Implement getting current user ID from Firebase Auth
+        return null
+    }
+
+    private fun UserProfileUpdate.toMap(): Map<String, Any?> {
+        return mapOf(
+            "firstName" to firstName,
+            "lastName" to lastName,
+            "phoneNumber" to phoneNumber,
+            "dateOfBirth" to dateOfBirth,
+            "gender" to gender,
+            "emergencyContact" to emergencyContact,
+            "homeAddress" to homeAddress,
+            "workAddress" to workAddress,
+            "preferredPaymentMethod" to preferredPaymentMethod,
+            "languages" to languages,
+            "bio" to bio,
+            "interests" to interests
+        ).filterValues { it != null }
     }
 }

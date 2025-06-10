@@ -16,6 +16,7 @@ import kotlinx.coroutines.tasks.await
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
+// Removed Achievement import - achievement system simplified
 
 @Singleton
 class UserProfileServiceImpl @Inject constructor(
@@ -196,15 +197,8 @@ class UserProfileServiceImpl @Inject constructor(
                 totalDistance = totalDistance,
                 totalSpent = totalSpent,
                 averageRating = averageRating,
-                totalTimeSaved = (totalDistance * 2).toInt(), // Estimated time saved vs walking
-                carbonSaved = carbonSaved,
-                favoriteDestination = favoriteDestination,
-                ridingStreak = calculateRidingStreak(rides),
-                totalRidingTime = totalTime,
-                averageWaitTime = 8, // Would calculate from actual wait times
-                cancelledRides = cancelledRides,
-                completedRides = completedRides,
-                monthlyRides = monthlyRides
+                totalTimeSaved = (totalDistance * 2).toLong(), // Estimated time saved vs walking
+                carbonSaved = carbonSaved
             )
             
             emit(stats)
@@ -295,80 +289,11 @@ class UserProfileServiceImpl @Inject constructor(
         }
     }
     
-    override fun getUserAchievements(): Flow<List<Achievement>> = flow {
-        val userId = auth.currentUser?.uid ?: return@flow
-        
-        try {
-            val achievementsSnapshot = firestore.collection(ACHIEVEMENTS_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
-            
-            val achievements = achievementsSnapshot.documents.mapNotNull { doc ->
-                try {
-                    Achievement(
-                        id = doc.id,
-                        title = doc.getString("title") ?: "",
-                        description = doc.getString("description") ?: "",
-                        iconUrl = doc.getString("iconUrl") ?: "",
-                        unlockedDate = doc.getLong("unlockedDate"),
-                        progress = doc.getDouble("progress")?.toFloat() ?: 0f,
-                        maxProgress = doc.getDouble("maxProgress")?.toFloat() ?: 1f,
-                        category = AchievementCategory.valueOf(
-                            doc.getString("category") ?: "RIDES"
-                        ),
-                        points = doc.getLong("points")?.toInt() ?: 0,
-                        isUnlocked = doc.getBoolean("isUnlocked") ?: false
-                    )
-                } catch (e: Exception) {
-                    null
-                }
-            }
-            
-            emit(achievements)
-        } catch (e: Exception) {
-            analyticsService.logError(e, "get_achievements_failed")
-        }
-    }
+    // Achievement system removed for simplicity
+    // override fun getUserAchievements(): Flow<List<Achievement>> = ...
     
-    override fun getBadgeProgress(): Flow<List<BadgeProgress>> = flow {
-        val userId = auth.currentUser?.uid ?: return@flow
-        
-        try {
-            val badgesSnapshot = firestore.collection(BADGES_COLLECTION)
-                .whereEqualTo("userId", userId)
-                .get()
-                .await()
-            
-            val badges = badgesSnapshot.documents.mapNotNull { doc ->
-                try {
-                    val current = doc.getLong("currentProgress")?.toInt() ?: 0
-                    val target = doc.getLong("targetProgress")?.toInt() ?: 1
-                    
-                    BadgeProgress(
-                        badgeId = doc.id,
-                        title = doc.getString("title") ?: "",
-                        description = doc.getString("description") ?: "",
-                        iconUrl = doc.getString("iconUrl") ?: "",
-                        currentProgress = current,
-                        targetProgress = target,
-                        progressPercentage = if (target > 0) (current.toFloat() / target * 100) else 0f,
-                        isCompleted = current >= target,
-                        category = BadgeCategory.valueOf(
-                            doc.getString("category") ?: "BEGINNER"
-                        ),
-                        reward = doc.getString("reward")
-                    )
-                } catch (e: Exception) {
-                    null
-                }
-            }
-            
-            emit(badges)
-        } catch (e: Exception) {
-            analyticsService.logError(e, "get_badge_progress_failed")
-        }
-    }
+    // Badge system removed for simplicity  
+    // override fun getBadgeProgress(): Flow<List<BadgeProgress>> = ...
     
     override suspend fun updateUserPreferences(preferences: UserPreferences): Result<Unit> {
         return try {
@@ -380,7 +305,7 @@ class UserProfileServiceImpl @Inject constructor(
                 .await()
             
             analyticsService.trackEvent("user_preferences_updated", mapOf(
-                "theme" to preferences.theme.name,
+                "theme" to preferences.theme,
                 "language" to preferences.language
             ))
             
@@ -426,12 +351,7 @@ class UserProfileServiceImpl @Inject constructor(
                     Friend(
                         id = doc.getString("friendId") ?: "",
                         name = doc.getString("friendName") ?: "",
-                        profilePhotoUrl = doc.getString("profilePhotoUrl"),
-                        joinDate = doc.getLong("joinDate") ?: 0L,
-                        mutualFriends = doc.getLong("mutualFriends")?.toInt() ?: 0,
-                        totalRides = doc.getLong("totalRides")?.toInt() ?: 0,
-                        isOnline = doc.getBoolean("isOnline") ?: false,
-                        lastSeen = doc.getLong("lastSeen")
+                        photoUrl = doc.getString("profilePhotoUrl")
                     )
                 } catch (e: Exception) {
                     null
@@ -469,6 +389,8 @@ class UserProfileServiceImpl @Inject constructor(
         }
     }
     
+    // Social methods removed for simplification
+    /*
     override suspend fun acceptFriendRequest(requestId: String): Result<Unit> {
         return try {
             val currentUserId = auth.currentUser?.uid ?: return Result.Error(AppError.AuthenticationError.NotAuthenticated)
@@ -513,7 +435,7 @@ class UserProfileServiceImpl @Inject constructor(
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to accept friend request"))
         }
     }
-    
+
     override suspend fun generateReferralCode(): Result<String> {
         return try {
             val userId = auth.currentUser?.uid ?: return Result.Error(AppError.AuthenticationError.NotAuthenticated)
@@ -537,58 +459,15 @@ class UserProfileServiceImpl @Inject constructor(
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to generate referral code"))
         }
     }
+    */
     
-    override fun getReferralStats(): Flow<ReferralStats> = flow {
-        val userId = auth.currentUser?.uid ?: return@flow
-        
-        try {
-            val referralDoc = firestore.collection(REFERRALS_COLLECTION)
-                .document(userId)
-                .get()
-                .await()
-            
-            if (referralDoc.exists()) {
-                val stats = ReferralStats(
-                    referralCode = referralDoc.getString("referralCode") ?: "",
-                    totalReferrals = referralDoc.getLong("totalReferrals")?.toInt() ?: 0,
-                    successfulReferrals = referralDoc.getLong("successfulReferrals")?.toInt() ?: 0,
-                    totalEarnings = referralDoc.getDouble("totalEarnings") ?: 0.0,
-                    pendingRewards = referralDoc.getDouble("pendingRewards") ?: 0.0
-                )
-                emit(stats)
-            }
-        } catch (e: Exception) {
-            analyticsService.logError(e, "get_referral_stats_failed")
-        }
-    }
+    // Referral system removed for simplicity
+    // override fun getReferralStats(): Flow<ReferralStats> = ...
     
-    override fun getCarbonFootprintData(): Flow<CarbonFootprintData> = flow {
-        val userId = auth.currentUser?.uid ?: return@flow
-        
-        try {
-            val carbonDoc = firestore.collection(CARBON_FOOTPRINT_COLLECTION)
-                .document(userId)
-                .get()
-                .await()
-            
-            if (carbonDoc.exists()) {
-                val data = CarbonFootprintData(
-                    totalCarbonSaved = carbonDoc.getDouble("totalCarbonSaved") ?: 0.0,
-                    carbonSavedThisMonth = carbonDoc.getDouble("carbonSavedThisMonth") ?: 0.0,
-                    carbonSavedThisYear = carbonDoc.getDouble("carbonSavedThisYear") ?: 0.0,
-                    equivalentTrees = ((carbonDoc.getDouble("totalCarbonSaved") ?: 0.0) / 21.8).toInt(),
-                    comparisonData = CarbonComparison(
-                        vsPrivateCar = 85.0,
-                        vsPublicTransport = 35.0,
-                        vsAverageUser = 120.0
-                    )
-                )
-                emit(data)
-            }
-        } catch (e: Exception) {
-            analyticsService.logError(e, "get_carbon_footprint_failed")
-        }
-    }
+    // Carbon footprint tracking removed for simplicity
+    
+    // Carbon footprint tracking removed for simplicity
+    // override fun getCarbonFootprintData(): Flow<CarbonFootprintData> = ...
     
     // Private helper methods
     
@@ -622,9 +501,7 @@ class UserProfileServiceImpl @Inject constructor(
     private fun getDefaultPreferences(): UserPreferences {
         return UserPreferences(
             notifications = NotificationPreferences(),
-            privacy = PrivacyPreferences(),
-            accessibility = AccessibilityPreferences(),
-            ridePreferences = RidePreferences()
+            privacy = PrivacyPreferences()
         )
     }
     

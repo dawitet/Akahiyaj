@@ -19,25 +19,24 @@ interface UserProfileService {
     fun getRideHistory(): Flow<List<RideHistoryItem>>
     suspend fun getRideDetails(rideId: String): Result<RideDetails>
     
-    // Achievement and badges
-    fun getUserAchievements(): Flow<List<Achievement>>
-    fun getBadgeProgress(): Flow<List<BadgeProgress>>
+    // Achievement and badges - REMOVED for simplicity
+    // fun getUserAchievements(): Flow<List<Achievement>>
+    // fun getBadgeProgress(): Flow<List<BadgeProgress>>
     
     // Preferences
     suspend fun updateUserPreferences(preferences: UserPreferences): Result<Unit>
     suspend fun getUserPreferences(): Result<UserPreferences>
     
-    // Social features
+    // Social features - simplified for Ethiopian market
     fun getFriends(): Flow<List<Friend>>
     suspend fun sendFriendRequest(userId: String): Result<Unit>
-    suspend fun acceptFriendRequest(requestId: String): Result<Unit>
     
-    // Referral system
-    suspend fun generateReferralCode(): Result<String>
-    fun getReferralStats(): Flow<ReferralStats>
+    // Referral system - REMOVED for simplicity
+    // suspend fun generateReferralCode(): Result<String>
+    // fun getReferralStats(): Flow<ReferralStats>
     
-    // Carbon footprint tracking
-    fun getCarbonFootprintData(): Flow<CarbonFootprintData>
+    // Carbon footprint tracking - REMOVED for simplicity
+    // fun getCarbonFootprintData(): Flow<CarbonFootprintData>
 }
 
 data class UserProfile(
@@ -112,18 +111,8 @@ data class RideStatistics(
     val totalDistance: Double, // in kilometers
     val totalSpent: Double,
     val averageRating: Float,
-    val totalTimeSaved: Int, // in minutes
-    val carbonSaved: Double, // in kg CO2
-    val favoriteDestination: String? = null,
-    val mostUsedRoute: String? = null,
-    val ridingStreak: Int = 0, // consecutive days with rides
-    val totalRidingTime: Int = 0, // in minutes
-    val averageWaitTime: Int = 0, // in minutes
-    val cancelledRides: Int = 0,
-    val completedRides: Int = 0,
-    val monthlyRides: Map<String, Int> = emptyMap(), // month -> ride count
-    val ridesByTimeOfDay: Map<String, Int> = emptyMap(), // hour -> ride count
-    val preferredRideTypes: Map<String, Int> = emptyMap() // ride type -> count
+    val totalTimeSaved: Long, // in minutes - changed from Int to Long for consistency
+    val carbonSaved: Double // in kg CO2 - simplified, removed all complex carbon tracking fields
 )
 
 data class RideHistoryItem(
@@ -243,165 +232,44 @@ data class RideReceipt(
     val companyInfo: String? = null
 )
 
-data class Achievement(
-    val id: String,
-    val title: String,
-    val description: String,
-    val iconUrl: String,
-    val unlockedDate: Long? = null,
-    val progress: Float = 0f,
-    val maxProgress: Float = 1f,
-    val category: AchievementCategory,
-    val points: Int = 0,
-    val isUnlocked: Boolean = false
-)
+// Achievement system removed for simplicity - not needed for basic Ethiopian ride-sharing
 
-enum class AchievementCategory {
-    RIDES, DISTANCE, SAVINGS, SOCIAL, ECO_FRIENDLY, STREAKS, SPECIAL
-}
-
-data class BadgeProgress(
-    val badgeId: String,
-    val title: String,
-    val description: String,
-    val iconUrl: String,
-    val currentProgress: Int,
-    val targetProgress: Int,
-    val progressPercentage: Float,
-    val isCompleted: Boolean = false,
-    val category: BadgeCategory,
-    val reward: String? = null
-)
-
-enum class BadgeCategory {
-    BEGINNER, FREQUENT_RIDER, ECO_WARRIOR, SOCIAL_BUTTERFLY, EXPLORER, PREMIUM
-}
+// Badge system removed for simplicity - not needed for basic Ethiopian ride-sharing
 
 data class UserPreferences(
-    val notifications: NotificationPreferences,
-    val privacy: PrivacyPreferences,
-    val accessibility: AccessibilityPreferences,
-    val ridePreferences: RidePreferences,
-    val theme: ThemePreference = ThemePreference.AUTO,
+    val notifications: NotificationPreferences = NotificationPreferences(),
+    val privacy: PrivacyPreferences = PrivacyPreferences(),
     val language: String = "en",
-    val currency: String = "USD"
+    val theme: String = "system",
+    val units: UnitPreferences = UnitPreferences()
 )
 
 data class NotificationPreferences(
-    val pushNotifications: Boolean = true,
-    val emailNotifications: Boolean = true,
-    val smsNotifications: Boolean = false,
     val rideUpdates: Boolean = true,
     val promotions: Boolean = true,
-    val socialUpdates: Boolean = true,
-    val securityAlerts: Boolean = true,
-    val weeklyDigest: Boolean = true
+    val news: Boolean = true,
+    val sound: Boolean = true,
+    val vibration: Boolean = true
 )
 
 data class PrivacyPreferences(
-    val shareLocationWithFriends: Boolean = false,
-    val shareRideHistory: Boolean = false,
-    val allowFriendRequests: Boolean = true,
-    val showOnlineStatus: Boolean = true,
-    val dataCollection: Boolean = true,
-    val analyticsOptOut: Boolean = false
+    val shareLocation: Boolean = true,
+    val shareProfile: Boolean = true,
+    val shareRideHistory: Boolean = false
 )
 
-data class AccessibilityPreferences(
-    val fontSize: FontSize = FontSize.MEDIUM,
-    val highContrast: Boolean = false,
-    val voiceAssistance: Boolean = false,
-    val largeButtons: Boolean = false,
-    val screenReader: Boolean = false,
-    val colorBlindSupport: Boolean = false
+data class UnitPreferences(
+    val distance: String = "km",
+    val currency: String = "USD",
+    val temperature: String = "C"
 )
-
-enum class FontSize {
-    SMALL, MEDIUM, LARGE, EXTRA_LARGE
-}
-
-data class RidePreferences(
-    val defaultRideType: RideType = RideType.REGULAR,
-    val allowSharedRides: Boolean = true,
-    val maxWaitTime: Int = 10, // minutes
-    val preferredPaymentMethod: PaymentMethod = PaymentMethod.CASH,
-    val musicPreference: Boolean = true,
-    val temperaturePreference: TemperaturePreference = TemperaturePreference.MODERATE,
-    val conversationPreference: ConversationPreference = ConversationPreference.OPTIONAL,
-    val petFriendly: Boolean = false,
-    val childSeatRequired: Boolean = false
-)
-
-enum class TemperaturePreference {
-    COOL, MODERATE, WARM
-}
-
-enum class ConversationPreference {
-    NONE, OPTIONAL, PREFERRED
-}
-
-enum class ThemePreference {
-    LIGHT, DARK, AUTO
-}
 
 data class Friend(
     val id: String,
     val name: String,
-    val profilePhotoUrl: String? = null,
-    val joinDate: Long,
-    val mutualFriends: Int = 0,
-    val totalRides: Int = 0,
-    val isOnline: Boolean = false,
-    val lastSeen: Long? = null,
-    val favoriteDestinations: List<String> = emptyList()
+    val photoUrl: String? = null
 )
 
-data class ReferralStats(
-    val referralCode: String,
-    val totalReferrals: Int,
-    val successfulReferrals: Int,
-    val totalEarnings: Double,
-    val pendingRewards: Double,
-    val recentReferrals: List<RecentReferral> = emptyList()
-)
+// Referral system removed for simplicity - not needed for basic Ethiopian ride-sharing
 
-data class RecentReferral(
-    val friendName: String,
-    val joinDate: Long,
-    val status: ReferralStatus,
-    val reward: Double
-)
-
-enum class ReferralStatus {
-    PENDING, COMPLETED, EXPIRED
-}
-
-data class CarbonFootprintData(
-    val totalCarbonSaved: Double, // kg CO2
-    val carbonSavedThisMonth: Double,
-    val carbonSavedThisYear: Double,
-    val equivalentTrees: Int, // trees planted equivalent
-    val comparisonData: CarbonComparison,
-    val monthlyTrend: List<MonthlyCarbonData> = emptyList(),
-    val tips: List<EcoTip> = emptyList()
-)
-
-data class CarbonComparison(
-    val vsPrivateCar: Double, // percentage reduction
-    val vsPublicTransport: Double,
-    val vsAverageUser: Double
-)
-
-data class MonthlyCarbonData(
-    val month: String,
-    val carbonSaved: Double,
-    val ridesCount: Int
-)
-
-data class EcoTip(
-    val id: String,
-    val title: String,
-    val description: String,
-    val impact: String, // e.g., "Save 2kg CO2"
-    val iconUrl: String? = null
-)
+// Removed carbon footprint tracking - not relevant for Ethiopian market

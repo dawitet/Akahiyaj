@@ -43,6 +43,12 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
+    abstract fun bindUserProfileRepository(
+        userProfileRepositoryImpl: UserProfileRepositoryImpl
+    ): UserProfileRepository
+
+    @Binds
+    @Singleton
     abstract fun bindFirebaseGroupService(
         firebaseGroupServiceImpl: FirebaseGroupServiceImpl
     ): FirebaseGroupService
@@ -52,12 +58,6 @@ abstract class RepositoryModule {
     abstract fun bindFirebaseChatService(
         firebaseChatServiceImpl: FirebaseChatServiceImpl
     ): FirebaseChatService
-
-    @Binds
-    @Singleton
-    abstract fun bindUserProfileRepository(
-        userProfileRepositoryImpl: UserProfileRepositoryImpl
-    ): UserProfileRepository
 
     // TODO: Uncomment when these manager classes are implemented
     /*
@@ -73,11 +73,10 @@ abstract class RepositoryModule {
         localizationManagerImpl: LocalizationManagerImpl
     ): LocalizationManager
 
-    @Binds
-    @Singleton
-    abstract fun bindOfflineManager(
-        offlineManagerImpl: OfflineManagerImpl
-    ): OfflineManager
+    // Offline manager removed for simplicity - not practical for ride-sharing
+    // @Binds
+    // @Singleton
+    // abstract fun bindOfflineManager(...): OfflineManager
 
     @Binds
     @Singleton

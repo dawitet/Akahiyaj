@@ -1,11 +1,10 @@
 package com.dawitf.akahidegn.di
 
 import android.content.Context
-import com.dawitf.akahidegn.performance.ImageCacheManager
-import com.dawitf.akahidegn.performance.NetworkOptimizationManager
-import com.dawitf.akahidegn.performance.PerformanceManager
-import com.dawitf.akahidegn.performance.PerformanceMonitor
+import com.dawitf.akahidegn.analytics.AnalyticsManager
 import com.dawitf.akahidegn.analytics.AnalyticsService
+import com.dawitf.akahidegn.production.ProductionAnalyticsManager
+import com.dawitf.akahidegn.performance.PerformanceMonitor
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -15,30 +14,22 @@ import javax.inject.Singleton
 
 @Module
 @InstallIn(SingletonComponent::class)
-object PerformanceModule {
+object AnalyticsModule {
 
     @Provides
     @Singleton
-    fun providePerformanceManager(
+    fun provideAnalyticsManager(
         @ApplicationContext context: Context
-    ): PerformanceManager {
-        return PerformanceManager(context)
+    ): AnalyticsManager {
+        return AnalyticsManager(context)
     }
 
     @Provides
     @Singleton
-    fun provideImageCacheManager(
+    fun provideAnalyticsService(
         @ApplicationContext context: Context
-    ): ImageCacheManager {
-        return ImageCacheManager(context)
-    }
-
-    @Provides
-    @Singleton
-    fun provideNetworkOptimizationManager(
-        @ApplicationContext context: Context
-    ): NetworkOptimizationManager {
-        return NetworkOptimizationManager(context)
+    ): AnalyticsService {
+        return AnalyticsService(context)
     }
 
     @Provides
@@ -49,4 +40,6 @@ object PerformanceModule {
     ): PerformanceMonitor {
         return PerformanceMonitor(context, analyticsService)
     }
-}
+
+    // Performance-related dependencies moved to PerformanceModule to avoid duplicates
+} 

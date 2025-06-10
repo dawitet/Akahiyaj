@@ -1,5 +1,6 @@
 package com.dawitf.akahidegn.data.local.database
 
+import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
@@ -33,6 +34,23 @@ abstract class AkahidegnDatabase : RoomDatabase() {
     
     companion object {
         const val DATABASE_NAME = "akahidegn_database"
+        
+        @Volatile
+        private var INSTANCE: AkahidegnDatabase? = null
+        
+        fun getInstance(context: Context): AkahidegnDatabase {
+            return INSTANCE ?: synchronized(this) {
+                val instance = Room.databaseBuilder(
+                    context.applicationContext,
+                    AkahidegnDatabase::class.java,
+                    DATABASE_NAME
+                )
+                .addMigrations(MIGRATION_1_2)
+                .build()
+                INSTANCE = instance
+                instance
+            }
+        }
         
         // Migration from version 1 to 2 - Add enhanced tables
         val MIGRATION_1_2 = object : Migration(1, 2) {

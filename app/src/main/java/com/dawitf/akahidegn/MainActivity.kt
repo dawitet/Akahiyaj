@@ -70,7 +70,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
-import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.hilt.navigation.compose.hiltViewModel
 import com.dawitf.akahidegn.ui.components.CreateRideDialog
 import com.dawitf.akahidegn.ui.screens.ChatScreen
 import com.dawitf.akahidegn.ui.screens.NameInputScreen
@@ -81,10 +81,10 @@ import com.dawitf.akahidegn.ui.activity.RecentActivityScreen
 import com.dawitf.akahidegn.ui.settings.SettingsScreen
 import com.dawitf.akahidegn.ui.profile.UserProfileScreen
 import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
-import com.dawitf.akahidegn.viewmodel.MainViewModel
 import com.dawitf.akahidegn.analytics.AnalyticsManager
 import com.dawitf.akahidegn.localization.LocalizationManager
-import com.dawitf.akahidegn.offline.OfflineManager
+// Offline manager removed for simplicity - not practical for ride-sharing
+// import com.dawitf.akahidegn.offline.OfflineManager
 import com.dawitf.akahidegn.accessibility.AccessibilityManager
 import com.dawitf.akahidegn.performance.ImageCacheManager
 import com.dawitf.akahidegn.performance.PerformanceManager
@@ -131,6 +131,10 @@ import com.dawitf.akahidegn.production.ProductionAnalyticsManager
 import com.dawitf.akahidegn.production.ProductionErrorHandler
 import com.dawitf.akahidegn.production.ProductionNotificationManager
 import javax.inject.Inject
+import com.dawitf.akahidegn.domain.repository.GroupRepository
+import com.dawitf.akahidegn.domain.repository.ChatRepository
+import com.dawitf.akahidegn.viewmodel.MainViewModel
+import androidx.lifecycle.viewmodel.compose.viewModel
 
 // Data classes (ChatMessage, Group) - consider moving to a 'data' package
 
@@ -185,8 +189,9 @@ class MainActivity : ComponentActivity() {
     @Inject
     lateinit var localizationManager: LocalizationManager
 
-    @Inject
-    lateinit var offlineManager: OfflineManager
+    // Offline manager removed for simplicity
+    // @Inject
+    // lateinit var offlineManager: OfflineManager
 
     @Inject
     lateinit var accessibilityManager: AccessibilityManager
@@ -211,6 +216,12 @@ class MainActivity : ComponentActivity() {
     
     @Inject
     lateinit var productionNotificationManager: ProductionNotificationManager
+
+    @Inject
+    lateinit var groupRepository: GroupRepository
+
+    @Inject
+    lateinit var chatRepository: ChatRepository
 
     private lateinit var firebaseAuth: FirebaseAuth
     private lateinit var activeGroupsRef: DatabaseReference
@@ -316,8 +327,8 @@ class MainActivity : ComponentActivity() {
                 // Initialize analytics tracking
                 analyticsManager.trackAppStart()
                 
-                // Initialize offline capabilities
-                offlineManager.initialize()
+                // Offline capabilities removed for simplicity
+                // offlineManager.initialize()
                 
                 Log.d("PERFORMANCE", "Performance optimizations initialized successfully")
             } catch (e: Exception) {
@@ -355,8 +366,8 @@ class MainActivity : ComponentActivity() {
 
 
         setContent {
-            // Get ViewModel instance
-            val viewModel: MainViewModel = viewModel()
+            // Get ViewModel instance using custom factory
+            val viewModel: MainViewModel = hiltViewModel()
             
             // Store ViewModel reference for use in ad callbacks
             mainViewModel = viewModel
@@ -586,10 +597,13 @@ class MainActivity : ComponentActivity() {
                         }
                         AppScreen.USER_PROFILE -> {
                             UserProfileScreen(
-                                onEditProfile = {
+                                onNavigateToEditProfile = {
                                     // Navigate to edit profile screen if needed
                                 },
-                                onSettings = { navigateToSettings() }
+                                onNavigateToRideHistory = {
+                                    // Navigate to ride history screen if needed
+                                },
+                                onNavigateToSettings = { navigateToSettings() }
                             )
                         }
                         AppScreen.SOCIAL -> {
