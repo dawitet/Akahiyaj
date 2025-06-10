@@ -3,6 +3,7 @@ package com.dawitf.akahidegn.data.local.dao
 import androidx.paging.PagingSource
 import androidx.room.*
 import com.dawitf.akahidegn.data.local.entity.GroupEntityEnhanced
+import com.dawitf.akahidegn.data.local.entity.UserPreferencesEntity
 import com.dawitf.akahidegn.domain.model.PopularDestination
 import kotlinx.coroutines.flow.Flow
 
@@ -237,6 +238,6 @@ interface EnhancedGroupDao {
     suspend fun getUserPreferencesCount(): Int
     
     @Query("SELECT * FROM user_preferences")
-    suspend fun getAllUserPreferences(): List<String> // Or appropriate type
+    suspend fun getAllUserPreferences(): List<UserPreferencesEntity>
     
 }

@@ -79,8 +79,10 @@ android {
         jvmTarget = "17"
         freeCompilerArgs += listOf(
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"
+            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-Xjvm-default=all"
         )
+        // JVM arguments should be set separately for kapt
     }
     buildFeatures {
         compose = true
@@ -171,7 +173,7 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)
-    // kapt(libs.androidx.room.compiler) // Use kapt temporarily instead of ksp
+    kapt(libs.androidx.room.compiler) // Enable Room annotation processor
     
     // Retrofit for better networking
     implementation(libs.retrofit)
@@ -207,5 +209,10 @@ kapt {
     useBuildCache = true
     arguments {
         arg("room.schemaLocation", "$projectDir/schemas")
+    }
+    javacOptions {
+        // Increase memory for annotation processing
+        option("-Xmx4g")
+        option("-XX:MaxMetaspaceSize=1g")
     }
 }
