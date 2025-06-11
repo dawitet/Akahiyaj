@@ -112,4 +112,111 @@ class GroupCleanupDebugHelper @Inject constructor(
             }
         }
     }
+    
+    /**
+     * MASS DELETE ALL GROUPS - USE ONLY FOR MANUAL CLEANUP
+     * This will delete ALL groups from Firebase, regardless of age
+     */
+    fun massDeleteAllGroups() {
+        CoroutineScope(Dispatchers.IO).launch {
+            Log.d(TAG, "🔥 MASS DELETION: Starting to delete ALL groups from Firebase")
+            Log.w(TAG, "⚠️ WARNING: This will delete ALL groups permanently!")
+            
+            try {
+                groupRepository.getAllGroups().collect { result ->
+                    when (result) {
+                        is com.dawitf.akahidegn.core.result.Result.Success -> {
+                            val allGroups = result.data
+                            Log.d(TAG, "Found ${allGroups.size} groups to delete")
+                            
+                            if (allGroups.isEmpty()) {
+                                Log.d(TAG, "No groups found to delete")
+                                return@collect
+                            }
+                            
+                            var deletedCount = 0
+                            var failedCount = 0
+                            
+                            allGroups.forEach { group ->
+                                val groupInfo = "${group.destinationName} (ID: ${group.groupId})"
+                                Log.d(TAG, "Deleting group: $groupInfo")
+                                
+                                try {
+                                    val deleteResult = groupRepository.deleteGroup(group.groupId ?: "")
+                                    if (deleteResult.isSuccess) {
+                                        deletedCount++
+                                        Log.d(TAG, "✅ Successfully deleted: $groupInfo")
+                                    } else {
+                                        failedCount++
+                                        val error = if (deleteResult is com.dawitf.akahidegn.core.result.Result.Error) {
+                                            deleteResult.error.message
+                                        } else {
+                                            "Unknown error"
+                                        }
+                                        Log.e(TAG, "❌ Failed to delete $groupInfo: $error")
+                                    }
+                                } catch (e: Exception) {
+                                    failedCount++
+                                    Log.e(TAG, "❌ Exception deleting $groupInfo: ${e.message}")
+                                }
+                            }
+                            
+                            Log.d(TAG, "🔥 MASS DELETION COMPLETED!")
+                            Log.d(TAG, "✅ Successfully deleted: $deletedCount groups")
+                            Log.d(TAG, "❌ Failed to delete: $failedCount groups")
+                            Log.d(TAG, "📊 Total processed: ${allGroups.size} groups")
+                        }
+                        is com.dawitf.akahidegn.core.result.Result.Error -> {
+                            Log.e(TAG, "Failed to get groups for mass deletion: ${result.error.message}")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Mass deletion failed with exception: ${e.message}", e)
+            }
+        }
+    }
+    
+    /**
+     * Delete only old groups (older than specified minutes) - safer option
+     */
+    fun deleteOldGroups(olderThanMinutes: Int = 30) {
+        CoroutineScope(Dispatchers.IO).launch {
+            val cutoffTime = System.currentTimeMillis() - (olderThanMinutes * 60 * 1000)
+            Log.d(TAG, "🧹 Deleting groups older than $olderThanMinutes minutes (before $cutoffTime)")
+            
+            try {
+                groupRepository.getAllGroups().collect { result ->
+                    when (result) {
+                        is com.dawitf.akahidegn.core.result.Result.Success -> {
+                            val allGroups = result.data
+                            val oldGroups = allGroups.filter { group ->
+                                group.timestamp != null && group.timestamp!! <= cutoffTime
+                            }
+                            
+                            Log.d(TAG, "Found ${oldGroups.size} old groups out of ${allGroups.size} total groups")
+                            
+                            oldGroups.forEach { group ->
+                                val ageMinutes = if (group.timestamp != null) {
+                                    (System.currentTimeMillis() - group.timestamp!!) / (60 * 1000)
+                                } else {
+                                    "unknown"
+                                }
+                                
+                                Log.d(TAG, "Deleting old group: ${group.destinationName} (age: ${ageMinutes}min)")
+                                groupRepository.deleteGroup(group.groupId ?: "")
+                            }
+                            
+                            Log.d(TAG, "🧹 Finished deleting ${oldGroups.size} old groups")
+                        }
+                        is com.dawitf.akahidegn.core.result.Result.Error -> {
+                            Log.e(TAG, "Failed to get groups for age-based deletion: ${result.error.message}")
+                        }
+                    }
+                }
+            } catch (e: Exception) {
+                Log.e(TAG, "Age-based deletion failed: ${e.message}", e)
+            }
+        }
+    }
 }

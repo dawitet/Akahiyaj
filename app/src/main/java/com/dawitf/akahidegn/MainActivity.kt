@@ -72,23 +72,23 @@ import kotlinx.coroutines.launch
 import androidx.lifecycle.lifecycleScope
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dawitf.akahidegn.ui.components.CreateRideDialog
-import com.dawitf.akahidegn.ui.screens.ChatScreen
-import com.dawitf.akahidegn.ui.screens.NameInputScreen
-import com.dawitf.akahidegn.ui.screens.MainScreen
-import com.dawitf.akahidegn.ui.social.RideBuddyScreen
-import com.dawitf.akahidegn.ui.social.SocialScreen
-import com.dawitf.akahidegn.ui.activity.RecentActivityScreen
-import com.dawitf.akahidegn.ui.settings.SettingsScreen
-import com.dawitf.akahidegn.ui.profile.UserProfileScreen
-import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
-import com.dawitf.akahidegn.analytics.AnalyticsManager
-import com.dawitf.akahidegn.localization.LocalizationManager
+import com.dawitf.akahhidegn.ui.screens.ChatScreen
+import com.dawitf.akahhidegn.ui.screens.NameInputScreen
+import com.dawitf.akahhidegn.ui.screens.MainScreen
+import com.dawitf.akahhidegn.ui.social.RideBuddyScreen
+import com.dawitf.akahhidegn.ui.social.SocialScreen
+import com.dawitf.akahhidegn.ui.activity.RecentActivityScreen
+import com.dawitf.akahhidegn.ui.settings.SettingsScreen
+import com.dawitf.akahhidegn.ui.profile.UserProfileScreen
+import com.dawitf.akahhidegn.ui.theme.AkahidegnTheme
+import com.dawitf.akahhidegn.analytics.AnalyticsManager
+import com.dawitf.akahhidegn.localization.LocalizationManager
 // Offline manager removed for simplicity - not practical for ride-sharing
-// import com.dawitf.akahidegn.offline.OfflineManager
-import com.dawitf.akahidegn.accessibility.AccessibilityManager
-import com.dawitf.akahidegn.performance.ImageCacheManager
-import com.dawitf.akahidegn.performance.PerformanceManager
-import com.dawitf.akahidegn.performance.NetworkOptimizationManager
+// import com.dawitf.akahhidegn.offline.OfflineManager
+import com.dawitf.akahhidegn.accessibility.AccessibilityManager
+import com.dawitf.akahhidegn.performance.ImageCacheManager
+import com.dawitf.akahhidegn.performance.PerformanceManager
+import com.dawitf.akahhidegn.performance.NetworkOptimizationManager
 import dagger.hilt.android.AndroidEntryPoint
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
@@ -124,16 +124,16 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.Locale
-import com.dawitf.akahidegn.ChatMessage
-import com.dawitf.akahidegn.debug.GroupCleanupDebugHelper
-import com.dawitf.akahidegn.production.DatabaseOptimizationManager
-import com.dawitf.akahidegn.production.ProductionAnalyticsManager
-import com.dawitf.akahidegn.production.ProductionErrorHandler
-import com.dawitf.akahidegn.production.ProductionNotificationManager
+import com.dawitf.akahhidegn.ChatMessage
+import com.dawitf.akahhidegn.debug.GroupCleanupDebugHelper
+import com.dawitf.akahhidegn.production.DatabaseOptimizationManager
+import com.dawitf.akahhidegn.production.ProductionAnalyticsManager
+import com.dawitf.akahhidegn.production.ProductionErrorHandler
+import com.dawitf.akahhidegn.production.ProductionNotificationManager
 import javax.inject.Inject
-import com.dawitf.akahidegn.domain.repository.GroupRepository
-import com.dawitf.akahidegn.domain.repository.ChatRepository
-import com.dawitf.akahidegn.viewmodel.MainViewModel
+import com.dawitf.akahhidegn.domain.repository.GroupRepository
+import com.dawitf.akahhidegn.domain.repository.ChatRepository
+import com.dawitf.akahhidegn.viewmodel.MainViewModel
 import androidx.lifecycle.viewmodel.compose.viewModel
 
 // Data classes (ChatMessage, Group) - consider moving to a 'data' package
@@ -457,7 +457,7 @@ class MainActivity : ComponentActivity() {
                                     onSearchQueryChange = { query ->
                                         viewModel.updateSearchQuery(query)
                                     },
-                                    selectedFilters = com.dawitf.akahidegn.ui.components.SearchFilters(),
+                                    selectedFilters = com.dawitf.akahhidegn.ui.components.SearchFilters(),
                                     onFiltersChange = { /* TODO: Implement filters */ },
                                     onGroupClick = { group ->
                                         // Show interstitial ad before joining the group
@@ -572,7 +572,7 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         AppScreen.SETTINGS -> {
-                            com.dawitf.akahidegn.ui.settings.SettingsScreen(
+                            com.dawitf.akahhidegn.ui.settings.SettingsScreen(
                                 currentThemeMode = currentThemeMode,
                                 onThemeChanged = { newThemeMode ->
                                     currentThemeMode = newThemeMode
@@ -584,13 +584,13 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         AppScreen.RECENT_ACTIVITY -> {
-                            com.dawitf.akahidegn.ui.activity.RecentActivityScreen(
+                            com.dawitf.akahhidegn.ui.activity.RecentActivityScreen(
                                 onNavigateBack = {
                                     currentAppScreen = AppScreen.MAIN_CONTENT
                                 },
                                 onClearActivity = {
                                     lifecycleScope.launch {
-                                        com.dawitf.akahidegn.features.bookmark.BookmarkManager.clearRecentActivity(this@MainActivity)
+                                        com.dawitf.akahhidegn.features.bookmark.BookmarkManager.clearRecentActivity(this@MainActivity)
                                     }
                                 }
                             )
@@ -658,7 +658,7 @@ class MainActivity : ComponentActivity() {
                         }
                         AppScreen.ACCESSIBILITY_SETTINGS -> {
                             SettingsScreen(
-                                currentThemeMode = com.dawitf.akahidegn.ui.components.ThemeMode.SYSTEM,
+                                currentThemeMode = com.dawitf.akahhidegn.ui.components.ThemeMode.SYSTEM,
                                 onThemeChanged = { /* TODO: Handle theme change */ },
                                 onNavigateBack = {
                                     currentAppScreen = AppScreen.MAIN_CONTENT
@@ -1370,6 +1370,63 @@ fun DebugMenuScreen(
                         )
                     ) {
                         Text("Trigger Immediate Cleanup")
+                    }
+
+                    // MASS DELETE BUTTONS - FOR MANUAL CLEANUP ONLY
+                    Button(
+                        onClick = {
+                            statusMessage = "🔥 MASS DELETING ALL GROUPS! Check logs..."
+                            groupCleanupDebugHelper.massDeleteAllGroups()
+                            statusMessage = "🔥 Mass deletion triggered! This deletes ALL groups. Check logs for progress."
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.error
+                        )
+                    ) {
+                        Text("🔥 MASS DELETE ALL GROUPS", color = MaterialTheme.colorScheme.onError)
+                    }
+
+                    Button(
+                        onClick = {
+                            statusMessage = "🧹 Deleting groups older than 1 minute..."
+                            groupCleanupDebugHelper.deleteOldGroups(1) // 1 minute for testing
+                            statusMessage = "🧹 Old groups deletion triggered! Check logs."
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary
+                        )
+                    ) {
+                        Text("🧹 Delete Old Groups (1+ min)")
+                    }
+
+                    Button(
+                        onClick = {
+                            statusMessage = "🧹 Deleting groups older than 30 minutes..."
+                            groupCleanupDebugHelper.deleteOldGroups(30) // Normal 30-minute threshold
+                            statusMessage = "🧹 30-minute cleanup triggered! Check logs."
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.tertiary
+                        )
+                    ) {
+                        Text("🧹 Delete Old Groups (30+ min)")
+                    }
+
+                    Button(
+                        onClick = {
+                            statusMessage = "🗑️ Clearing local cache..."
+                            mainViewModel.refreshGroups() // Force refresh from Firebase
+                            statusMessage = "🗑️ Local cache cleared! Groups refreshed from Firebase."
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.outline
+                        )
+                    ) {
+                        Text("🗑️ Clear Local Cache")
                     }
                 }
             }
