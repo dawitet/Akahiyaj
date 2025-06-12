@@ -79,6 +79,8 @@ import com.dawitf.akahidegn.ui.social.SocialScreen
 import com.dawitf.akahidegn.ui.activity.RecentActivityScreen
 import com.dawitf.akahidegn.ui.settings.SettingsScreen
 import com.dawitf.akahidegn.ui.profile.UserProfileScreen
+import com.dawitf.akahidegn.ui.bookmarks.BookmarksScreen
+import com.dawitf.akahidegn.ui.notifications.NotificationsScreen
 import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -153,6 +155,96 @@ class MainActivity : ComponentActivity() {
     fun navigateToAccessibilitySettings() {
         currentAppScreen = AppScreen.ACCESSIBILITY_SETTINGS
     }
+    
+    // Function to navigate to bookmarks screen
+    fun navigateToBookmarks() {
+        currentAppScreen = AppScreen.BOOKMARKS
+    }
+    
+    // Function to navigate to notifications screen
+    fun navigateToNotifications() {
+        currentAppScreen = AppScreen.NOTIFICATIONS
+    }
+    
+    // Function to handle filter changes
+    private fun handleFiltersChange(newFilters: com.dawitf.akahidegn.ui.components.SearchFilters) {
+        currentSearchFilters = newFilters
+        applyFiltersToGroups()
+    }
+    
+    // Function to apply filters to the groups list
+    private fun applyFiltersToGroups() {
+        filteredGroups = applySearchFilters(groups, currentSearchFilters)
+    }
+    
+    private fun applySearchFilters(groups: List<Group>, filters: com.dawitf.akahidegn.ui.components.SearchFilters): List<Group> {
+        return groups.filter { group ->
+            // Apply destination filter (query in this SearchFilters class)
+            if (filters.query.isNotBlank() && 
+                !group.destinationName.orEmpty().contains(filters.query, ignoreCase = true)) {
+                return@filter false
+            }
+            
+            // Apply minimum seats filter  
+            val availableSeats = group.maxMembers - group.memberCount
+            if (availableSeats < filters.minimumSeats) {
+                return@filter false
+            }
+            
+            true
+        }
+    }
+    
+    // Function to refresh groups from Firebase
+    private fun refreshGroups() {
+        if (isLoadingGroups) return
+        
+        isLoadingGroups = true
+        Log.d("REFRESH", "Starting groups refresh from Firebase")
+        
+        activeGroupsRef.orderByChild("timestamp")
+            .limitToLast(50)
+            .addListenerForSingleValueEvent(object : ValueEventListener {
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    val newGroups = mutableListOf<Group>()
+                    for (groupSnapshot in snapshot.children) {
+                        val group = groupSnapshot.getValue(Group::class.java)
+                        if (group != null) {
+                            group.groupId = groupSnapshot.key
+                            newGroups.add(group)
+                        }
+                    }
+                    groups = newGroups.sortedByDescending { it.timestamp }
+                    applyFiltersToGroups()
+                    isLoadingGroups = false
+                    Log.d("REFRESH", "Groups refreshed: ${groups.size} groups loaded")
+                }
+                
+                override fun onCancelled(error: DatabaseError) {
+                    Log.e("REFRESH", "Failed to refresh groups: ${error.message}")
+                    isLoadingGroups = false
+                }
+            })
+    }
+    
+    // Function to handle theme changes and persist them
+    private fun handleThemeChange(newThemeMode: ThemeMode) {
+        currentThemeMode = newThemeMode
+        lifecycleScope.launch {
+            try {
+                dataStore.edit { preferences ->
+                    preferences[THEME_MODE_KEY] = when (newThemeMode) {
+                        ThemeMode.LIGHT -> "LIGHT"
+                        ThemeMode.DARK -> "DARK"
+                        ThemeMode.SYSTEM -> "SYSTEM"
+                    }
+                }
+                Log.d("THEME", "Theme preference saved: $newThemeMode")
+            } catch (e: Exception) {
+                Log.e("THEME", "Failed to save theme preference: ${e.message}")
+            }
+        }
+    }
     // Theme preferences key
     companion object {
         val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
@@ -198,7 +290,9 @@ class MainActivity : ComponentActivity() {
         SOCIAL,
         ENHANCED_SEARCH,
         ACTIVITY_HISTORY,
-        ACCESSIBILITY_SETTINGS
+        ACCESSIBILITY_SETTINGS,
+        BOOKMARKS,
+        NOTIFICATIONS
     }
     private var currentAppScreen by mutableStateOf(AppScreen.ASK_NAME)
 
@@ -212,6 +306,14 @@ class MainActivity : ComponentActivity() {
     private var showCreateRideDialog by mutableStateOf(false)
     private var showAdPromptForCreateRideDialog by mutableStateOf(false)
     private var tempDestinationForCreateRide by mutableStateOf("")
+    
+    // State for search filters
+    private var currentSearchFilters by mutableStateOf(com.dawitf.akahidegn.ui.components.SearchFilters())
+    
+    // State for groups data with Firebase integration
+    private var groups by mutableStateOf<List<Group>>(emptyList())
+    private var isLoadingGroups by mutableStateOf(false)
+    private var filteredGroups by mutableStateOf<List<Group>>(emptyList())
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -292,16 +394,23 @@ class MainActivity : ComponentActivity() {
         loadRewardedAd()
         createNotificationChannel()
         retrieveFCMToken()
+        
+        // Handle notification intent if app was opened from notification
+        handleNotificationIntent()
 
 
         setContent {
-            // Simplified for release build - no complex ViewModel dependencies
-            // Using basic state management instead of Hilt ViewModel
-            var groups by remember { mutableStateOf<List<Group>>(emptyList()) }
-            var isLoadingGroups by remember { mutableStateOf(false) }
+            // State variables for UI
             var currentSearchQuery by remember { mutableStateOf("") }
             var selectedGroupForChat by remember { mutableStateOf<Group?>(null) }
             var chatMessages by remember { mutableStateOf<List<ChatMessage>>(emptyList()) }
+            
+            // Load initial groups on first launch
+            LaunchedEffect(currentFirebaseUserId) {
+                if (currentFirebaseUserId != null && groups.isEmpty()) {
+                    refreshGroups()
+                }
+            }
 
             locationPermissionLauncher = rememberLauncherForActivityResult(
                 ActivityResultContracts.RequestMultiplePermissions()
@@ -357,24 +466,28 @@ class MainActivity : ComponentActivity() {
                                 currentAppScreen = AppScreen.CHAT // Trigger recomposition
                             } else {
                                 MainScreen(
-                                    groups = groups,
+                                    groups = filteredGroups.ifEmpty { groups },
                                     searchQuery = currentSearchQuery,
                                     onSearchQueryChange = { query ->
                                         currentSearchQuery = query
-                                        // Basic search functionality - could be enhanced later
+                                        // Apply basic text filtering and trigger group filtering
+                                        if (query.isNotBlank()) {
+                                            filteredGroups = groups.filter { group ->
+                                                group.destinationName?.contains(query, ignoreCase = true) == true
+                                            }
+                                        } else {
+                                            applyFiltersToGroups()
+                                        }
                                     },
-                                    selectedFilters = com.dawitf.akahidegn.ui.components.SearchFilters(),
-                                    onFiltersChange = { /* TODO: Implement filters */ },
+                                    selectedFilters = currentSearchFilters,
+                                    onFiltersChange = ::handleFiltersChange,
                                     onGroupClick = { group ->
                                         // Show interstitial ad before joining the group
                                         showInterstitialAdForJoinGroup(group)
                                     },
                                     isLoading = isLoadingGroups,
                                     onRefreshGroups = {
-                                        // Basic refresh functionality
-                                        isLoadingGroups = true
-                                        // Load groups from Firebase - simplified
-                                        isLoadingGroups = false
+                                        refreshGroups()
                                     },
                                     onCreateGroup = {
                                         if (currentFirebaseUserId == null) {
@@ -391,9 +504,12 @@ class MainActivity : ComponentActivity() {
                                     },
                                     onNavigateToSettings = { navigateToSettings() },
                                     onNavigateToProfile = { navigateToUserProfile() },
-                                    onNavigateToBookmarks = { /* TODO: Implement bookmarks */ },
-                                    onNavigateToChat = { /* TODO: Implement chat navigation */ },
-                                    onNavigateToNotifications = { /* TODO: Implement notifications */ },
+                                    onNavigateToBookmarks = { navigateToBookmarks() },
+                                    onNavigateToChat = { 
+                                        // Navigate to chat screen - for now go to social since we need a selected group for chat
+                                        navigateToSocial()
+                                    },
+                                    onNavigateToNotifications = { navigateToNotifications() },
                                     onNavigateToHistory = { navigateToActivityHistory() }
                                 )
 
@@ -522,25 +638,41 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                         AppScreen.ENHANCED_SEARCH -> {
-                            // TODO: Implement basic search screen or redirect to main
+                            // Enhanced search with advanced filtering capabilities
                             MainScreen(
-                                groups = groups,
+                                groups = filteredGroups.ifEmpty { groups },
                                 searchQuery = currentSearchQuery,
-                                onSearchQueryChange = { currentSearchQuery = it },
-                                selectedFilters = com.dawitf.akahidegn.ui.components.SearchFilters(),
-                                onFiltersChange = { /* TODO: Implement filters */ },
+                                onSearchQueryChange = { query ->
+                                    currentSearchQuery = query
+                                    // Apply enhanced search with filters
+                                    if (query.isNotBlank()) {
+                                        filteredGroups = groups.filter { group ->
+                                            group.destinationName?.contains(query, ignoreCase = true) == true
+                                        }
+                                        applyFiltersToGroups()
+                                    } else {
+                                        applyFiltersToGroups()
+                                    }
+                                },
+                                selectedFilters = currentSearchFilters,
+                                onFiltersChange = ::handleFiltersChange,
                                 onGroupClick = { group -> 
-                                    // Navigate to group details
+                                    // Show ad and join group, then return to main
+                                    showInterstitialAdForJoinGroup(group)
                                     currentAppScreen = AppScreen.MAIN_CONTENT
                                 },
                                 isLoading = isLoadingGroups,
-                                onRefreshGroups = { /* TODO: Implement refresh */ },
-                                onCreateGroup = { /* TODO: Navigate to create group */ },
+                                onRefreshGroups = { refreshGroups() },
+                                onCreateGroup = { 
+                                    // Navigate to create group flow
+                                    showAdPromptForCreateRideDialog = true
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                },
                                 onNavigateToSettings = { navigateToSettings() },
                                 onNavigateToProfile = { currentAppScreen = AppScreen.USER_PROFILE },
-                                onNavigateToBookmarks = { /* TODO: Navigate to bookmarks */ },
-                                onNavigateToChat = { /* TODO: Navigate to chat */ },
-                                onNavigateToNotifications = { /* TODO: Navigate to notifications */ },
+                                onNavigateToBookmarks = { navigateToBookmarks() },
+                                onNavigateToChat = { navigateToSocial() },
+                                onNavigateToNotifications = { navigateToNotifications() },
                                 onNavigateToHistory = { currentAppScreen = AppScreen.ACTIVITY_HISTORY }
                             )
                         }
@@ -553,8 +685,26 @@ class MainActivity : ComponentActivity() {
                         }
                         AppScreen.ACCESSIBILITY_SETTINGS -> {
                             SettingsScreen(
-                                currentThemeMode = com.dawitf.akahidegn.ui.components.ThemeMode.SYSTEM,
-                                onThemeChanged = { /* TODO: Handle theme change */ },
+                                currentThemeMode = currentThemeMode,
+                                onThemeChanged = ::handleThemeChange,
+                                onNavigateBack = {
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                }
+                            )
+                        }
+                        AppScreen.BOOKMARKS -> {
+                            BookmarksScreen(
+                                onNavigateBack = {
+                                    currentAppScreen = AppScreen.MAIN_CONTENT
+                                },
+                                onGroupClick = { group ->
+                                    // Show ad and join the bookmarked group
+                                    showInterstitialAdForJoinGroup(group)
+                                }
+                            )
+                        }
+                        AppScreen.NOTIFICATIONS -> {
+                            NotificationsScreen(
                                 onNavigateBack = {
                                     currentAppScreen = AppScreen.MAIN_CONTENT
                                 }
@@ -1066,8 +1216,48 @@ class MainActivity : ComponentActivity() {
             }
             val token = task.result
             Log.d("FCM_TAG", "FCM Registration Token: $token")
-            // TODO LATER: Send this token to your server/Firebase if you implement user-specific notifications for specific groups/users.
+            // Store FCM token in Firebase for user-specific notifications
+            storeFCMTokenInFirebase(token)
         })
+    }
+    
+    // Store FCM token in Firebase for push notifications
+    private fun storeFCMTokenInFirebase(token: String) {
+        val userId = currentFirebaseUserId
+        if (userId != null) {
+            try {
+                val userTokensRef = Firebase.database.getReference("user_fcm_tokens").child(userId)
+                userTokensRef.setValue(token)
+                    .addOnSuccessListener {
+                        Log.d("FCM_TAG", "FCM token stored successfully for user: $userId")
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("FCM_TAG", "Failed to store FCM token: ${exception.message}")
+                    }
+            } catch (e: Exception) {
+                Log.e("FCM_TAG", "Error storing FCM token: ${e.message}")
+            }
+        } else {
+            Log.w("FCM_TAG", "Cannot store FCM token - user not authenticated")
+        }
+    }
+    
+    // Handle notification intent when app is opened from notification
+    private fun handleNotificationIntent() {
+        intent?.extras?.let { extras ->
+            if (extras.getBoolean("notification_clicked", false)) {
+                val notificationTitle = extras.getString("notification_title", "")
+                val notificationMessage = extras.getString("notification_message", "")
+                
+                Log.d("NOTIFICATION_TAG", "App opened from notification: $notificationTitle")
+                
+                // Navigate to notifications screen if app was opened from notification
+                lifecycleScope.launch {
+                    kotlinx.coroutines.delay(1000) // Wait for UI to initialize
+                    currentAppScreen = AppScreen.NOTIFICATIONS
+                }
+            }
+        }
     }
 
     fun showLocalNotification(title: String, message: String) {
@@ -1095,10 +1285,21 @@ class MainActivity : ComponentActivity() {
             .setContentText(message)
             .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setAutoCancel(true) // Dismiss notification when tapped
-        // TODO: Add an Intent to open the app/specific screen when notification is tapped
-        // val intent = Intent(this, MainActivity::class.java)
-        // val pendingIntent = PendingIntent.getActivity(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        // builder.setContentIntent(pendingIntent)
+        
+        // Add intent to open app when notification is tapped
+        val intent = android.content.Intent(this, MainActivity::class.java).apply {
+            flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra("notification_clicked", true)
+            putExtra("notification_title", title)
+            putExtra("notification_message", message)
+        }
+        val pendingIntent = android.app.PendingIntent.getActivity(
+            this, 
+            0, 
+            intent, 
+            android.app.PendingIntent.FLAG_UPDATE_CURRENT or android.app.PendingIntent.FLAG_IMMUTABLE
+        )
+        builder.setContentIntent(pendingIntent)
 
         try {
             notificationManager.notify(fcmNotificationId, builder.build())

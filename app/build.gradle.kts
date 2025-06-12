@@ -16,10 +16,10 @@ android {
 
     defaultConfig {
         applicationId = "com.dawitf.akahidegn"
-        minSdk = 26
+        minSdk = 23
         targetSdk = 35
-        versionCode = 2
-        versionName = "1.0.0-production"
+        versionCode = 3
+        versionName = "1.1.0-compatible"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
