@@ -61,6 +61,15 @@
                 tools:node="remove" />
         </provider>
 
+        <!-- Debug receiver for testing Firebase security rules -->
+        <receiver
+            android:name=".debug.FirebaseRulesTestReceiver"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="com.dawitf.akahidegn.DEBUG_TEST_FIREBASE_RULES" />
+            </intent-filter>
+        </receiver>
+
     </application>
 
 </manifest>

@@ -1,0 +1,18 @@
+{
+  "id": "1749787391",
+  "from": "Current Location",
+  "to": "Test Destination",
+  "departureTime": "1749787391000", 
+  "availableSeats": 4,
+  "pricePerPerson": 0,
+  "createdAt": 1749787391000,
+  "createdBy": "test_user",
+  "members": {
+    "test_user": true
+  },
+  "pickupLat": 9.005401,
+  "pickupLng": 38.763611,
+  "maxMembers": 4,
+  "memberCount": 1,
+  "imageUrl": "https://picsum.photos/seed/1749787391/400/300"
+}

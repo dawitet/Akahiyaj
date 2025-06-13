@@ -3,7 +3,10 @@ package com.dawitf.akahidegn
 // Removed LocalContext as most direct UI context needs are in Composables now
 // Removed LocalFocusManager as it's handled in Composable files
 import android.Manifest
+import android.app.Activity
 import android.content.Context
+import android.content.Intent
+import android.content.IntentSender
 import android.annotation.SuppressLint
 import android.app.NotificationChannel
 import android.app.NotificationManager
@@ -87,7 +90,9 @@ import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DataSnapshot
 import com.google.firebase.database.DatabaseError
 import com.google.firebase.database.DatabaseReference
+import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.IgnoreExtraProperties
+import com.google.firebase.database.Logger
 import com.google.firebase.database.MutableData
 import com.google.firebase.database.Transaction
 import com.google.firebase.database.ValueEventListener
@@ -115,6 +120,7 @@ import com.google.android.gms.location.LocationRequest
 import com.google.android.gms.location.LocationSettingsRequest
 import com.google.android.gms.location.LocationSettingsResponse
 import com.google.android.gms.location.Priority
+import com.google.android.gms.common.api.ResolvableApiException
 import com.google.android.gms.location.SettingsClient
 import com.google.android.gms.tasks.OnCompleteListener
 
@@ -248,6 +254,7 @@ class MainActivity : ComponentActivity() {
     // Theme preferences key
     companion object {
         val THEME_MODE_KEY = stringPreferencesKey("theme_mode")
+        const val REQUEST_CHECK_SETTINGS = 1001
     }
 
     // Simplified for release build - removed complex DI
@@ -258,6 +265,7 @@ class MainActivity : ComponentActivity() {
 
     private var currentFirebaseUserId by mutableStateOf<String?>(null)
     private var currentUserDisplayName by mutableStateOf<String?>(null)
+    private var currentUserEmail by mutableStateOf<String?>(null)
     private val currentCloudflareUserId: String = "dummy_cloudflare_user_123" // Placeholder
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -337,8 +345,13 @@ class MainActivity : ComponentActivity() {
         try {
             firebaseAuth = Firebase.auth
             
+            // Enable detailed Firebase debug logging to help diagnose database permission issues
+            FirebaseDatabase.getInstance().setLogLevel(Logger.Level.DEBUG)
+            Log.d("FIREBASE_DEBUG", "Firebase debug logging enabled")
+            
             // Note: Firebase persistence is already enabled in AkahidegnApplication.onCreate()
-            activeGroupsRef = Firebase.database.getReference("active_groups")
+            // Changed from "active_groups" to "groups" to match security rules
+            activeGroupsRef = Firebase.database.getReference("groups")
             groupChatsRef = Firebase.database.getReference("group_chats")
             com.google.firebase.installations.FirebaseInstallations.getInstance().id
                 .addOnSuccessListener { installationId ->
@@ -865,27 +878,39 @@ class MainActivity : ComponentActivity() {
         val placeholderImageUrl = "https://picsum.photos/seed/${groupId}-${randomImageSeed}/400/300"
 
 
+        // Create a new group with all fields required by security rules
+        val currentTime = System.currentTimeMillis()
         val newGroup = Group(
-            creatorId = uid,
-            creatorCloudflareId = currentCloudflareUserId, // Placeholder
+            groupId = groupId, // Must match the Firebase key and the 'id' field
+            creatorId = uid,   // Must match auth.uid for the security rule
+            creatorCloudflareId = currentCloudflareUserId, 
             destinationName = cleanDestination,
             pickupLat = loc.latitude,
             pickupLng = loc.longitude,
-            timestamp = System.currentTimeMillis(),
-            members = hashMapOf(uid to true), // Creator is the first member
+            timestamp = currentTime,
+            members = hashMapOf(uid to true), // Will be converted to proper structure in toMap()
             memberCount = 1,
-            maxMembers = 4, // Default max members
-            imageUrl = placeholderImageUrl // Add image URL for new UI
+            maxMembers = 4, 
+            imageUrl = placeholderImageUrl 
         )
-
-        Log.d("CREATE_GROUP_TAG", "Attempting to create group: $groupId with data: ${newGroup.toMap()}")
-        activeGroupsRef.child(groupId).setValue(newGroup.toMap())
+        
+        val groupData = newGroup.toMap()
+        Log.d("CREATE_GROUP_TAG", "Attempting to create group: $groupId with data: $groupData")
+        
+        // Add more detailed debugging
+        Log.d("FIREBASE_DEBUG", "Authentication state: UID=$uid, isAuthenticated=${firebaseAuth.currentUser != null}")
+        Log.d("FIREBASE_DEBUG", "Database path: groups/$groupId")
+        Log.d("FIREBASE_DEBUG", "Required fields validation: id=${groupData["id"]}, from=${groupData["from"]}, to=${groupData["to"]}")
+        Log.d("FIREBASE_DEBUG", "Security fields: createdBy=${groupData["createdBy"]}, currentUid=$uid, match=${groupData["createdBy"] == uid}")
+        
+        activeGroupsRef.child(groupId).setValue(groupData)
             .addOnSuccessListener {
                 Log.i("CREATE_GROUP_TAG", "Group '$cleanDestination' created successfully with ID: $groupId")
                 callback(true, groupId)
             }
             .addOnFailureListener { e ->
                 Log.e("CREATE_GROUP_TAG", "Failed to create group '$cleanDestination': ${e.message}", e)
+                Log.e("FIREBASE_DEBUG", "Database error details: code=${(e as? DatabaseError)?.code}, rule violated=${e.message?.contains("permission_denied")}")
                 callback(false, e.message ?: getString(R.string.toast_failed_generic))
             }
     }
@@ -901,11 +926,15 @@ class MainActivity : ComponentActivity() {
         groupRef.runTransaction(object : Transaction.Handler {
             override fun doTransaction(currentData: MutableData): Transaction.Result {
                 val group = currentData.getValue(Group::class.java) ?: return Transaction.abort() // Group deleted
-                if (group.members.containsKey(uid)) return Transaction.abort() // Already a member
-                if (group.memberCount >= group.maxMembers) return Transaction.abort() // Group is full
-
-                group.members[uid] = true
                 group.memberCount++
+                
+                // We need to manually update the members structure since we're in a transaction
+                val updates = HashMap<String, Any>()
+                updates["members/$uid/name"] = currentUserDisplayName ?: "Anonymous User"
+                updates["members/$uid/joinedAt"] = System.currentTimeMillis()
+                updates["memberCount"] = group.memberCount
+                
+                // Update the currentData value with our changes
                 currentData.value = group.toMap()
                 return Transaction.success(currentData)
             }
@@ -1006,6 +1035,7 @@ class MainActivity : ComponentActivity() {
                 .addOnCompleteListener(this) { task ->
                     if (task.isSuccessful) {
                         currentFirebaseUserId = firebaseAuth.currentUser?.uid
+                        currentUserEmail = firebaseAuth.currentUser?.email ?: "anonymous@example.com"
                         Log.d("AUTH_TAG", "Firebase Anonymous Sign-In: SUCCESS, UID: $currentFirebaseUserId")
                         // ViewModel will handle the search automatically once initialized
                         if (currentAppScreen == AppScreen.MAIN_CONTENT && !hasLocationPermission()) {
@@ -1020,6 +1050,7 @@ class MainActivity : ComponentActivity() {
         } else {
             // User is already authenticated
             currentFirebaseUserId = firebaseAuth.currentUser?.uid
+            currentUserEmail = firebaseAuth.currentUser?.email ?: "anonymous@example.com"
             Log.d("AUTH_TAG", "User already authenticated: UID: $currentFirebaseUserId")
             // ViewModel will handle the search automatically once initialized
         }
@@ -1031,6 +1062,8 @@ class MainActivity : ComponentActivity() {
                 val lastLocation = locationResult.lastLocation
                 if (lastLocation != null) {
                     activityCurrentLocation = lastLocation
+                    // Update the LocationProvider singleton with the current location
+                    com.dawitf.akahidegn.location.LocationProvider.setUserLocation(lastLocation)
                     Log.d("LOCATION_TAG", "Location Updated: ${activityCurrentLocation?.latitude}, ${activityCurrentLocation?.longitude}")
                     // Location update will trigger ViewModel update via LaunchedEffect
                 }
@@ -1149,13 +1182,27 @@ class MainActivity : ComponentActivity() {
             }
             .addOnFailureListener { exception ->
                 Log.w("LOCATION_TAG", "Location settings are not satisfied", exception)
-                // Here you could show a dialog to the user to enable location services
-                lifecycleScope.launch {
-                    snackbarHostState.showSnackbar(
-                        "Please enable location services for better accuracy. Check your device settings."
-                    )
+                
+                if (exception is ResolvableApiException) {
+                    try {
+                        // For Activity - show the resolution dialog
+                        exception.startResolutionForResult(this@MainActivity, 
+                            REQUEST_CHECK_SETTINGS)
+                        Log.d("LOCATION_TAG", "Showing resolution dialog to user")
+                    } catch (sendEx: IntentSender.SendIntentException) {
+                        Log.e("LOCATION_TAG", "Error showing resolution dialog", sendEx)
+                        // Fallback
+                        onFailure()
+                    }
+                } else {
+                    // Show a message to the user
+                    lifecycleScope.launch {
+                        snackbarHostState.showSnackbar(
+                            "Please enable location services for better accuracy. Check your device settings."
+                        )
+                    }
+                    onFailure()
                 }
-                onFailure()
             }
     }
 
@@ -1173,6 +1220,38 @@ class MainActivity : ComponentActivity() {
                 // Optionally, if on main screen and permissions were previously denied, you might prompt again
                 // Be careful not to create annoying loops.
                 // if(currentAppScreen == AppScreen.MAIN_CONTENT) requestInitialPermissions()
+            }
+        }
+    }
+
+    @Deprecated("Deprecated in Java")
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        
+        when (requestCode) {
+            REQUEST_CHECK_SETTINGS -> {
+                if (resultCode == Activity.RESULT_OK) {
+                    // User agreed to location settings changes
+                    Log.d("LOCATION_TAG", "User enabled location settings, starting updates")
+                    startLocationUpdates()
+                } else {
+                    // User rejected the location settings changes
+                    Log.w("LOCATION_TAG", "User rejected location settings changes")
+                    // We'll still try with whatever settings we have
+                    val locationRequest = LocationRequest.Builder(Priority.PRIORITY_BALANCED_POWER_ACCURACY, 15000L)
+                        .setMinUpdateIntervalMillis(10000L)
+                        .build()
+                    
+                    try {
+                        fusedLocationClient.requestLocationUpdates(
+                            locationRequest, 
+                            locationCallback, 
+                            Looper.getMainLooper()
+                        )
+                    } catch (e: SecurityException) {
+                        Log.e("LOCATION_TAG", "SecurityException: ${e.message}")
+                    }
+                }
             }
         }
     }
@@ -1226,8 +1305,21 @@ class MainActivity : ComponentActivity() {
         val userId = currentFirebaseUserId
         if (userId != null) {
             try {
-                val userTokensRef = Firebase.database.getReference("user_fcm_tokens").child(userId)
-                userTokensRef.setValue(token)
+                // Store token in the users/{uid}/settings path which is allowed by security rules
+                val userSettingsRef = Firebase.database.getReference("users").child(userId)
+                
+                // First ensure the user profile exists (required by rules)
+                val userData = mapOf(
+                    "profile" to mapOf(
+                        "name" to (currentUserDisplayName ?: "Anonymous User"),
+                        "email" to (currentUserEmail ?: "anonymous@example.com")
+                    ),
+                    "settings" to mapOf(
+                        "fcmToken" to token
+                    )
+                )
+                
+                userSettingsRef.updateChildren(userData)
                     .addOnSuccessListener {
                         Log.d("FCM_TAG", "FCM token stored successfully for user: $userId")
                     }
@@ -1342,5 +1434,3 @@ class MainActivity : ComponentActivity() {
 
 // Helper extension function (should be top-level, outside the class)
 fun Double.format(digits: Int): String = "%.${digits}f".format(Locale.getDefault(), this)
-
-

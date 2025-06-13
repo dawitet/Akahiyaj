@@ -484,8 +484,7 @@ class UserProfileRepositoryImpl @Inject constructor(
     */
 
     private fun getCurrentUserId(): String? {
-        // TODO: Implement getting current user ID from Firebase Auth
-        return null
+        return auth.currentUser?.uid
     }
 
     private fun UserProfileUpdate.toMap(): Map<String, Any?> {

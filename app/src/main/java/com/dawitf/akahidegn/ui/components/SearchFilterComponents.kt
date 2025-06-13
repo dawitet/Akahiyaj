@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.*
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
+import com.dawitf.akahidegn.location.LocationProvider
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -115,7 +116,29 @@ fun filterGroups(groups: List<Group>, filters: SearchFilters): List<Group> {
     
     // Sort based on selected option
     filteredGroups = when (filters.sortOption) {
-        GroupSortOption.NEAREST -> filteredGroups.sortedBy { 0.0 } // TODO: implement distance calculation
+        GroupSortOption.NEAREST -> {
+            // Get the current location from the context - it will be provided externally by the caller
+            // For filtering, null userLocation will keep original order
+            val userLocation = LocationProvider.getUserLocation()
+            
+            if (userLocation != null) {
+                filteredGroups.sortedBy { group ->
+                    // Calculate distance if group has location data
+                    if (group.pickupLat != null && group.pickupLng != null) {
+                        com.dawitf.akahidegn.util.LocationUtils.calculateDistance(
+                            userLocation.latitude, userLocation.longitude,
+                            group.pickupLat!!, group.pickupLng!!
+                        )
+                    } else {
+                        // Groups without location data go to the end
+                        Double.MAX_VALUE
+                    }
+                }
+            } else {
+                // If user location not available, don't change order
+                filteredGroups
+            }
+        }
         GroupSortOption.DEPARTURE_TIME -> {
             val currentTime = System.currentTimeMillis()
             filteredGroups.sortedBy { group ->
