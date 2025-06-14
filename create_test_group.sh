@@ -6,7 +6,7 @@
 ADB="/Users/dawitsahle/Library/Android/sdk/platform-tools/adb"
 GROUP_ID=$(date +%s)
 DESTINATION="Test Destination"
-USER_UID="test_user"
+USER_UID=$(firebase auth:export --project akahidegn-79376 users --format=json | grep -o '"localId": "[^"]*"' | head -1 | cut -d'"' -f4 || echo "test_user")
 
 echo "Creating a test group with ID: $GROUP_ID"
 echo "Using user ID: $USER_UID"
