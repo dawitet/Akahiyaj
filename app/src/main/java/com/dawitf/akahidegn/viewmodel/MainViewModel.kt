@@ -7,9 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.paging.PagingData
 import androidx.paging.cachedIn
-import com.dawitf.akahidegn.ChatMessage
 import com.dawitf.akahidegn.Group
-import com.dawitf.akahidegn.domain.repository.ChatRepository
 import com.dawitf.akahidegn.domain.repository.GroupRepository
 import com.google.firebase.database.*
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -37,8 +35,7 @@ import javax.inject.Inject
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val groupRepository: GroupRepository,
-    private val chatRepository: ChatRepository
+    private val groupRepository: GroupRepository
 ) : ViewModel() {
 
     // State flows for UI state
@@ -61,21 +58,15 @@ class MainViewModel @Inject constructor(
     private val _currentLocation = MutableStateFlow<Location?>(null)
     val currentLocation: StateFlow<Location?> = _currentLocation.asStateFlow()
 
-    private val _chatMessages = MutableStateFlow<List<ChatMessage>>(emptyList())
-    val chatMessages: StateFlow<List<ChatMessage>> = _chatMessages.asStateFlow()
-
     private val _selectedGroup = MutableStateFlow<Group?>(null)
     val selectedGroup: StateFlow<Group?> = _selectedGroup.asStateFlow()
 
     // Firebase references
     private lateinit var activeGroupsRef: DatabaseReference
-    private lateinit var groupChatsRef: DatabaseReference
     
     // Current search parameters
     private var currentSearchRadiusMeters = 1000
     private var currentFirebaseUserId: String? = null
-    private var chatValueEventListener: ValueEventListener? = null
-    private var currentChatGroupId: String? = null
 
     // Advanced caching and performance optimization
     private val groupsCache = mutableMapOf<String, Group>()
@@ -85,7 +76,6 @@ class MainViewModel @Inject constructor(
     
     // Memory optimization: Limit cache sizes
     private val MAX_GROUPS_CACHE_SIZE = 200
-    private val MAX_CHAT_MESSAGES_SIZE = 100
     private val MAX_RECENT_SEARCHES_SIZE = 20
 
     // Background dispatcher for heavy operations
@@ -307,101 +297,10 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Attach chat listener for real-time messages with user display name
-     */
-    fun attachChatListener(groupId: String, currentUserDisplayName: String) {
-        if (currentChatGroupId == groupId) return // Already listening
-
-        detachChatListener(currentChatGroupId) // Clean up previous listener
-        currentChatGroupId = groupId
-
-        chatValueEventListener = object : ValueEventListener {
-            override fun onDataChange(snapshot: DataSnapshot) {
-                viewModelScope.launch(Dispatchers.Default) {
-                    val messages = mutableListOf<ChatMessage>()
-                    for (messageSnapshot in snapshot.children) {
-                        val message = messageSnapshot.getValue(ChatMessage::class.java)
-                        message?.let { 
-                            // Set sender name if it's null but we know the current user
-                            if (it.senderName.isNullOrBlank() && it.senderId == currentFirebaseUserId) {
-                                it.senderName = currentUserDisplayName
-                            }
-                            messages.add(it)
-                        }
-                    }
-                    
-                    withContext(Dispatchers.Main) {
-                        _chatMessages.value = messages.sortedBy { it.timestamp }
-                    }
-                }
-            }
-
-            override fun onCancelled(error: DatabaseError) {
-                Log.e("MainViewModel", "Chat listener cancelled: ${error.message}")
-            }
-        }
-
-        groupChatsRef.child(groupId).child("messages")
-            .addValueEventListener(chatValueEventListener!!)
-    }
-
-    /**
-     * Detach chat listener with specific group ID
-     */
-    fun detachChatListener(groupId: String? = null) {
-        val targetGroupId = groupId ?: currentChatGroupId
-        chatValueEventListener?.let { listener ->
-            targetGroupId?.let { id ->
-                groupChatsRef.child(id).child("messages")
-                    .removeEventListener(listener)
-            }
-        }
-        if (groupId == null || groupId == currentChatGroupId) {
-            chatValueEventListener = null
-            currentChatGroupId = null
-            _chatMessages.value = emptyList()
-        }
-    }
-
-    /**
-     * Send a message to a group chat
-     */
-    fun sendMessage(groupId: String, messageText: String, senderId: String, senderName: String) {
-        if (messageText.isBlank()) return
-        
-        viewModelScope.launch(Dispatchers.IO) {
-            try {
-                val messageId = groupChatsRef.child(groupId).child("messages").push().key
-                if (messageId != null) {
-                    val chatMessage = ChatMessage(
-                        messageId = messageId,
-                        senderId = senderId,
-                        senderName = senderName,
-                        text = messageText.trim(),
-                        timestamp = System.currentTimeMillis()
-                    )
-                    
-                    groupChatsRef.child(groupId).child("messages").child(messageId)
-                        .setValue(chatMessage)
-                        .addOnSuccessListener {
-                            Log.d("MainViewModel", "Message sent successfully")
-                        }
-                        .addOnFailureListener { error ->
-                            Log.e("MainViewModel", "Failed to send message: ${error.message}")
-                        }
-                }
-            } catch (e: Exception) {
-                Log.e("MainViewModel", "Error sending message", e)
-            }
-        }
-    }
-
-    /**
      * Initialize Firebase references and user ID for the ViewModel
      */
-    fun initializeFirebase(activeGroupsRef: DatabaseReference, groupChatsRef: DatabaseReference, firebaseUserId: String) {
+    fun initializeFirebase(activeGroupsRef: DatabaseReference, firebaseUserId: String) {
         this.activeGroupsRef = activeGroupsRef
-        this.groupChatsRef = groupChatsRef
         this.currentFirebaseUserId = firebaseUserId
         Log.d("MainViewModel", "Firebase initialized with user ID: $firebaseUserId")
     }
@@ -436,13 +335,6 @@ class MainViewModel @Inject constructor(
             oldestEntries.forEach { groupsCache.remove(it.key) }
         }
         
-        // Limit chat messages
-        val currentMessages = _chatMessages.value
-        if (currentMessages.size > MAX_CHAT_MESSAGES_SIZE) {
-            val limitedMessages = currentMessages.takeLast(MAX_CHAT_MESSAGES_SIZE)
-            _chatMessages.value = limitedMessages
-        }
-        
         // Limit recent searches
         if (recentSearchesCache.size > MAX_RECENT_SEARCHES_SIZE) {
             val limitedSearches = recentSearchesCache.takeLast(MAX_RECENT_SEARCHES_SIZE)
@@ -451,7 +343,7 @@ class MainViewModel @Inject constructor(
             _recentSearches.value = limitedSearches.toList()
         }
         
-        Log.d("MainViewModel", "Memory cleanup completed. Cache sizes - Groups: ${groupsCache.size}, Messages: ${_chatMessages.value.size}, Searches: ${recentSearchesCache.size}")
+        Log.d("MainViewModel", "Memory cleanup completed. Cache sizes - Groups: ${groupsCache.size}, Searches: ${recentSearchesCache.size}")
     }
 
     /**
@@ -495,7 +387,6 @@ class MainViewModel @Inject constructor(
 
     override fun onCleared() {
         super.onCleared()
-        detachChatListener()
         groupsCache.clear()
     }
 }

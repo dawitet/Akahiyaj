@@ -1,7 +1,6 @@
 package com.dawitf.akahidegn.di
 
 import android.content.Context
-import com.dawitf.akahidegn.data.local.dao.ChatMessageDao
 import com.dawitf.akahidegn.data.local.dao.GroupDao
 import com.dawitf.akahidegn.data.local.dao.UserPreferencesDao
 import com.dawitf.akahidegn.data.local.database.AkahidegnDatabase
@@ -29,12 +28,6 @@ object DatabaseModule {
     @Singleton
     fun provideGroupDao(database: AkahidegnDatabase): GroupDao {
         return database.groupDao()
-    }
-
-    @Provides
-    @Singleton
-    fun provideChatMessageDao(database: AkahidegnDatabase): ChatMessageDao {
-        return database.chatMessageDao()
     }
 
     @Provides

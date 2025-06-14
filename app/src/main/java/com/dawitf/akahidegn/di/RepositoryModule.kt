@@ -1,13 +1,9 @@
 package com.dawitf.akahidegn.di
 
-import com.dawitf.akahidegn.data.remote.service.FirebaseChatService
 import com.dawitf.akahidegn.data.remote.service.FirebaseGroupService
-import com.dawitf.akahidegn.data.remote.service.impl.FirebaseChatServiceImpl
 import com.dawitf.akahidegn.data.remote.service.impl.FirebaseGroupServiceImpl
-import com.dawitf.akahidegn.data.repository.ChatRepositoryImpl
 import com.dawitf.akahidegn.data.repository.GroupRepositoryImpl
 import com.dawitf.akahidegn.data.repository.UserProfileRepositoryImpl
-import com.dawitf.akahidegn.domain.repository.ChatRepository
 import com.dawitf.akahidegn.domain.repository.GroupRepository
 import com.dawitf.akahidegn.domain.repository.UserProfileRepository
 // TODO: Uncomment when manager classes are implemented
@@ -37,12 +33,6 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindChatRepository(
-        chatRepositoryImpl: ChatRepositoryImpl
-    ): ChatRepository
-
-    @Binds
-    @Singleton
     abstract fun bindUserProfileRepository(
         userProfileRepositoryImpl: UserProfileRepositoryImpl
     ): UserProfileRepository
@@ -52,12 +42,6 @@ abstract class RepositoryModule {
     abstract fun bindFirebaseGroupService(
         firebaseGroupServiceImpl: FirebaseGroupServiceImpl
     ): FirebaseGroupService
-
-    @Binds
-    @Singleton
-    abstract fun bindFirebaseChatService(
-        firebaseChatServiceImpl: FirebaseChatServiceImpl
-    ): FirebaseChatService
 
     // TODO: Uncomment when these manager classes are implemented
     /*

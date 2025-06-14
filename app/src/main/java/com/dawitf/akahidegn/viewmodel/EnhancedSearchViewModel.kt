@@ -3,7 +3,6 @@ package com.dawitf.akahidegn.viewmodel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dawitf.akahidegn.domain.repository.GroupRepository
-import com.dawitf.akahidegn.domain.repository.ChatRepository
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -11,8 +10,7 @@ import javax.inject.Inject
 
 @HiltViewModel
 class EnhancedSearchViewModel @Inject constructor(
-    private val groupRepository: GroupRepository,
-    private val chatRepository: ChatRepository
+    private val groupRepository: GroupRepository
 ) : ViewModel() {
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()

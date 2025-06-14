@@ -7,23 +7,48 @@ import com.google.firebase.database.IgnoreExtraProperties
 
 @Stable
 @IgnoreExtraProperties
+data class MemberInfo(
+    var name: String = "",
+    var phone: String = "",
+    var avatar: String = "avatar_1",
+    var joinedAt: Long = System.currentTimeMillis()
+) {
+    constructor() : this("", "", "avatar_1", System.currentTimeMillis())
+}
+
+@Stable
+@IgnoreExtraProperties
 data class Group(
     @get:Exclude var groupId: String? = null,
     var creatorId: String? = null,
+    var creatorName: String? = null, // Added creator name field
     var creatorCloudflareId: String? = null,
     var destinationName: String? = null,
+    var originalDestination: String? = null, // Store original destination without time/creator info
     var pickupLat: Double? = null,
     var pickupLng: Double? = null,
     var timestamp: Long? = null,
     var maxMembers: Int = 4,
     var members: HashMap<String, Boolean> = HashMap(),
+    var memberDetails: HashMap<String, MemberInfo> = HashMap(), // Store member details including phone
     var memberCount: Int = 0,
     var imageUrl: String? = null // Added missing imageUrl field
 ) {
     constructor() : this(
-        null, null, null, null,
-        null, null, null, 4,
-        HashMap(), 0, null
+        groupId = null,
+        creatorId = null,
+        creatorName = null,
+        creatorCloudflareId = null,
+        destinationName = null,
+        originalDestination = null,
+        pickupLat = null,
+        pickupLng = null,
+        timestamp = null,
+        maxMembers = 4,
+        members = HashMap<String, Boolean>(),
+        memberDetails = HashMap<String, MemberInfo>(),
+        memberCount = 0,
+        imageUrl = null
     )
 
     @Exclude
@@ -48,12 +73,24 @@ data class Group(
         // SIMPLIFIED MEMBERS STRUCTURE - this works with our updated rules
         map["members"] = members.filter { it.value }.keys.associateWith { true }
         
+        // Store member details separately for phone access
+        map["memberDetails"] = memberDetails.mapValues { (_, memberInfo) ->
+            mapOf(
+                "name" to memberInfo.name,
+                "phone" to memberInfo.phone,
+                "avatar" to memberInfo.avatar,
+                "joinedAt" to memberInfo.joinedAt
+            )
+        }
+        
         // Additional fields - these are allowed by our rules
         map["pickupLat"] = pickupLat ?: 0.0
         map["pickupLng"] = pickupLng ?: 0.0
         map["maxMembers"] = maxMembers
         map["memberCount"] = memberCount
         map["imageUrl"] = imageUrl ?: ""
+        map["creatorName"] = creatorName ?: ""
+        map["originalDestination"] = originalDestination ?: destinationName ?: ""
         
         // Log validation fields to help diagnose rule failures
         Log.d("FIREBASE_DEBUG", "Security validation fields: id=${map["id"]}, createdBy=${map["createdBy"]}")

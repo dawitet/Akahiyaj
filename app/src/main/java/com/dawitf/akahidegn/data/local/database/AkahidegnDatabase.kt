@@ -12,7 +12,6 @@ import com.dawitf.akahidegn.data.local.entity.*
 @Database(
     entities = [
         GroupEntity::class, 
-        ChatMessageEntity::class,
         GroupEntityEnhanced::class,
         RecentSearchEntity::class,
         PopularDestinationEntity::class,
@@ -26,7 +25,6 @@ import com.dawitf.akahidegn.data.local.entity.*
 abstract class AkahidegnDatabase : RoomDatabase() {
     
     abstract fun groupDao(): GroupDao
-    abstract fun chatMessageDao(): ChatMessageDao
     abstract fun enhancedGroupDao(): EnhancedGroupDao
     abstract fun searchDao(): SearchDao
     abstract fun userPreferencesDao(): UserPreferencesDao

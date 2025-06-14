@@ -37,6 +37,53 @@
             ".validate": "true"
           }
         },
+        "memberDetails": {
+          "$uid": {
+            ".validate": "newData.hasChildren(['name', 'phone', 'avatar', 'joinedAt'])",
+            "name": {
+              ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
+            },
+            "phone": {
+              ".validate": "newData.isString() && newData.val().matches(/^[+]?[0-9\\s\\-\\(\\)]{10,20}$/)"
+            },
+            "avatar": {
+              ".validate": "newData.isString() && newData.val().matches(/^avatar_[1-8]$/)"
+            },
+            "joinedAt": {
+              ".validate": "newData.isNumber() && newData.val() <= now"
+            }
+          }
+        },
+        "creatorName": {
+          ".validate": "newData.isString() && newData.val().length <= 50"
+        },
+        "creatorCloudflareId": {
+          ".validate": "newData.isString()"
+        },
+        "destinationName": {
+          ".validate": "newData.isString()"
+        },
+        "originalDestination": {
+          ".validate": "newData.isString()"
+        },
+        "pickupLat": {
+          ".validate": "newData.isNumber() && newData.val() >= -90 && newData.val() <= 90"
+        },
+        "pickupLng": {
+          ".validate": "newData.isNumber() && newData.val() >= -180 && newData.val() <= 180"
+        },
+        "timestamp": {
+          ".validate": "newData.isNumber()"
+        },
+        "maxMembers": {
+          ".validate": "newData.isNumber() && newData.val() >= 2 && newData.val() <= 8"
+        },
+        "memberCount": {
+          ".validate": "newData.isNumber() && newData.val() >= 0"
+        },
+        "imageUrl": {
+          ".validate": "newData.isString()"
+        },
         "$other": {
           ".validate": "true"
         }
@@ -45,7 +92,23 @@
     "users": {
       "$uid": {
         ".read": "$uid == auth.uid",
-        ".write": "$uid == auth.uid"
+        ".write": "$uid == auth.uid",
+        ".validate": "newData.hasChildren(['name', 'phone', 'avatar'])",
+        "name": {
+          ".validate": "newData.isString() && newData.val().length > 0 && newData.val().length <= 50"
+        },
+        "phone": {
+          ".validate": "newData.isString() && newData.val().matches(/^[+]?[0-9\\s\\-\\(\\)]{10,20}$/)"
+        },
+        "avatar": {
+          ".validate": "newData.isString() && newData.val().matches(/^avatar_[1-8]$/)"
+        },
+        "registrationTime": {
+          ".validate": "newData.isNumber() && newData.val() <= now"
+        },
+        "lastActive": {
+          ".validate": "newData.isNumber() && newData.val() <= now"
+        }
       }
     },
     "user_fcm_tokens": {

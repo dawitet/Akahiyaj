@@ -59,7 +59,6 @@ fun MainScreen(
     onNavigateToSettings: () -> Unit,
     onNavigateToProfile: () -> Unit,
     onNavigateToBookmarks: () -> Unit,
-    onNavigateToChat: () -> Unit,
     onNavigateToNotifications: () -> Unit,
     onNavigateToHistory: () -> Unit,
     modifier: Modifier = Modifier
