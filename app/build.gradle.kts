@@ -18,8 +18,8 @@ android {
         applicationId = "com.dawitf.akahidegn"
         minSdk = 23
         targetSdk = 35
-        versionCode = 3
-        versionName = "1.1.0-compatible"
+        versionCode = 1
+        versionName = "1.0.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -53,19 +53,16 @@ android {
             isShrinkResources = false
             isDebuggable = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android-optimize.txt"),
+                getDefaultProguardFile("proguard-android.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
             manifestPlaceholders["crashlyticsCollectionEnabled"] = true
             
-            // Production optimizations
+            // Production optimizations - conservative approach
             ndk {
-                debugSymbolLevel = "FULL"
+                debugSymbolLevel = "SYMBOL_TABLE"
             }
-            
-            // Optimize R8 processing to reduce memory usage
-            kotlinOptions.freeCompilerArgs += listOf("-Xjvm-default=all")
         }
         
         // Staging variant removed to avoid Google Services configuration issues
@@ -155,7 +152,9 @@ dependencies {
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-perf-ktx")
     implementation("com.google.android.gms:play-services-location:21.1.0") // Latest stable version
-    implementation("com.google.android.gms:play-services-ads:22.6.0") // Updated
+    implementation("com.google.android.gms:play-services-maps:18.2.0") // Google Maps
+    implementation("com.google.maps.android:maps-compose:4.3.3") // Maps Compose
+    implementation("com.google.android.gms:play-services-ads:22.6.0") // Keep for interstitial and rewarded ads
     
     // Hilt for Dependency Injection - simplified for Ethiopian market
     implementation(libs.hilt.android)
@@ -202,6 +201,7 @@ dependencies {
     // Add dependencies for WorkManager testing
     testImplementation(libs.androidx.work.testing)
     testImplementation("androidx.test:core:1.6.1") // Updated
+    // Note: Using native Firestore geo-queries instead of GeoFirestore for simplicity
 }
 
 kapt {

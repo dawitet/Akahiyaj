@@ -42,9 +42,13 @@ data class GroupMember(
 fun GroupMembersDialog(
     group: Group,
     members: List<GroupMember>,
+    currentUserId: String,
     onDismiss: () -> Unit
 ) {
     val context = LocalContext.current
+    
+    // Check if current user has joined this group
+    val userHasJoined = group.members.containsKey(currentUserId)
 
     Dialog(
         onDismissRequest = onDismiss,
@@ -132,6 +136,7 @@ fun GroupMembersDialog(
                         items(members) { member ->
                             MemberCard(
                                 member = member,
+                                showPhoneNumber = userHasJoined,
                                 onPhoneClick = { phoneNumber ->
                                     // Create intent to dial phone number
                                     val intent = Intent(Intent.ACTION_DIAL).apply {
@@ -151,6 +156,7 @@ fun GroupMembersDialog(
 @Composable
 private fun MemberCard(
     member: GroupMember,
+    showPhoneNumber: Boolean = false,
     onPhoneClick: (String) -> Unit
 ) {
     Card(
@@ -226,7 +232,7 @@ private fun MemberCard(
                 Spacer(modifier = Modifier.height(4.dp))
                 
                 Text(
-                    text = member.phone,
+                    text = if (showPhoneNumber) member.phone else "***-***-****",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
                 )
@@ -241,20 +247,39 @@ private fun MemberCard(
                 }
             }
             
-            // Phone button
-            IconButton(
-                onClick = { onPhoneClick(member.phone) },
-                modifier = Modifier
-                    .background(
-                        color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
-                        shape = CircleShape
+            // Phone button (only show if user has joined)
+            if (showPhoneNumber) {
+                IconButton(
+                    onClick = { onPhoneClick(member.phone) },
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.primary.copy(alpha = 0.1f),
+                            shape = CircleShape
+                        )
+                ) {
+                    Icon(
+                        Icons.Default.Phone,
+                        contentDescription = "Call ${member.name}",
+                        tint = MaterialTheme.colorScheme.primary
                     )
-            ) {
-                Icon(
-                    Icons.Default.Phone,
-                    contentDescription = "Call ${member.name}",
-                    tint = MaterialTheme.colorScheme.primary
-                )
+                }
+            } else {
+                // Show placeholder for locked phone access
+                IconButton(
+                    onClick = { /* Do nothing - phone locked */ },
+                    enabled = false,
+                    modifier = Modifier
+                        .background(
+                            color = MaterialTheme.colorScheme.outline.copy(alpha = 0.1f),
+                            shape = CircleShape
+                        )
+                ) {
+                    Icon(
+                        Icons.Default.Phone,
+                        contentDescription = "Join group to see phone",
+                        tint = MaterialTheme.colorScheme.outline
+                    )
+                }
             }
         }
     }

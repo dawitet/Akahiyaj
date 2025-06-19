@@ -1,7 +1,7 @@
 package com.dawitf.akahidegn.worker
 
 import android.content.Context
-import android.util.Log
+import com.dawitf.akahidegn.utils.AppLog
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
@@ -26,22 +26,22 @@ class GroupCleanupWorker @AssistedInject constructor(
     }
 
     override suspend fun doWork(): androidx.work.ListenableWorker.Result {
-        Log.d(TAG, "Starting group cleanup task")
+        AppLog.d(TAG, "Starting group cleanup task")
         
         return try {
             when (val cleanupResult = groupRepository.cleanupExpiredGroups()) {
                 is com.dawitf.akahidegn.core.result.Result.Success -> {
                     val deletedCount = cleanupResult.data
-                    Log.d(TAG, "Successfully cleaned up $deletedCount expired groups")
+                    AppLog.d(TAG, "Successfully cleaned up $deletedCount expired groups")
                     androidx.work.ListenableWorker.Result.success()
                 }
                 is com.dawitf.akahidegn.core.result.Result.Error -> {
-                    Log.e(TAG, "Failed to cleanup expired groups: ${cleanupResult.error}")
+                    AppLog.e(TAG, "Failed to cleanup expired groups: ${cleanupResult.error}")
                     androidx.work.ListenableWorker.Result.retry()
                 }
             }
         } catch (e: Exception) {
-            Log.e(TAG, "Group cleanup failed with exception", e)
+            AppLog.e(TAG, "Group cleanup failed with exception", e)
             androidx.work.ListenableWorker.Result.retry()
         }
     }

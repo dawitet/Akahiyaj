@@ -5,7 +5,6 @@
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/> <!-- Added for Android 13+ notifications -->
 
 
@@ -41,7 +40,7 @@
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" /> <!-- Replace with your actual AdMob App ID for production -->
+            android:value="pub-3787918879230745" />
 
         <!-- Fix manifest merger conflict between AdMob and Google Analytics -->
         <property
@@ -60,6 +59,11 @@
                 android:value="androidx.startup"
                 tools:node="remove" />
         </provider>
+
+        <!-- Google Maps API Key -->
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyA-04oS-c5FmfZ-DekJqdBl_GTnW4b_yAo" />
 
         <!-- Debug receiver for testing Firebase security rules -->
         <receiver

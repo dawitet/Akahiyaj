@@ -65,7 +65,9 @@ class MainViewModel @Inject constructor(
     private lateinit var activeGroupsRef: DatabaseReference
     
     // Current search parameters
-    private var currentSearchRadiusMeters = 1000
+    // Search configuration - 500 meter radius for location-based filtering
+    private val searchRadiusMeters = 500.0
+    private val maxRetries = 3
     private var currentFirebaseUserId: String? = null
 
     // Advanced caching and performance optimization
@@ -87,7 +89,6 @@ class MainViewModel @Inject constructor(
     val errorState: StateFlow<String?> = _errorState.asStateFlow()
     
     private var retryCount = 0
-    private val maxRetries = 3
     private val baseRetryDelayMs = 1000L
     
     init {
@@ -154,12 +155,12 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Update current location and trigger nearby groups search if needed
+     * Update current location and trigger nearby groups search
      */
     fun updateLocation(location: Location?) {
         _currentLocation.value = location
-        // Only trigger search if we have a location and we're not currently searching
-        if (location != null && !_isLoadingGroups.value && currentFirebaseUserId != null) {
+        // Trigger search when location is available
+        if (location != null && currentFirebaseUserId != null) {
             viewModelScope.launch {
                 performGroupsSearch(_searchQuery.value.trim().takeIf { it.isNotBlank() })
             }
@@ -176,7 +177,8 @@ class MainViewModel @Inject constructor(
         }
 
         // Check if we have cached results for this search
-        val cacheKey = "${destinationFilter ?: "all"}_${_currentLocation.value?.let { "${it.latitude}_${it.longitude}" } ?: "no_location"}"
+        val userLoc = _currentLocation.value
+        val cacheKey = "${destinationFilter ?: "all"}_${userLoc?.let { "${it.latitude}_${it.longitude}" } ?: "no_location"}"
         val lastSearchTime = lastSearchTimestamp[cacheKey] ?: 0
         val currentTime = System.currentTimeMillis()
         
@@ -213,7 +215,7 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Process groups data on background thread with optimized caching and filtering
+     * Process groups data on background thread with 500m location filtering
      */
     private suspend fun processGroupsData(snapshot: DataSnapshot, destinationFilter: String?, cacheKey: String) {
         val newGroupsList = mutableListOf<Group>()
@@ -249,34 +251,62 @@ class MainViewModel @Inject constructor(
         withContext(Dispatchers.Main) {
             _groups.value = sortedList
             _isLoadingGroups.value = false
-            Log.d("MainViewModel", "Updated groups list with ${sortedList.size} groups")
+            Log.d("MainViewModel", "Updated groups list with ${sortedList.size} groups within 500m")
         }
     }
 
     /**
-     * Check if group passes all filters
+     * Check if group passes filters - Location (500m) + expiry (30 minutes) + destination search
      */
     private fun passesFilters(group: Group, destinationFilter: String?, userLocation: Location?): Boolean {
+        // Location filter - 500 meter radius
+        if (userLocation != null && group.pickupLat != null && group.pickupLng != null) {
+            val distance = calculateDistance(
+                userLocation.latitude, userLocation.longitude,
+                group.pickupLat!!, group.pickupLng!!
+            )
+            if (distance > searchRadiusMeters) {
+                Log.d("MainViewModel", "Group '${group.originalDestination}' filtered out - ${distance.toInt()}m away")
+                return false
+            }
+        } else if (userLocation == null) {
+            // No user location available - don't show any groups
+            return false
+        }
+
         // Destination filter
         destinationFilter?.let { filter ->
-            if (group.destinationName?.contains(filter, ignoreCase = true) != true) {
+            val searchableDestination = group.originalDestination ?: group.destinationName
+            if (searchableDestination?.contains(filter, ignoreCase = true) != true) {
                 return false
             }
         }
 
-        // Proximity filter
-        if (userLocation != null && group.pickupLat != null && group.pickupLng != null) {
-            val groupLocation = Location("group").apply {
-                latitude = group.pickupLat!!
-                longitude = group.pickupLng!!
-            }
-            val distance = userLocation.distanceTo(groupLocation)
-            if (distance > currentSearchRadiusMeters) {
-                return false
-            }
+        // Only check if group is not expired (30 minutes)
+        val thirtyMinutesAgo = System.currentTimeMillis() - (30 * 60 * 1000L)
+        if (group.timestamp != null && group.timestamp!! <= thirtyMinutesAgo) {
+            Log.d("MainViewModel", "Group '${group.originalDestination}' filtered out - expired")
+            return false
         }
 
+        Log.d("MainViewModel", "Group '${group.originalDestination}' included - active and nearby")
         return true
+    }
+
+    /**
+     * Calculate straight-line distance between two points (Euclidean distance)
+     * Fast and sufficient for short distances like 500m
+     */
+    private fun calculateDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
+        val earthRadius = 6371000.0 // Earth radius in meters
+        val dLat = Math.toRadians(lat2 - lat1)
+        val dLng = Math.toRadians(lng2 - lng1)
+        
+        // Convert to meters using simple approximation for short distances
+        val deltaX = dLng * earthRadius * Math.cos(Math.toRadians((lat1 + lat2) / 2))
+        val deltaY = dLat * earthRadius
+        
+        return Math.sqrt(deltaX * deltaX + deltaY * deltaY)
     }
 
     /**

@@ -20,7 +20,7 @@ import com.google.android.gms.ads.AdView
 @Composable
 fun CarouselBannerAd(
     modifier: Modifier = Modifier,
-    adUnitId: String = "ca-app-pub-3940256099942544/6300978111" // Test ad unit ID
+    adUnitId: String = "pub-3787918879230745"
 ) {
     val context = LocalContext.current
     
@@ -80,5 +80,37 @@ fun CarouselPlaceholderAd(
                 textAlign = TextAlign.Center
             )
         }
+    }
+}
+
+@Composable
+fun FullWidthBannerAd(
+    modifier: Modifier = Modifier,
+    adUnitId: String = "pub-3787918879230745"
+) {
+    val context = LocalContext.current
+    
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .height(100.dp), // Standard banner height
+        shape = RoundedCornerShape(12.dp),
+        elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.7f)
+        )
+    ) {
+        AndroidView(
+            factory = { context ->
+                AdView(context).apply {
+                    setAdSize(AdSize.BANNER) // Standard banner size (320x50)
+                    this.adUnitId = adUnitId
+                    loadAd(AdRequest.Builder().build())
+                }
+            },
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(8.dp)
+        )
     }
 }

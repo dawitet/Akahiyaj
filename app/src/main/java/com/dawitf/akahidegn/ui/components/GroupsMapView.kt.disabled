@@ -1,0 +1,258 @@
+package com.dawitf.akahidegn.ui.components
+
+import android.location.Location
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material3.*
+import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.dawitf.akahidegn.Group
+import com.google.android.gms.maps.CameraUpdateFactory
+import com.google.android.gms.maps.model.CameraPosition
+import com.google.android.gms.maps.model.LatLng
+import com.google.maps.android.compose.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.clickable
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.LocationOn
+import androidx.compose.material.icons.filled.People
+
+@Composable
+fun GroupsMapView(
+    groups: List<Group>,
+    userLocation: Location?,
+    onGroupClick: (Group) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showMapError by remember { mutableStateOf(false) }
+    
+    if (userLocation == null) {
+        // Show location permission message in Amharic
+        Box(
+            modifier = modifier.fillMaxSize(),
+            contentAlignment = Alignment.Center
+        ) {
+            Card(
+                modifier = Modifier.padding(24.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.errorContainer)
+            ) {
+                Column(
+                    modifier = Modifier.padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = "በአቅራቢያዎ ያሉ ግሩፖችን ለማየት አካባቢዎን እንዲያይ መፍቀድ አለብዎ",
+                        style = MaterialTheme.typography.bodyLarge,
+                        textAlign = TextAlign.Center,
+                        fontWeight = FontWeight.Medium,
+                        color = MaterialTheme.colorScheme.onErrorContainer
+                    )
+                }
+            }
+        }
+    } else if (showMapError || groups.isEmpty()) {
+        // Fallback: Show simple list when Maps fails or no groups
+        Column(modifier = modifier.fillMaxSize()) {
+            if (groups.isEmpty()) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Card(
+                        modifier = Modifier.padding(24.dp),
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surfaceVariant)
+                    ) {
+                        Column(
+                            modifier = Modifier.padding(24.dp),
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Icon(
+                                Icons.Default.People,
+                                contentDescription = null,
+                                modifier = Modifier.size(48.dp),
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "በአቅራቢያዎ ምንም ቡድን አልተገኘም",
+                                style = MaterialTheme.typography.bodyLarge,
+                                textAlign = TextAlign.Center,
+                                fontWeight = FontWeight.Medium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
+                            )
+                        }
+                    }
+                }
+            } else {
+                // Simple list view as fallback
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(16.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                ) {
+                    items(groups) { group ->
+                        Card(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .clickable { onGroupClick(group) },
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
+                                Row(
+                                    modifier = Modifier.fillMaxWidth(),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = group.originalDestination ?: group.destinationName ?: "Unknown",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold
+                                    )
+                                    Text(
+                                        text = "${group.memberCount}/${group.maxMembers}",
+                                        style = MaterialTheme.typography.bodyMedium,
+                                        color = MaterialTheme.colorScheme.primary
+                                    )
+                                }
+                                if (group.pickupLat != null && group.pickupLng != null) {
+                                    Row(
+                                        verticalAlignment = Alignment.CenterVertically,
+                                        modifier = Modifier.padding(top = 4.dp)
+                                    ) {
+                                        Icon(
+                                            Icons.Default.LocationOn,
+                                            contentDescription = null,
+                                            modifier = Modifier.size(16.dp),
+                                            tint = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = "${group.pickupLat!!.format(4)}, ${group.pickupLng!!.format(4)}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                                        )
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // Try to show Google Maps
+        try {
+            GoogleMapsView(
+                groups = groups,
+                userLocation = userLocation,
+                onGroupClick = onGroupClick,
+                onError = { showMapError = true },
+                modifier = modifier
+            )
+        } catch (e: Exception) {
+            showMapError = true
+        }
+    }
+}
+
+@Composable
+private fun GoogleMapsView(
+    groups: List<Group>,
+    userLocation: Location,
+    onGroupClick: (Group) -> Unit,
+    onError: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val currentLocation = LatLng(userLocation.latitude, userLocation.longitude)
+    
+    val cameraPositionState = rememberCameraPositionState {
+        position = CameraPosition.fromLatLngZoom(currentLocation, 15f)
+    }
+
+    // Update camera when user location changes
+    LaunchedEffect(userLocation) {
+        val newLocation = LatLng(userLocation.latitude, userLocation.longitude)
+        try {
+            cameraPositionState.animate(
+                CameraUpdateFactory.newLatLngZoom(newLocation, 15f),
+                1000
+            )
+        } catch (e: Exception) {
+            onError()
+        }
+    }
+
+    try {
+        GoogleMap(
+            modifier = modifier.fillMaxSize(),
+            cameraPositionState = cameraPositionState,
+            uiSettings = MapUiSettings(
+                zoomControlsEnabled = false,
+                compassEnabled = true,
+                myLocationButtonEnabled = true
+            ),
+            properties = MapProperties(
+                isMyLocationEnabled = true,
+                maxZoomPreference = 18f,
+                minZoomPreference = 12f
+            )
+        ) {
+            // Add markers for each group
+            groups.forEach { group ->
+                if (group.pickupLat != null && group.pickupLng != null) {
+                    val groupPosition = LatLng(group.pickupLat!!, group.pickupLng!!)
+                    
+                    MarkerInfoWindow(
+                        state = MarkerState(position = groupPosition),
+                        title = group.originalDestination ?: group.destinationName ?: "Group",
+                        snippet = "${group.memberCount}/${group.maxMembers} members",
+                        onClick = {
+                            onGroupClick(group)
+                            true
+                        }
+                    ) { marker ->
+                        // Custom info window
+                        Card(
+                            shape = RoundedCornerShape(8.dp),
+                            colors = CardDefaults.cardColors(
+                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                            ),
+                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp)
+                        ) {
+                            Column(
+                                modifier = Modifier.padding(12.dp),
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    text = marker.title ?: "",
+                                    style = MaterialTheme.typography.labelMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                                Text(
+                                    text = marker.snippet ?: "",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } catch (e: Exception) {
+        onError()
+    }
+}
+
+// Extension function for formatting coordinates
+private fun Double.format(digits: Int) = "%.${digits}f".format(this)

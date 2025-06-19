@@ -34,12 +34,12 @@ import com.dawitf.akahidegn.ui.components.gradientBackground
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun RideGroupCard(group: Group, onClick: () -> Unit) {
+fun RideGroupCard(group: Group, onJoinGroup: () -> Unit) {
     val context = LocalContext.current
     
     // Cache computed values
-    val destinationText = remember(group.destinationName) {
-        group.destinationName ?: "Unknown Destination"
+    val destinationText = remember(group.originalDestination, group.destinationName) {
+        group.originalDestination ?: group.destinationName ?: "Unknown Destination"
     }
     
     val spotsText = remember(group.memberCount, group.maxMembers) {
@@ -74,10 +74,9 @@ fun RideGroupCard(group: Group, onClick: () -> Unit) {
     )
     
     Card(
-        onClick = onClick,
         modifier = Modifier
-            .width(160.dp)
-            .height(200.dp)
+            .fillMaxWidth()
+            .height(120.dp)
             .glassCard(alpha = 0.1f),
         shape = RoundedCornerShape(20.dp),
         elevation = CardDefaults.cardElevation(defaultElevation = 8.dp),
@@ -104,138 +103,119 @@ fun RideGroupCard(group: Group, onClick: () -> Unit) {
                 )
             }
             
-            Column(
+            Row(
                 modifier = Modifier
                     .fillMaxSize()
                     .padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
             ) {
-                // Header section with status
+                // Left section with avatar and destination
                 Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.SpaceBetween,
-                    verticalAlignment = Alignment.CenterVertically
+                    horizontalArrangement = Arrangement.spacedBy(12.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    modifier = Modifier.weight(1f)
                 ) {
-                    // Status badge
-                    Surface(
-                        shape = RoundedCornerShape(12.dp),
-                        color = statusColor.copy(alpha = 0.2f),
-                        modifier = Modifier.padding(2.dp)
+                    // Avatar with enhanced styling
+                    Box(
+                        contentAlignment = Alignment.Center
+                    ) {
+                        LazyImageLoader(
+                            imageUrl = group.imageUrl,
+                            fallbackAvatarId = group.id,
+                            isGroupAvatar = true,
+                            contentDescription = "አንድ ሰው",
+                            modifier = Modifier
+                                .size(50.dp)
+                                .clip(CircleShape)
+                                .border(
+                                    width = 2.dp,
+                                    brush = Brush.linearGradient(
+                                        colors = listOf(
+                                            MaterialTheme.colorScheme.primary,
+                                            MaterialTheme.colorScheme.secondary
+                                        )
+                                    ),
+                                    shape = CircleShape
+                                )
+                        )
+                        
+                        // Online indicator
+                        Surface(
+                            modifier = Modifier
+                                .size(12.dp)
+                                .align(Alignment.BottomEnd),
+                            shape = CircleShape,
+                            color = Color.Green,
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.surface)
+                        ) {}
+                    }
+                    
+                    // Destination and details
+                    Column(
+                        verticalArrangement = Arrangement.spacedBy(4.dp)
                     ) {
                         Text(
-                            text = statusText,
-                            style = MaterialTheme.typography.labelSmall.copy(
+                            text = destinationText,
+                            style = MaterialTheme.typography.titleMedium.copy(
                                 fontWeight = FontWeight.Bold,
-                                fontSize = 10.sp
+                                letterSpacing = 0.3.sp
                             ),
-                            color = statusColor,
-                            modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp)
+                            color = MaterialTheme.colorScheme.onSurface,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis
                         )
-                    }
-                    
-                    // Capacity indicator icon
-                    Icon(
-                        imageVector = when {
-                            capacityPercentage >= 1.0f -> Icons.Default.Block
-                            capacityPercentage >= 0.8f -> Icons.Default.Warning
-                            else -> Icons.Default.CheckCircle
-                        },
-                        contentDescription = "Status",
-                        tint = statusColor,
-                        modifier = Modifier.size(16.dp)
-                    )
-                }
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Avatar with enhanced styling
-                Box(
-                    modifier = Modifier.align(Alignment.CenterHorizontally),
-                    contentAlignment = Alignment.Center
-                ) {
-                    LazyImageLoader(
-                        imageUrl = group.imageUrl,
-                        fallbackAvatarId = group.id,
-                        isGroupAvatar = true,
-                        contentDescription = "አንድ ሰው",
-                        modifier = Modifier
-                            .size(60.dp)
-                            .clip(CircleShape)
-                            .border(
-                                width = 3.dp,
-                                brush = Brush.linearGradient(
-                                    colors = listOf(
-                                        MaterialTheme.colorScheme.primary,
-                                        MaterialTheme.colorScheme.secondary
-                                    )
-                                ),
-                                shape = CircleShape
+                        
+                        Row(
+                            horizontalArrangement = Arrangement.spacedBy(8.dp),
+                            verticalAlignment = Alignment.CenterVertically
+                        ) {
+                            // Status badge
+                            Surface(
+                                shape = RoundedCornerShape(8.dp),
+                                color = statusColor.copy(alpha = 0.2f)
+                            ) {
+                                Text(
+                                    text = statusText,
+                                    style = MaterialTheme.typography.labelSmall.copy(
+                                        fontWeight = FontWeight.Bold,
+                                        fontSize = 10.sp
+                                    ),
+                                    color = statusColor,
+                                    modifier = Modifier.padding(horizontal = 6.dp, vertical = 2.dp)
+                                )
+                            }
+                            
+                            // Member count
+                            Text(
+                                text = spotsText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant
                             )
-                    )
-                    
-                    // Online indicator
-                    Surface(
-                        modifier = Modifier
-                            .size(16.dp)
-                            .align(Alignment.BottomEnd),
-                        shape = CircleShape,
-                        color = Color.Green,
-                        border = BorderStroke(2.dp, MaterialTheme.colorScheme.surface)
-                    ) {}
+                        }
+                    }
                 }
                 
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                // Destination with enhanced typography
-                Text(
-                    text = destinationText,
-                    style = MaterialTheme.typography.titleSmall.copy(
-                        fontWeight = FontWeight.Bold,
-                        letterSpacing = 0.3.sp
+                // Right section with join button
+                Button(
+                    onClick = onJoinGroup,
+                    enabled = capacityPercentage < 1.0f,
+                    modifier = Modifier.padding(start = 8.dp),
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = MaterialTheme.colorScheme.primary,
+                        disabledContainerColor = MaterialTheme.colorScheme.surfaceVariant
                     ),
-                    color = MaterialTheme.colorScheme.onSurface,
-                    textAlign = TextAlign.Center,
-                    maxLines = 2,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.fillMaxWidth()
-                )
-                
-                Spacer(modifier = Modifier.height(8.dp))
-                
-                // Capacity progress bar
-                Column {
-                    Row(
-                        modifier = Modifier.fillMaxWidth(),
-                        horizontalArrangement = Arrangement.SpaceBetween,
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Text(
-                            text = spotsText,
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Medium
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                        Text(
-                            text = "${(capacityPercentage * 100).toInt()}%",
-                            style = MaterialTheme.typography.bodySmall.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = statusColor
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(4.dp))
-                    
-                    // Animated progress bar
-                    LinearProgressIndicator(
-                        progress = { capacityPercentage },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(6.dp)
-                            .clip(RoundedCornerShape(3.dp)),
-                        color = statusColor,
-                        trackColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.3f)
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text(
+                        text = if (capacityPercentage >= 1.0f) "ሙሉ" else "ተቀላቀል",
+                        style = MaterialTheme.typography.labelMedium.copy(
+                            fontWeight = FontWeight.Bold
+                        ),
+                        color = if (capacityPercentage >= 1.0f) 
+                            MaterialTheme.colorScheme.onSurfaceVariant 
+                        else 
+                            MaterialTheme.colorScheme.onPrimary
                     )
                 }
             }

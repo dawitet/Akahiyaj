@@ -12,11 +12,14 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -25,9 +28,13 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.ImeAction
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
@@ -37,17 +44,23 @@ import com.dawitf.akahidegn.ui.components.EmptyStateComponent
 import com.dawitf.akahidegn.ui.components.SearchFilters
 import com.dawitf.akahidegn.ui.components.EnhancedPullToRefresh
 import com.dawitf.akahidegn.ui.components.ShimmerGroupList
-import com.dawitf.akahidegn.ui.components.CarouselPlaceholderAd
-import com.dawitf.akahidegn.ui.components.CarouselBannerAd
 import com.dawitf.akahidegn.ui.components.glassmorphism
 import com.dawitf.akahidegn.ui.components.glassCard
 import com.dawitf.akahidegn.ui.components.gradientBackground
 import com.dawitf.akahidegn.ui.components.SuccessAnimationCard
+import com.dawitf.akahidegn.ui.components.GroupsNativeMapView
+import com.dawitf.akahidegn.ui.components.LocationHistoryBox
+import com.dawitf.akahidegn.ui.components.filterGroups
+import android.location.Location
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dawitf.akahidegn.ui.viewmodel.GroupsMapViewModel
+import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun MainScreen(
     groups: List<Group>,
+    userLocation: Location?,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     selectedFilters: SearchFilters,
@@ -65,10 +78,50 @@ fun MainScreen(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val hapticFeedback = LocalHapticFeedback.current
+    val focusManager = LocalFocusManager.current
     var isRefreshing by remember { mutableStateOf(false) }
     var showSuccessAnimation by remember { mutableStateOf(false) }
     var fabScale by remember { mutableStateOf(1f) }
     val infiniteTransition = rememberInfiniteTransition(label = "background_animation")
+    
+    // Initialize ViewModel for Firestore groups
+    val groupsMapViewModel: GroupsMapViewModel = viewModel()
+    val firestoreGroups by groupsMapViewModel.groups.collectAsState()
+    
+    // Use Firestore groups if available, otherwise fallback to passed groups
+    val displayGroups = if (firestoreGroups.isNotEmpty()) firestoreGroups else groups
+    
+    // Apply search and filters to displayed groups
+    val filteredGroups = remember(displayGroups, searchQuery, selectedFilters) {
+        val groupsWithSearch = if (searchQuery.isNotBlank()) {
+            displayGroups.filter { group ->
+                group.destinationName?.contains(searchQuery, ignoreCase = true) == true ||
+                group.originalDestination?.contains(searchQuery, ignoreCase = true) == true ||
+                group.creatorId?.contains(searchQuery, ignoreCase = true) == true
+            }
+        } else {
+            displayGroups
+        }
+        
+        // Apply additional filters
+        filterGroups(groupsWithSearch, selectedFilters)
+    }
+    
+    // Check for recent groups (created in last 30 minutes)
+    val recentGroups = remember(filteredGroups) {
+        val thirtyMinutesAgo = System.currentTimeMillis() - (30 * 60 * 1000)
+        filteredGroups.filter { group ->
+            (group.timestamp ?: 0) > thirtyMinutesAgo
+        }
+    }
+    
+    // Load groups on launch and when user location changes
+    LaunchedEffect(userLocation) {
+        // Use location-based filtering if user location is available
+        userLocation?.let {
+            groupsMapViewModel.loadNearbyGroups(it.latitude, it.longitude, 500.0) // 500m radius
+        } ?: groupsMapViewModel.loadAllGroups()
+    }
     
     // Animated gradient background
     val backgroundOffset by infiniteTransition.animateFloat(
@@ -84,7 +137,13 @@ fun MainScreen(
     suspend fun handleRefresh() {
         isRefreshing = true
         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+        
+        // Refresh both the passed groups and ViewModel groups
         onRefreshGroups()
+        
+        // Also refresh the GroupsMapViewModel data
+        groupsMapViewModel.refreshGroups()
+        
         isRefreshing = false
         showSuccessAnimation = true
     }
@@ -153,51 +212,6 @@ fun MainScreen(
                     ),
                     modifier = Modifier.glassmorphism(blurRadius = 8.dp, alpha = 0.1f)
                 )
-            },
-            floatingActionButton = {
-                // Enhanced FAB with animations and micro-interactions
-                FloatingActionButton(
-                    onClick = {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onCreateGroup()
-                    },
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .scale(fabAnimatedScale)
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onPress = {
-                                    fabScale = 0.95f
-                                    tryAwaitRelease()
-                                    fabScale = 1f
-                                }
-                            )
-                        },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 8.dp,
-                        pressedElevation = 12.dp
-                    )
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Add, 
-                            contentDescription = "Create Group",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Text(
-                            "ቡድን ፍጠር",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
-                }
             },
             containerColor = Color.Transparent
         ) { innerPadding ->
@@ -299,6 +313,18 @@ fun MainScreen(
                                         }
                                     }
                                 },
+                                keyboardOptions = KeyboardOptions(
+                                    imeAction = ImeAction.Search,
+                                    keyboardType = KeyboardType.Text
+                                ),
+                                keyboardActions = KeyboardActions(
+                                    onSearch = {
+                                        // Trigger search when Enter is pressed
+                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                        // Clear focus to hide keyboard
+                                        focusManager.clearFocus()
+                                    }
+                                ),
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(12.dp),
@@ -319,12 +345,21 @@ fun MainScreen(
                         }
                     }
                     
+                    Spacer(modifier = Modifier.height(16.dp))
+                    
+                    // Location History Box (replacing AvailableGroupsBox)
+                    LocationHistoryBox(
+                        userCreatedGroups = recentGroups.filter { it.creatorId == "current_user_id" }, // TODO: Get actual user ID
+                        userJoinedGroups = recentGroups.filter { it.creatorId != "current_user_id" }, // TODO: Get actual user ID
+                        modifier = Modifier.fillMaxWidth()
+                    )
+                    
                     Spacer(modifier = Modifier.height(24.dp))
                 
                     // Content with enhanced animations and effects
                     if (isLoading) {
                         ShimmerGroupList()
-                    } else if (groups.isEmpty()) {
+                    } else if (filteredGroups.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),
                             contentAlignment = Alignment.Center
@@ -332,7 +367,7 @@ fun MainScreen(
                             EmptyStateComponent(
                                 icon = Icons.Default.DirectionsCar,
                                 title = "ምንም ቡድን የለም",
-                                subtitle = "አዲስ ቡድን ፍጠሩ ወይም ወደ ታች ጎትተው አድስ አድርግ",
+                                subtitle = if (displayGroups.isNotEmpty()) "የፍተሻ ሁኔታዎች ወይም ፍልተሮች ምንም ውጤት አላመጡም" else "የእርስዎ አካባቢ ላይ ምንም ቡድን አልተገኘም። አንድ ቡድን ይፍጠሩ!",
                                 actionText = "ቡድን ፍጠር",
                                 onActionClick = {
                                     hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
@@ -341,150 +376,96 @@ fun MainScreen(
                             )
                         }
                     } else {
-                        // Groups section with enhanced styling
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(vertical = 16.dp),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Text(
-                                text = "የሚገኙ ቡድኖች",
-                                style = MaterialTheme.typography.titleLarge.copy(
-                                    fontWeight = FontWeight.Bold,
-                                    letterSpacing = 0.3.sp
+                        // Groups Map View - Lean and Fast
+                        Column {
+                            // Create Group Button between tiles
+                            Button(
+                                onClick = {
+                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                                    onCreateGroup()
+                                },
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .height(50.dp),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = MaterialTheme.colorScheme.primary
                                 ),
-                                color = MaterialTheme.colorScheme.onSurface
-                            )
-                            
-                            // Add real-time status indicator
-                            Card(
-                                shape = RoundedCornerShape(12.dp),
-                                colors = CardDefaults.cardColors(
-                                    containerColor = MaterialTheme.colorScheme.primaryContainer
-                                )
+                                shape = RoundedCornerShape(12.dp)
                             ) {
-                                Text(
-                                    text = "${groups.size} ቡድኖች",
-                                    style = MaterialTheme.typography.labelMedium.copy(
-                                        fontWeight = FontWeight.Medium
-                                    ),
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                )
-                            }
-                        }
-                        
-                        // Enhanced Vertical List with smooth animations
-                        LazyVerticalGrid(
-                            columns = GridCells.Fixed(1),
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            horizontalArrangement = Arrangement.spacedBy(12.dp),
-                            contentPadding = PaddingValues(horizontal = 8.dp, vertical = 8.dp),
-                            modifier = Modifier.animateContentSize()
-                        ) {
-                            // Create list with groups and ads interspersed
-                            val itemsList = mutableListOf<Any>()
-                            var index = 0
-                            
-                            while (index < groups.size) {
-                                // Add one group per row
-                                if (index < groups.size) {
-                                    itemsList.add(groups[index])
-                                    index++
-                                }
-                                
-                                // Add ad after every 3 groups (since we have more vertical space)
-                                if (index % 3 == 0 && index < groups.size) {
-                                    itemsList.add("AD")
-                                }
-                            }
-                            
-                            itemsList.forEachIndexed { listIndex, item ->
-                                if (item == "AD") {
-                                    // Full width banner ad spanning the single column
-                                    item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(1) }) {
-                                        AnimatedVisibility(
-                                            visible = true,
-                                            enter = slideInVertically(
-                                                initialOffsetY = { it },
-                                                animationSpec = spring(
-                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                    stiffness = Spring.StiffnessLow
-                                                )
-                                            ) + fadeIn()
-                                        ) {
-                                            Box(
-                                                modifier = Modifier
-                                                    .fillMaxWidth()
-                                                    .height(120.dp)
-                                                    .glassCard(alpha = 0.15f)
-                                                    .clip(RoundedCornerShape(16.dp))
-                                            ) {
-                                                CarouselBannerAd()
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    // Group card
-                                    item {
-                                        val group = item as Group
-                                        AnimatedVisibility(
-                                            visible = true,
-                                            enter = slideInVertically(
-                                                initialOffsetY = { it },
-                                                animationSpec = spring(
-                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                    stiffness = Spring.StiffnessLow
-                                                )
-                                            ) + fadeIn()
-                                        ) {
-                                            var cardScale by remember { mutableStateOf(1f) }
-                                            val animatedScale by animateFloatAsState(
-                                                targetValue = cardScale,
-                                                animationSpec = spring(
-                                                    dampingRatio = Spring.DampingRatioMediumBouncy
-                                                ),
-                                                label = "card_scale"
-                                            )
-                                            
-                                            Box(
-                                                modifier = Modifier
-                                                    .scale(animatedScale)
-                                                    .pointerInput(Unit) {
-                                                        detectTapGestures(
-                                                            onPress = {
-                                                                cardScale = 0.95f
-                                                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                                                tryAwaitRelease()
-                                                                cardScale = 1f
-                                                            },
-                                                            onTap = {
-                                                                onGroupClick(group)
-                                                            }
-                                                        )
-                                                    }
-                                            ) {
-                                                RideGroupCard(
-                                                    group = group,
-                                                    onClick = { onGroupClick(group) }
-                                                )
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            // Bottom spacing for FAB with smooth transition
-                            item(span = { androidx.compose.foundation.lazy.grid.GridItemSpan(1) }) {
-                                AnimatedVisibility(
-                                    visible = true,
-                                    enter = fadeIn()
+                                Row(
+                                    verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
                                 ) {
-                                    Spacer(modifier = Modifier.height(100.dp))
+                                    Icon(
+                                        Icons.Default.Add,
+                                        contentDescription = "Create Group",
+                                        tint = Color.White
+                                    )
+                                    Text(
+                                        text = "አዲስ ቡድን ፍጠር",
+                                        style = MaterialTheme.typography.titleMedium,
+                                        fontWeight = FontWeight.Bold,
+                                        color = Color.White
+                                    )
                                 }
                             }
+                            
+                            Spacer(modifier = Modifier.height(16.dp))
+                            
+                            // Simple header showing group count
+                            if (filteredGroups.isNotEmpty()) {
+                                Row(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 16.dp),
+                                    horizontalArrangement = Arrangement.SpaceBetween,
+                                    verticalAlignment = Alignment.CenterVertically
+                                ) {
+                                    Text(
+                                        text = "በአቅራቢያዎ ያሉ ቡድኖች",
+                                        style = MaterialTheme.typography.titleLarge.copy(
+                                            fontWeight = FontWeight.Bold
+                                        ),
+                                        color = MaterialTheme.colorScheme.onSurface
+                                    )
+                                    
+                                    Row(
+                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                                        verticalAlignment = Alignment.CenterVertically
+                                    ) {
+                                        Card(
+                                            shape = RoundedCornerShape(12.dp),
+                                            colors = CardDefaults.cardColors(
+                                                containerColor = MaterialTheme.colorScheme.primaryContainer
+                                            )
+                                        ) {
+                                            Text(
+                                                text = "${filteredGroups.size} ቡድኖች",
+                                                style = MaterialTheme.typography.labelMedium.copy(
+                                                    fontWeight = FontWeight.Medium
+                                                ),
+                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
+                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+                            
+                            // Native Map View (reliable alternative to WebView)
+                            GroupsNativeMapView(
+                                groups = filteredGroups,
+                                onJoinGroup = { group -> onGroupClick(group) },
+                                onRefresh = {
+                                    coroutineScope.launch {
+                                        handleRefresh()
+                                    }
+                                },
+                                isRefreshing = isRefreshing,
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .clip(RoundedCornerShape(16.dp))
+                            )
                         }
                     }
                 }

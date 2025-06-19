@@ -33,11 +33,10 @@ import com.dawitf.akahidegn.R
 
 @Composable
 fun UserRegistrationDialog(
-    onComplete: (name: String, phone: String, avatar: String) -> Unit,
+    onComplete: (name: String, avatar: String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
-    var phone by remember { mutableStateOf("") }
     var selectedAvatar by remember { mutableStateOf("avatar_1") }
     val focusManager = LocalFocusManager.current
     
@@ -75,7 +74,7 @@ fun UserRegistrationDialog(
             ) {
                 // Title
                 Text(
-                    text = "Welcome to Akahidegn!",
+                    text = "🎉 እንኳን ወደ ኣካሂደኛ መጡ!",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -85,7 +84,7 @@ fun UserRegistrationDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "Please complete your profile to get started",
+                    text = "እባክዎ ለመጀመር የእርስዎን መገለጫ ያጠናቅቁ",
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -95,7 +94,7 @@ fun UserRegistrationDialog(
                 
                 // Avatar Selection
                 Text(
-                    text = "Choose your avatar:",
+                    text = "👤 የእርስዎን አቫታር ይምረጡ:",
                     style = MaterialTheme.typography.titleMedium,
                     fontWeight = FontWeight.SemiBold,
                     modifier = Modifier.fillMaxWidth()
@@ -122,7 +121,7 @@ fun UserRegistrationDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("Your Name") },
+                    label = { Text("📝 የእርስዎ ስም") },
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -132,44 +131,48 @@ fun UserRegistrationDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Phone Input
-                OutlinedTextField(
-                    value = phone,
-                    onValueChange = { newValue ->
-                        // Basic phone number formatting - only allow digits, +, -, and spaces
-                        if (newValue.all { it.isDigit() || it in "+-() " }) {
-                            phone = newValue
-                        }
-                    },
-                    label = { Text("Phone Number") },
-                    leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
+                // Feedback Email Info
+                Card(
                     modifier = Modifier.fillMaxWidth(),
-                    singleLine = true,
-                    keyboardOptions = KeyboardOptions(
-                        keyboardType = KeyboardType.Phone,
-                        imeAction = ImeAction.Done
-                    ),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                    placeholder = { Text("+251 9XX XXX XXX") }
-                )
+                    colors = CardDefaults.cardColors(
+                        containerColor = MaterialTheme.colorScheme.primaryContainer
+                    )
+                ) {
+                    Column(
+                        modifier = Modifier.padding(16.dp)
+                    ) {
+                        Text(
+                            text = "📧 ግብረ መልስ እና ድጋፍ",
+                            style = MaterialTheme.typography.titleSmall,
+                            fontWeight = FontWeight.Bold,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "dawitfikadu3@gmail.com",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                        )
+                    }
+                }
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
                 // Continue Button
                 Button(
                     onClick = {
-                        if (name.isNotBlank() && phone.isNotBlank()) {
-                            onComplete(name.trim(), phone.trim(), selectedAvatar)
+                        if (name.isNotBlank()) {
+                            onComplete(name.trim(), selectedAvatar)
                         }
                     },
-                    enabled = name.isNotBlank() && phone.isNotBlank(),
+                    enabled = name.isNotBlank(),
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
                     Text(
-                        text = "Continue",
+                        text = "✨ ቀጥል",
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )

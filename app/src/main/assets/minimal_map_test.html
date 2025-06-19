@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Minimal Map Test</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; }
+    #map { height: 100%; width: 100%; }
+    #debug { 
+      position: absolute; 
+      top: 10px; 
+      left: 10px; 
+      background: rgba(255,255,255,0.9); 
+      padding: 8px; 
+      z-index: 1000; 
+      border-radius: 4px;
+      font-size: 12px;
+      max-width: 200px;
+    }
+  </style>
+</head>
+<body>
+  <div id="debug">Loading minimal map test...</div>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    function updateDebug(message) {
+      document.getElementById('debug').innerHTML = message;
+      console.log('Map Debug:', message);
+    }
+    
+    updateDebug('Step 1: Starting map initialization...');
+    
+    try {
+      updateDebug('Step 2: Creating map object...');
+      
+      // Create map centered on Addis Ababa
+      const map = L.map('map').setView([9.0054, 38.7636], 13);
+      
+      updateDebug('Step 3: Map object created, adding tiles...');
+      
+      // Add tile layer with error handling
+      const tileLayer = L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors'
+      });
+      
+      updateDebug('Step 4: Tile layer created, adding to map...');
+      
+      tileLayer.addTo(map);
+      
+      updateDebug('Step 5: Tile layer added successfully!');
+      
+      // Add a test marker to confirm everything works
+      const testMarker = L.marker([9.0054, 38.7636]).addTo(map);
+      testMarker.bindPopup('Test marker - Map is working!');
+      
+      updateDebug('✅ Map fully loaded with test marker!');
+      
+      // Test tile loading events
+      tileLayer.on('loading', function() {
+        updateDebug('🔄 Tiles are loading...');
+      });
+      
+      tileLayer.on('load', function() {
+        updateDebug('✅ All tiles loaded successfully!');
+      });
+      
+      tileLayer.on('tileerror', function(e) {
+        updateDebug('❌ Tile loading error: ' + e.tile.src);
+        console.error('Tile error:', e);
+      });
+      
+    } catch (e) {
+      updateDebug('❌ Error: ' + e.message);
+      console.error('Map error:', e);
+    }
+  </script>
+</body>
+</html>

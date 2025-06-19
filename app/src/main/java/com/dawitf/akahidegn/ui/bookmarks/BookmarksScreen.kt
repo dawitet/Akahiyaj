@@ -67,7 +67,7 @@ fun BookmarksScreen(
                 items(bookmarkedGroups, key = { it.group.groupId ?: "" }) { bookmarkedGroup ->
                     RideGroupCard(
                         group = bookmarkedGroup.group,
-                        onClick = { onGroupClick(bookmarkedGroup.group) }
+                        onJoinGroup = { onGroupClick(bookmarkedGroup.group) }
                     )
                 }
             }
