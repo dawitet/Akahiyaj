@@ -33,10 +33,11 @@ import com.dawitf.akahidegn.R
 
 @Composable
 fun UserRegistrationDialog(
-    onComplete: (name: String, avatar: String) -> Unit,
+    onComplete: (name: String, phone: String, avatar: String) -> Unit,
     onDismiss: () -> Unit
 ) {
     var name by remember { mutableStateOf("") }
+    var phone by remember { mutableStateOf("") }
     var selectedAvatar by remember { mutableStateOf("avatar_1") }
     val focusManager = LocalFocusManager.current
     
@@ -131,6 +132,24 @@ fun UserRegistrationDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
+                // Phone Input
+                OutlinedTextField(
+                    value = phone,
+                    onValueChange = { phone = it },
+                    label = { Text("📱 የስልክ ቁጥር") },
+                    leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
+                    modifier = Modifier.fillMaxWidth(),
+                    singleLine = true,
+                    keyboardOptions = KeyboardOptions(
+                        keyboardType = KeyboardType.Phone,
+                        imeAction = ImeAction.Done
+                    ),
+                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
+                    placeholder = { Text("ምሳሌ: +251911123456") }
+                )
+                
+                Spacer(modifier = Modifier.height(16.dp))
+                
                 // Feedback Email Info
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -161,11 +180,11 @@ fun UserRegistrationDialog(
                 // Continue Button
                 Button(
                     onClick = {
-                        if (name.isNotBlank()) {
-                            onComplete(name.trim(), selectedAvatar)
+                        if (name.isNotBlank() && phone.isNotBlank()) {
+                            onComplete(name.trim(), phone.trim(), selectedAvatar)
                         }
                     },
-                    enabled = name.isNotBlank(),
+                    enabled = name.isNotBlank() && phone.isNotBlank(),
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary

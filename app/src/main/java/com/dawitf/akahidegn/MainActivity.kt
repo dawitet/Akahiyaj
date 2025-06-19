@@ -163,7 +163,7 @@ class MainActivity : ComponentActivity() {
     
     private fun loadRewardedAd() {
         val adRequest = AdRequest.Builder().build()
-        RewardedAd.load(this, "pub-3787918879230745", adRequest, object : RewardedAdLoadCallback() {
+        RewardedAd.load(this, "ca-app-pub-3787918879230745/7293294323", adRequest, object : RewardedAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 AppLog.d("ADS", "Rewarded ad failed to load: ${adError.message}")
                 rewardedAd = null
@@ -178,7 +178,7 @@ class MainActivity : ComponentActivity() {
     
     private fun loadInterstitialAd() {
         val adRequest = AdRequest.Builder().build()
-        InterstitialAd.load(this, "pub-3787918879230745", adRequest, object : InterstitialAdLoadCallback() {
+        InterstitialAd.load(this, "ca-app-pub-3787918879230745/4107328982", adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 AppLog.d("ADS", "Interstitial ad failed to load: ${adError.message}")
                 interstitialAd = null
@@ -221,13 +221,28 @@ class MainActivity : ComponentActivity() {
             .setPositiveButton("✨ ቡድን ፍጠር") { _, _ ->
                 val destination = editText.text.toString().trim()
                 if (destination.isNotEmpty()) {
-                    // Show rewarded ad before creating group
-                    showRewardedAdForGroupCreation(destination)
+                    // Show consent dialog for rewarded ad before creating group
+                    showRewardedAdConsentDialog(destination)
                 } else {
                     Toast.makeText(this, "እባክዎ መድረሻ ያስገቡ", Toast.LENGTH_SHORT).show()
                 }
             }
             .setNegativeButton("❌ ሰርዝ", null)
+            .show()
+    }
+    
+    private fun showRewardedAdConsentDialog(destination: String) {
+        AlertDialog.Builder(this)
+            .setTitle("📺 የማሳወቂያ እይታ")
+            .setMessage("ቡድን ለመፍጠር አጭር ማስታወቂያ ይመልከቱ። ይህ ነፃ አገልግሎቱን ለመስጠት ይረዳል።\n\nየማስታወቂያ እይታ ይፈልጋሉ?")
+            .setPositiveButton("✅ እሺ፣ ማስታወቂያ አይ") { _, _ ->
+                showRewardedAdForGroupCreation(destination)
+            }
+            .setNegativeButton("❌ አላመስጥንም") { _, _ ->
+                // Create group without ad
+                createGroupAfterAd(destination)
+            }
+            .setCancelable(false)
             .show()
     }
     
@@ -484,11 +499,11 @@ class MainActivity : ComponentActivity() {
         setContent {
             AkahidegnTheme {
                 UserRegistrationDialog(
-                    onComplete = { name, avatar ->
-                        if (name.isNotEmpty()) {
-                            saveUserProfile(name, "", avatar) // Empty phone number
+                    onComplete = { name, phone, avatar ->
+                        if (name.isNotEmpty() && phone.isNotEmpty()) {
+                            saveUserProfile(name, phone, avatar)
                         } else {
-                            Toast.makeText(context, "Please enter your name", Toast.LENGTH_SHORT).show()
+                            Toast.makeText(context, "Please enter your name and phone number", Toast.LENGTH_SHORT).show()
                         }
                     },
                     onDismiss = { /* Cannot dismiss - required */ }

@@ -34,13 +34,13 @@
         <!-- Main Activity -->
         <activity
             android:name=".MainActivity"
-            android:exported="false"
+            android:exported="true"
             android:theme="@style/SplashTheme">
         </activity>
 
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="pub-3787918879230745" />
+            android:value="ca-app-pub-3787918879230745~9551227357" />
 
         <!-- Fix manifest merger conflict between AdMob and Google Analytics -->
         <property
