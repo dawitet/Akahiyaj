@@ -68,7 +68,6 @@ data class Group(
         map["availableSeats"] = (maxMembers - memberCount).coerceIn(1, 8)  // Must be between 1 and 8
         map["pricePerPerson"] = 0  // Must be >= 0
         map["createdAt"] = timestamp ?: System.currentTimeMillis()  // Must be <= now
-        map["timestamp"] = timestamp ?: System.currentTimeMillis()  // Add timestamp field for Group class
         map["createdBy"] = creatorId ?: ""  // Must match auth.uid
         
         // SIMPLIFIED MEMBERS STRUCTURE - this works with our updated rules

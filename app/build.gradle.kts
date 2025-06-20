@@ -18,8 +18,8 @@ android {
         applicationId = "com.dawitf.akahidegn"
         minSdk = 23
         targetSdk = 35
-        versionCode = 1
-        versionName = "1.0.0"
+        versionCode = 3
+        versionName = "1.1.0-compatible"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         vectorDrawables {
@@ -53,16 +53,19 @@ android {
             isShrinkResources = false
             isDebuggable = false
             proguardFiles(
-                getDefaultProguardFile("proguard-android.txt"),
+                getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
             signingConfig = signingConfigs.getByName("release")
             manifestPlaceholders["crashlyticsCollectionEnabled"] = true
             
-            // Production optimizations - conservative approach
+            // Production optimizations
             ndk {
-                debugSymbolLevel = "SYMBOL_TABLE"
+                debugSymbolLevel = "FULL"
             }
+            
+            // Optimize R8 processing to reduce memory usage
+            kotlinOptions.freeCompilerArgs += listOf("-Xjvm-default=all")
         }
         
         // Staging variant removed to avoid Google Services configuration issues

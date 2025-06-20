@@ -49,7 +49,7 @@ import com.dawitf.akahidegn.ui.components.glassCard
 import com.dawitf.akahidegn.ui.components.gradientBackground
 import com.dawitf.akahidegn.ui.components.SuccessAnimationCard
 import com.dawitf.akahidegn.ui.components.GroupsNativeMapView
-import com.dawitf.akahidegn.ui.components.LocationHistoryBox
+import com.dawitf.akahidegn.ui.components.AvailableGroupsBox
 import com.dawitf.akahidegn.ui.components.filterGroups
 import android.location.Location
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -213,6 +213,51 @@ fun MainScreen(
                     modifier = Modifier.glassmorphism(blurRadius = 8.dp, alpha = 0.1f)
                 )
             },
+            floatingActionButton = {
+                // Enhanced FAB with animations and micro-interactions
+                FloatingActionButton(
+                    onClick = {
+                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                        onCreateGroup()
+                    },
+                    modifier = Modifier
+                        .padding(16.dp)
+                        .scale(fabAnimatedScale)
+                        .pointerInput(Unit) {
+                            detectTapGestures(
+                                onPress = {
+                                    fabScale = 0.95f
+                                    tryAwaitRelease()
+                                    fabScale = 1f
+                                }
+                            )
+                        },
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    elevation = FloatingActionButtonDefaults.elevation(
+                        defaultElevation = 8.dp,
+                        pressedElevation = 12.dp
+                    )
+                ) {
+                    Row(
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                        modifier = Modifier.padding(horizontal = 16.dp)
+                    ) {
+                        Icon(
+                            Icons.Default.Add, 
+                            contentDescription = "Create Group",
+                            tint = MaterialTheme.colorScheme.onPrimary
+                        )
+                        Text(
+                            "ቡድን ፍጠር",
+                            style = MaterialTheme.typography.labelLarge.copy(
+                                fontWeight = FontWeight.Bold
+                            ),
+                            color = MaterialTheme.colorScheme.onPrimary
+                        )
+                    }
+                }
+            },
             containerColor = Color.Transparent
         ) { innerPadding ->
             EnhancedPullToRefresh(
@@ -347,10 +392,16 @@ fun MainScreen(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Location History Box (replacing AvailableGroupsBox)
-                    LocationHistoryBox(
-                        userCreatedGroups = recentGroups.filter { it.creatorId == "current_user_id" }, // TODO: Get actual user ID
-                        userJoinedGroups = recentGroups.filter { it.creatorId != "current_user_id" }, // TODO: Get actual user ID
+                    // Always visible Available Groups Box below search
+                    AvailableGroupsBox(
+                        groups = recentGroups, // Use groups from GroupsMapViewModel
+                        onGroupSelected = onGroupClick,
+                        onRefresh = {
+                            coroutineScope.launch {
+                                handleRefresh()
+                            }
+                        },
+                        isRefreshing = isRefreshing,
                         modifier = Modifier.fillMaxWidth()
                     )
                     
@@ -378,40 +429,6 @@ fun MainScreen(
                     } else {
                         // Groups Map View - Lean and Fast
                         Column {
-                            // Create Group Button between tiles
-                            Button(
-                                onClick = {
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onCreateGroup()
-                                },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .height(50.dp),
-                                colors = ButtonDefaults.buttonColors(
-                                    containerColor = MaterialTheme.colorScheme.primary
-                                ),
-                                shape = RoundedCornerShape(12.dp)
-                            ) {
-                                Row(
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.spacedBy(8.dp)
-                                ) {
-                                    Icon(
-                                        Icons.Default.Add,
-                                        contentDescription = "Create Group",
-                                        tint = Color.White
-                                    )
-                                    Text(
-                                        text = "አዲስ ቡድን ፍጠር",
-                                        style = MaterialTheme.typography.titleMedium,
-                                        fontWeight = FontWeight.Bold,
-                                        color = Color.White
-                                    )
-                                }
-                            }
-                            
-                            Spacer(modifier = Modifier.height(16.dp))
-                            
                             // Simple header showing group count
                             if (filteredGroups.isNotEmpty()) {
                                 Row(
@@ -456,12 +473,6 @@ fun MainScreen(
                             GroupsNativeMapView(
                                 groups = filteredGroups,
                                 onJoinGroup = { group -> onGroupClick(group) },
-                                onRefresh = {
-                                    coroutineScope.launch {
-                                        handleRefresh()
-                                    }
-                                },
-                                isRefreshing = isRefreshing,
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .clip(RoundedCornerShape(16.dp))

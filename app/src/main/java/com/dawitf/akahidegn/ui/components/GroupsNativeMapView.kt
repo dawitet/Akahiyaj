@@ -8,7 +8,6 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.People
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -23,8 +22,6 @@ import com.dawitf.akahidegn.Group
 fun GroupsNativeMapView(
     groups: List<Group>,
     onJoinGroup: (Group) -> Unit = {},
-    onRefresh: () -> Unit = {},
-    isRefreshing: Boolean = false,
     modifier: Modifier = Modifier
 ) {
     Card(
@@ -56,43 +53,17 @@ fun GroupsNativeMapView(
                     color = Color(0xFFFFD700) // Golden yellow
                 )
                 
-                Row(
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically
+                Card(
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color(0xFFFFD700).copy(alpha = 0.2f) // Golden yellow with transparency
+                    )
                 ) {
-                    Card(
-                        colors = CardDefaults.cardColors(
-                            containerColor = Color(0xFFFFD700).copy(alpha = 0.2f) // Golden yellow with transparency
-                        )
-                    ) {
-                        Text(
-                            text = "${groups.size} ቡድኖች",
-                            modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
-                            style = MaterialTheme.typography.labelMedium,
-                            color = Color(0xFFFFD700) // Golden yellow
-                        )
-                    }
-                    
-                    // Refresh button
-                    IconButton(
-                        onClick = onRefresh,
-                        modifier = Modifier.size(32.dp)
-                    ) {
-                        if (isRefreshing) {
-                            CircularProgressIndicator(
-                                modifier = Modifier.size(16.dp),
-                                color = Color(0xFFFFD700),
-                                strokeWidth = 2.dp
-                            )
-                        } else {
-                            Icon(
-                                Icons.Default.Refresh,
-                                contentDescription = "Refresh",
-                                tint = Color(0xFFFFD700),
-                                modifier = Modifier.size(20.dp)
-                            )
-                        }
-                    }
+                    Text(
+                        text = "${groups.size} ቡድኖች",
+                        modifier = Modifier.padding(horizontal = 12.dp, vertical = 4.dp),
+                        style = MaterialTheme.typography.labelMedium,
+                        color = Color(0xFFFFD700) // Golden yellow
+                    )
                 }
             }
             

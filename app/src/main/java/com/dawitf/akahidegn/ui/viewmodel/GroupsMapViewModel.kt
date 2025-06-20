@@ -1,6 +1,6 @@
 package com.dawitf.akahidegn.ui.viewmodel
 
-import com.dawitf.akahidegn.utils.AppLog
+import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dawitf.akahidegn.Group
@@ -56,18 +56,18 @@ class GroupsMapViewModel : ViewModel() {
                             groupsList.add(group)
                         } else {
                             // Optionally delete expired groups from Firebase
-                            AppLog.d("GroupsMapViewModel", "Group ${group.groupId} expired, removing from Firebase")
+                            Log.d("GroupsMapViewModel", "Group ${group.groupId} expired, removing from Firebase")
                             childSnapshot.ref.removeValue()
                         }
                     }
                 }
                 _groups.value = groupsList
                 _isLoading.value = false
-                AppLog.d("GroupsMapViewModel", "Loaded ${groupsList.size} groups (filtered by 30min expiry)")
+                Log.d("GroupsMapViewModel", "Loaded ${groupsList.size} groups (filtered by 30min expiry)")
             }
 
             override fun onCancelled(error: DatabaseError) {
-                AppLog.e("GroupsMapViewModel", "Database error: ${error.message}")
+                Log.e("GroupsMapViewModel", "Database error: ${error.message}")
                 _isLoading.value = false
             }
         })
@@ -97,18 +97,18 @@ class GroupsMapViewModel : ViewModel() {
                             }
                         } else {
                             // Optionally delete expired groups from Firebase
-                            AppLog.d("GroupsMapViewModel", "Group ${group.groupId} expired, removing from Firebase")
+                            Log.d("GroupsMapViewModel", "Group ${group.groupId} expired, removing from Firebase")
                             childSnapshot.ref.removeValue()
                         }
                     }
                 }
                 _groups.value = groupsList
                 _isLoading.value = false
-                AppLog.d("GroupsMapViewModel", "Loaded ${groupsList.size} nearby groups within ${radiusMeters}m (filtered by 30min expiry)")
+                Log.d("GroupsMapViewModel", "Loaded ${groupsList.size} nearby groups within ${radiusMeters}m (filtered by 30min expiry)")
             }
 
             override fun onCancelled(error: DatabaseError) {
-                AppLog.e("GroupsMapViewModel", "Database error: ${error.message}")
+                Log.e("GroupsMapViewModel", "Database error: ${error.message}")
                 _isLoading.value = false
             }
         })

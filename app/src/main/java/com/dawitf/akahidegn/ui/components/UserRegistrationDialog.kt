@@ -135,8 +135,33 @@ fun UserRegistrationDialog(
                 // Phone Input
                 OutlinedTextField(
                     value = phone,
-                    onValueChange = { phone = it },
-                    label = { Text("📱 የስልክ ቁጥር") },
+                    onValueChange = { newValue ->
+                        // Ethiopian phone number validation - prioritize local format (0911000927)
+                        val cleanedValue = newValue.replace(Regex("[^0-9+]"), "")
+                        
+                        when {
+                            // Allow Ethiopian local format (starts with 09)
+                            cleanedValue.matches(Regex("^0[0-9]{0,9}$")) -> {
+                                phone = cleanedValue
+                            }
+                            // Convert +251 format to local format
+                            cleanedValue.startsWith("+2519") -> {
+                                phone = "0" + cleanedValue.substring(5)
+                            }
+                            cleanedValue.startsWith("2519") -> {
+                                phone = "0" + cleanedValue.substring(4)
+                            }
+                            // Allow typing + at the start temporarily
+                            cleanedValue == "+" || cleanedValue == "+2" || cleanedValue == "+25" || cleanedValue == "+251" -> {
+                                phone = cleanedValue
+                            }
+                            // For other inputs, only allow if it's a valid progression
+                            cleanedValue.length <= 10 && cleanedValue.all { it.isDigit() || it == '+' } -> {
+                                phone = cleanedValue
+                            }
+                        }
+                    },
+                    label = { Text("📞 የስልክ ቁጥር") },
                     leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -145,35 +170,15 @@ fun UserRegistrationDialog(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                    placeholder = { Text("ምሳሌ: +251911123456") }
-                )
-                
-                Spacer(modifier = Modifier.height(16.dp))
-                
-                // Feedback Email Info
-                Card(
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.primaryContainer
-                    )
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
+                    placeholder = { Text("0911000927") },
+                    supportingText = { 
                         Text(
-                            text = "📧 ግብረ መልስ እና ድጋፍ",
-                            style = MaterialTheme.typography.titleSmall,
-                            fontWeight = FontWeight.Bold,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
-                        )
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = "dawitfikadu3@gmail.com",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer
+                            text = "ኢትዮጵያዊ ቁጥር: 0911000927 ወይም +251911000927",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
-                }
+                )
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 

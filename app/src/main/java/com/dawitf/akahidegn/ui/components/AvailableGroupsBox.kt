@@ -177,7 +177,7 @@ private fun AvailableGroupBoxCard(
                 )
                 Spacer(modifier = Modifier.width(6.dp))
                 Text(
-                    text = group.originalDestination ?: group.destinationName ?: "Unknown destination",
+                    text = group.destinationName ?: "Unknown destination",
                     style = MaterialTheme.typography.titleSmall,
                     fontWeight = FontWeight.SemiBold,
                     color = Color.White

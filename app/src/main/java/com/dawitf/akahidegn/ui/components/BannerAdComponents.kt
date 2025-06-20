@@ -20,7 +20,7 @@ import com.google.android.gms.ads.AdView
 @Composable
 fun CarouselBannerAd(
     modifier: Modifier = Modifier,
-    adUnitId: String = "ca-app-pub-3787918879230745/6242537735"
+    adUnitId: String = "ca-app-pub-3940256099942544/6300978111" // Test ad unit ID
 ) {
     val context = LocalContext.current
     
@@ -86,7 +86,7 @@ fun CarouselPlaceholderAd(
 @Composable
 fun FullWidthBannerAd(
     modifier: Modifier = Modifier,
-    adUnitId: String = "ca-app-pub-3787918879230745/6242537735"
+    adUnitId: String = "ca-app-pub-3940256099942544/6300978111" // Test ad unit ID
 ) {
     val context = LocalContext.current
     

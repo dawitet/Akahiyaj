@@ -116,29 +116,6 @@
 # Ads
 -keep class com.google.android.gms.ads.** { *; }
 
-# Additional production-safe rules
-
-# Keep all data classes and models that might be used with reflection
--keep class com.dawitf.akahidegn.ui.viewmodel.** { *; }
--keep class com.dawitf.akahidegn.ui.components.** { *; }
--keep class com.dawitf.akahidegn.ui.screens.** { *; }
-
-# Prevent obfuscation of Compose classes that might be accessed dynamically
--keep class androidx.compose.runtime.** { *; }
--keep class androidx.compose.ui.** { *; }
--keep class androidx.compose.material3.** { *; }
-
-# Keep WebView related classes
--keep class android.webkit.** { *; }
--keepclassmembers class * extends android.webkit.WebViewClient {
-    public void *(android.webkit.WebView, java.lang.String);
-    public boolean *(android.webkit.WebView, java.lang.String);
-}
-
-# Keep location-related classes
--keep class android.location.** { *; }
--keep class com.google.android.gms.maps.** { *; }
-
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile

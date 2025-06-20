@@ -6,7 +6,7 @@ import android.webkit.WebView
 import android.webkit.WebViewClient
 import android.webkit.ConsoleMessage
 import android.webkit.WebChromeClient
-import com.dawitf.akahidegn.utils.AppLog
+import android.util.Log
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
@@ -52,22 +52,22 @@ fun GroupsWebMapView(
                 // Remove background color now that we confirmed WebView is visible
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)
                 
-                AppLog.d("GroupsWebMapView", "WebView created with enhanced settings for map rendering")
+                Log.d("GroupsWebMapView", "WebView created with enhanced settings for map rendering")
                 webViewClient = object : WebViewClient() {
                     override fun onPageFinished(view: WebView?, url: String?) {
                         super.onPageFinished(view, url)
-                        AppLog.d("GroupsWebMapView", "Page loaded, WebView size: ${view?.width}x${view?.height}")
+                        Log.d("GroupsWebMapView", "Page loaded, WebView size: ${view?.width}x${view?.height}")
                     }
                     
                     override fun onPageStarted(view: WebView?, url: String?, favicon: android.graphics.Bitmap?) {
                         super.onPageStarted(view, url, favicon)
-                        AppLog.d("GroupsWebMapView", "Page started loading: $url")
+                        Log.d("GroupsWebMapView", "Page started loading: $url")
                     }
                 }
                 
                 webChromeClient = object : WebChromeClient() {
                     override fun onConsoleMessage(consoleMessage: ConsoleMessage): Boolean {
-                        AppLog.d("WebView-Console", "${consoleMessage.messageLevel()}: ${consoleMessage.message()}")
+                        Log.d("WebView-Console", "${consoleMessage.messageLevel()}: ${consoleMessage.message()}")
                         return true
                     }
                 }
@@ -77,7 +77,7 @@ fun GroupsWebMapView(
         update = { webView ->
             if (groups.isNotEmpty()) {
                 val validGroups = groups.filter { it.pickupLat != null && it.pickupLng != null }
-                AppLog.d("GroupsWebMapView", "Updating map with ${validGroups.size} valid groups")
+                Log.d("GroupsWebMapView", "Updating map with ${validGroups.size} valid groups")
                 val groupsJson = Gson().toJson(validGroups).replace("'", "\\'")
                 webView.evaluateJavascript("window.addGroups('$groupsJson')", null)
             }
