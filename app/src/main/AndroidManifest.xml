@@ -38,9 +38,18 @@
             android:theme="@style/SplashTheme">
         </activity>
 
+        <!-- AdMob App ID - Using test ID, replace with production ID when you have AdMob account -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" /> <!-- Replace with your actual AdMob App ID for production -->
+            android:value="ca-app-pub-3940256099942544~3347511713" /> <!-- Test ID - Safe for now -->
+        
+        <!-- Alternative: Disable ads for production until you set up AdMob -->
+        <!-- Remove the meta-data above and uncomment this if you want to disable ads -->
+        <!--
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="" />
+        -->
 
         <!-- Fix manifest merger conflict between AdMob and Google Analytics -->
         <property
@@ -65,10 +74,11 @@
             android:name="com.google.android.geo.API_KEY"
             android:value="AIzaSyA-04oS-c5FmfZ-DekJqdBl_GTnW4b_yAo" />
 
-        <!-- Debug receiver for testing Firebase security rules -->
+        <!-- Debug receiver for testing Firebase security rules - Only in debug builds -->
         <receiver
             android:name=".debug.FirebaseRulesTestReceiver"
-            android:exported="true">
+            android:exported="false"
+            tools:node="remove">
             <intent-filter>
                 <action android:name="com.dawitf.akahidegn.DEBUG_TEST_FIREBASE_RULES" />
             </intent-filter>

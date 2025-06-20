@@ -116,6 +116,18 @@
 # Ads
 -keep class com.google.android.gms.ads.** { *; }
 
+# Additional safety rules for production
+-keep class com.dawitf.akahidegn.BuildConfig { *; }
+
+# Firebase Crashlytics
+-keepattributes SourceFile,LineNumberTable
+-keep public class * extends java.lang.Exception
+-keep class com.google.firebase.crashlytics.** { *; }
+
+# Additional Firebase safety
+-keep class com.google.firebase.FirebaseApp { *; }
+-keep class com.google.firebase.FirebaseOptions { *; }
+
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile

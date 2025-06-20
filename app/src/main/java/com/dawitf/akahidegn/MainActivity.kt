@@ -162,8 +162,14 @@ class MainActivity : ComponentActivity() {
     }
     
     private fun loadRewardedAd() {
+        // Only load ads if enabled in build configuration
+        if (!BuildConfig.ADS_ENABLED || BuildConfig.ADMOB_REWARDED_ID.isEmpty()) {
+            Log.d("ADS", "Ads disabled in this build configuration")
+            return
+        }
+        
         val adRequest = AdRequest.Builder().build()
-        RewardedAd.load(this, "ca-app-pub-3940256099942544/5224354917", adRequest, object : RewardedAdLoadCallback() {
+        RewardedAd.load(this, BuildConfig.ADMOB_REWARDED_ID, adRequest, object : RewardedAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 Log.d("ADS", "Rewarded ad failed to load: ${adError.message}")
                 rewardedAd = null
@@ -177,8 +183,14 @@ class MainActivity : ComponentActivity() {
     }
     
     private fun loadInterstitialAd() {
+        // Only load ads if enabled in build configuration
+        if (!BuildConfig.ADS_ENABLED || BuildConfig.ADMOB_INTERSTITIAL_ID.isEmpty()) {
+            Log.d("ADS", "Ads disabled in this build configuration")
+            return
+        }
+        
         val adRequest = AdRequest.Builder().build()
-        InterstitialAd.load(this, "ca-app-pub-3940256099942544/1033173712", adRequest, object : InterstitialAdLoadCallback() {
+        InterstitialAd.load(this, BuildConfig.ADMOB_INTERSTITIAL_ID, adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 Log.d("ADS", "Interstitial ad failed to load: ${adError.message}")
                 interstitialAd = null

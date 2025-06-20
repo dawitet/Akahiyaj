@@ -16,13 +16,19 @@ import androidx.compose.ui.viewinterop.AndroidView
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
+import com.dawitf.akahidegn.BuildConfig
 
 @Composable
 fun CarouselBannerAd(
     modifier: Modifier = Modifier,
-    adUnitId: String = "ca-app-pub-3940256099942544/6300978111" // Test ad unit ID
+    adUnitId: String = BuildConfig.ADMOB_BANNER_ID // Use build config
 ) {
     val context = LocalContext.current
+    
+    // Don't show ads if disabled or empty ad ID
+    if (!BuildConfig.ADS_ENABLED || adUnitId.isEmpty()) {
+        return
+    }
     
     Card(
         modifier = modifier.size(width = 140.dp, height = 160.dp),
@@ -86,9 +92,14 @@ fun CarouselPlaceholderAd(
 @Composable
 fun FullWidthBannerAd(
     modifier: Modifier = Modifier,
-    adUnitId: String = "ca-app-pub-3940256099942544/6300978111" // Test ad unit ID
+    adUnitId: String = BuildConfig.ADMOB_BANNER_ID // Use build config
 ) {
     val context = LocalContext.current
+    
+    // Don't show ads if disabled or empty ad ID
+    if (!BuildConfig.ADS_ENABLED || adUnitId.isEmpty()) {
+        return
+    }
     
     Card(
         modifier = modifier

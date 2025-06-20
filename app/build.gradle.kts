@@ -46,6 +46,13 @@ android {
             versionNameSuffix = "-debug"
             isMinifyEnabled = false
             manifestPlaceholders["crashlyticsCollectionEnabled"] = false
+            
+            // Test AdMob IDs for development
+            buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3940256099942544~3347511713\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
+            buildConfigField("String", "ADMOB_REWARDED_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
+            buildConfigField("Boolean", "ADS_ENABLED", "true")
         }
         
         release {
@@ -58,6 +65,13 @@ android {
             )
             signingConfig = signingConfigs.getByName("release")
             manifestPlaceholders["crashlyticsCollectionEnabled"] = true
+            
+            // Disable ads in production until you get real AdMob IDs
+            buildConfigField("String", "ADMOB_APP_ID", "\"\"")
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"\"")
+            buildConfigField("String", "ADMOB_REWARDED_ID", "\"\"")
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"\"")
+            buildConfigField("Boolean", "ADS_ENABLED", "false")
             
             // Production optimizations
             ndk {
