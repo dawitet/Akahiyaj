@@ -178,27 +178,27 @@ class FirebaseGroupServiceImpl @Inject constructor(
                     child.getValue(Group::class.java)?.copy(groupId = child.key ?: "")
                 }
                 
-                android.util.AppLog.d("FirebaseGroupService", "getExpiredGroups - Total groups: ${allGroups.size}, Threshold: $thresholdTimestamp")
+                android.util.Log.d("FirebaseGroupService", "getExpiredGroups - Total groups: ${allGroups.size}, Threshold: $thresholdTimestamp")
                 
                 val expiredGroups = allGroups.mapNotNull { group ->
                     // Only consider groups with valid timestamps that are truly expired
                     if (group.timestamp != null) {
                         val isExpired = group.timestamp!! <= thresholdTimestamp
                         val ageMinutes = (System.currentTimeMillis() - group.timestamp!!) / (60 * 1000)
-                        android.util.AppLog.d("FirebaseGroupService", "Group ${group.destinationName} (${group.groupId}): timestamp=${group.timestamp}, age=${ageMinutes}min, expired=$isExpired")
+                        android.util.Log.d("FirebaseGroupService", "Group ${group.destinationName} (${group.groupId}): timestamp=${group.timestamp}, age=${ageMinutes}min, expired=$isExpired")
                         
                         if (isExpired) group else null
                     } else {
-                        android.util.AppLog.d("FirebaseGroupService", "Group ${group.destinationName} (${group.groupId}): null timestamp, skipping")
+                        android.util.Log.d("FirebaseGroupService", "Group ${group.destinationName} (${group.groupId}): null timestamp, skipping")
                         null
                     }
                 }
                 
-                android.util.AppLog.d("FirebaseGroupService", "getExpiredGroups - Expired groups found: ${expiredGroups.size}")
+                android.util.Log.d("FirebaseGroupService", "getExpiredGroups - Expired groups found: ${expiredGroups.size}")
                 Result.Success(expiredGroups)
             }
         } catch (e: Exception) {
-            android.util.AppLog.e("FirebaseGroupService", "getExpiredGroups failed", e)
+            android.util.Log.e("FirebaseGroupService", "getExpiredGroups failed", e)
             Result.Error(AppError.NetworkError.FirebaseError(e.message ?: "Failed to get expired groups"))
         }
     }
