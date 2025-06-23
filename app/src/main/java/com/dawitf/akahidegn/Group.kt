@@ -51,7 +51,6 @@ data class Group(
         imageUrl = null
     )
 
-    @Exclude
     fun toMap(): Map<String, Any?> {
         // Initialize a map with only the fields allowed by the security rules
         val map = HashMap<String, Any?>()

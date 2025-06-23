@@ -98,7 +98,8 @@ class FirebaseGroupServiceImpl @Inject constructor(
                 }
                 
                 val groupWithId = group.copy(groupId = groupRef.key ?: "")
-                groupRef.setValue(groupWithId).await()
+                // Use toMap() for writing to Firebase
+                groupRef.setValue(groupWithId.toMap()).await()
                 Result.Success(groupWithId)
             }
         } catch (e: Exception) {
