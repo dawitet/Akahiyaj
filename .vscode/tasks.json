@@ -1,0 +1,24 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Build Standalone Debug APK",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"group": "build",
+			"problemMatcher": [
+				"$gradle"
+			],
+			"isBackground": false
+		}
+	]
+}

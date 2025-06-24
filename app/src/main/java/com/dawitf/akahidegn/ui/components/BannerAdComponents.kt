@@ -13,6 +13,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
+import android.util.Log
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.AdSize
 import com.google.android.gms.ads.AdView
@@ -27,8 +28,11 @@ fun CarouselBannerAd(
     
     // Don't show ads if disabled or empty ad ID
     if (!BuildConfig.ADS_ENABLED || adUnitId.isEmpty()) {
+        Log.d("BannerAd", "Ads disabled - ADS_ENABLED: ${BuildConfig.ADS_ENABLED}, BANNER_ID: '$adUnitId'")
         return
     }
+    
+    Log.d("BannerAd", "Creating banner ad with ID: $adUnitId")
     
     Card(
         modifier = modifier.size(width = 140.dp, height = 160.dp),
@@ -43,6 +47,7 @@ fun CarouselBannerAd(
                 AdView(context).apply {
                     setAdSize(AdSize.MEDIUM_RECTANGLE)
                     this.adUnitId = adUnitId
+                    Log.d("BannerAd", "Loading banner ad...")
                     loadAd(AdRequest.Builder().build())
                 }
             },
@@ -98,8 +103,11 @@ fun FullWidthBannerAd(
     
     // Don't show ads if disabled or empty ad ID
     if (!BuildConfig.ADS_ENABLED || adUnitId.isEmpty()) {
+        Log.d("BannerAd", "Full width ads disabled - ADS_ENABLED: ${BuildConfig.ADS_ENABLED}, BANNER_ID: '$adUnitId'")
         return
     }
+    
+    Log.d("BannerAd", "Creating full width banner ad with ID: $adUnitId")
     
     Card(
         modifier = modifier
@@ -116,6 +124,7 @@ fun FullWidthBannerAd(
                 AdView(context).apply {
                     setAdSize(AdSize.BANNER) // Standard banner size (320x50)
                     this.adUnitId = adUnitId
+                    Log.d("BannerAd", "Loading full width banner ad...")
                     loadAd(AdRequest.Builder().build())
                 }
             },

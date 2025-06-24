@@ -23,12 +23,12 @@ fun GroupsWebMapView(
 ) {
     AndroidView(
         modifier = modifier,
-        factory = { ctx ->
-            WebView(ctx).apply {
+        factory = { ctx ->        WebView(ctx).apply {
+            try {
                 // Enable hardware acceleration - this is critical for map rendering
                 setLayerType(android.view.View.LAYER_TYPE_HARDWARE, null)
                 
-                // WebView settings
+                // Samsung-specific WebView settings
                 settings.javaScriptEnabled = true
                 settings.domStorageEnabled = true
                 settings.allowFileAccess = true
@@ -40,14 +40,23 @@ fun GroupsWebMapView(
                 settings.builtInZoomControls = false
                 settings.displayZoomControls = false
                 
-                // Additional settings for map rendering
+                // Samsung compatibility fixes
                 settings.allowUniversalAccessFromFileURLs = true
                 settings.allowFileAccessFromFileURLs = true
                 settings.javaScriptCanOpenWindowsAutomatically = true
                 settings.setSupportZoom(true)
                 
+                // Samsung WebView specific settings
+                settings.userAgentString = settings.userAgentString + " AkahidegnApp/1.0"
+                settings.mediaPlaybackRequiresUserGesture = false
+                
                 // Force WebView to render content
                 setInitialScale(1)
+                
+                Log.d("WebView", "WebView initialized successfully on ${android.os.Build.MANUFACTURER} device")
+            } catch (e: Exception) {
+                Log.e("WebView", "Error initializing WebView", e)
+            }
                 
                 // Remove background color now that we confirmed WebView is visible
                 setBackgroundColor(android.graphics.Color.TRANSPARENT)

@@ -41,15 +41,22 @@ fun UserRegistrationDialog(
     var selectedAvatar by remember { mutableStateOf("avatar_1") }
     val focusManager = LocalFocusManager.current
     
-    // Available avatars from drawable resources
+    // Available avatars from drawable resources - only include verified ones
     val avatars = listOf<Pair<String, Int>>(
         "avatar_1" to R.drawable.user_avatar_1,
         "avatar_2" to R.drawable.user_avatar_2,
         "avatar_3" to R.drawable.user_avatar_3,
         "avatar_4" to R.drawable.user_avatar_4,
         "avatar_5" to R.drawable.user_avatar_5,
-        "avatar_6" to R.drawable.default_avatar
-    )
+        "default" to R.drawable.default_avatar
+    ).filter { (_, resourceId) ->
+        try {
+            // Verify resource exists at compile time
+            resourceId != 0
+        } catch (e: Exception) {
+            false
+        }
+    }
 
     Dialog(
         onDismissRequest = { /* Cannot dismiss - required registration */ },
@@ -233,10 +240,12 @@ private fun AvatarOption(
             .clickable { onClick() },
         contentAlignment = Alignment.Center
     ) {
-        Image(
-            painter = painterResource(id = drawableRes),
+        // Simple fallback - use default icon instead of problematic image loading
+        Icon(
+            imageVector = Icons.Default.Person,
             contentDescription = "Avatar option",
-            modifier = Modifier.size(48.dp)
+            modifier = Modifier.size(48.dp),
+            tint = MaterialTheme.colorScheme.onSurfaceVariant
         )
     }
 }

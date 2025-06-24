@@ -1,6 +1,8 @@
 package com.dawitf.akahidegn.data.remote.service.impl
 
+import android.util.Log
 import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.GroupReader
 import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.core.result.Result
 import com.dawitf.akahidegn.core.retry.RetryMechanism
@@ -27,7 +29,7 @@ class FirebaseGroupServiceImpl @Inject constructor(
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
                     val groups = snapshot.children.mapNotNull { child ->
-                        child.getValue(Group::class.java)?.copy(groupId = child.key ?: "")
+                        GroupReader.fromSnapshot(child)
                     }
                     trySend(Result.Success(groups))
                 } catch (e: Exception) {
@@ -48,9 +50,9 @@ class FirebaseGroupServiceImpl @Inject constructor(
         return try {
             retryMechanism.withRetry {
                 val snapshot = groupsRef.child(groupId).get().await()
-                val group = snapshot.getValue(Group::class.java)
+                val group = GroupReader.fromSnapshot(snapshot)
                 if (group != null) {
-                    Result.Success(group.copy(groupId = groupId))
+                    Result.Success(group)
                 } else {
                     Result.Error(AppError.ValidationError.NotFound("Group not found"))
                 }
@@ -65,7 +67,7 @@ class FirebaseGroupServiceImpl @Inject constructor(
             override fun onDataChange(snapshot: DataSnapshot) {
                 try {
                     val allGroups = snapshot.children.mapNotNull { child ->
-                        child.getValue(Group::class.java)?.copy(groupId = child.key ?: "")
+                        GroupReader.fromSnapshot(child)
                     }
                     
                     val nearbyGroups = allGroups.filter { group ->
@@ -98,7 +100,9 @@ class FirebaseGroupServiceImpl @Inject constructor(
                 }
                 
                 val groupWithId = group.copy(groupId = groupRef.key ?: "")
-                groupRef.setValue(groupWithId).await()
+                Log.d("FIREBASE_SERVICE", "Creating group via service: ${groupWithId.destinationName} with ID: ${groupWithId.groupId}")
+                Log.d("FIREBASE_SERVICE", "Group data format: ${groupWithId.toMap()}")
+                groupRef.setValue(groupWithId.toMap()).await()
                 Result.Success(groupWithId)
             }
         } catch (e: Exception) {
@@ -109,7 +113,7 @@ class FirebaseGroupServiceImpl @Inject constructor(
     override suspend fun updateGroup(group: Group): Result<Group> {
         return try {
             retryMechanism.withRetry {
-                groupsRef.child(group.groupId ?: "").setValue(group).await()
+                groupsRef.child(group.groupId ?: "").setValue(group.toMap()).await()
                 Result.Success(group)
             }
         } catch (e: Exception) {
@@ -137,7 +141,7 @@ class FirebaseGroupServiceImpl @Inject constructor(
                 
                 if (group != null) {
                     val updatedGroup = group.copy(memberCount = group.memberCount + 1)
-                    groupRef.setValue(updatedGroup).await()
+                    groupRef.setValue(updatedGroup.toMap()).await()
                     Result.Success(Unit)
                 } else {
                     Result.Error(AppError.ValidationError.NotFound("Group not found"))
@@ -157,7 +161,7 @@ class FirebaseGroupServiceImpl @Inject constructor(
                 
                 if (group != null) {
                     val updatedGroup = group.copy(memberCount = maxOf(0, group.memberCount - 1))
-                    groupRef.setValue(updatedGroup).await()
+                    groupRef.setValue(updatedGroup.toMap()).await()
                     Result.Success(Unit)
                 } else {
                     Result.Error(AppError.ValidationError.NotFound("Group not found"))

@@ -66,8 +66,8 @@ class MainViewModel @Inject constructor(
     private lateinit var activeGroupsRef: DatabaseReference
     
     // Current search parameters
-    // Search configuration - 500 meter radius for location-based filtering
-    private val searchRadiusMeters = 500.0
+    // Increased radius for testing - normally 500 meters but using worldwide for debugging
+    private val searchRadiusMeters = 25000000.0 // 25,000 km (effectively worldwide)
     private val maxRetries = 3
     private var currentFirebaseUserId: String? = null
 
@@ -172,8 +172,12 @@ class MainViewModel @Inject constructor(
      * Perform groups search with optimization and smart caching
      */
     private suspend fun performGroupsSearch(destinationFilter: String?) {
+        Log.d("GROUP_REFRESH", "MainViewModel.performGroupsSearch(): Starting with filter: $destinationFilter")
+        Log.i("Firebase", "MainViewModel.performGroupsSearch(): Starting with filter: $destinationFilter")
+        
         if (_isLoadingGroups.value) {
-            Log.d("MainViewModel", "Search already in progress, skipping")
+            Log.d("GROUP_REFRESH", "MainViewModel.performGroupsSearch(): Search already in progress, skipping")
+            Log.i("Firebase", "MainViewModel.performGroupsSearch(): Search already in progress, skipping")
             return
         }
 
@@ -183,33 +187,50 @@ class MainViewModel @Inject constructor(
         val lastSearchTime = lastSearchTimestamp[cacheKey] ?: 0
         val currentTime = System.currentTimeMillis()
         
-        // Use cached results if recent enough (within 2 minutes)
-        if (currentTime - lastSearchTime < 2 * 60 * 1000L && _groups.value.isNotEmpty()) {
-            Log.d("MainViewModel", "Using cached search results for: $cacheKey")
-            return
-        }
+        // FORCING REFRESH - Skip cache check
+        Log.d("GROUP_REFRESH", "MainViewModel.performGroupsSearch(): FORCING FRESH DATA")
+        Log.i("Firebase", "MainViewModel.performGroupsSearch(): FORCING FRESH DATA")
 
         _isLoadingGroups.value = true
-        Log.d("MainViewModel", "Performing optimized groups search. Filter: '$destinationFilter'")
+        Log.d("GROUP_REFRESH", "MainViewModel.performGroupsSearch(): Performing groups search with filter: '$destinationFilter'")
+        Log.i("Firebase", "MainViewModel.performGroupsSearch(): Performing groups search with filter: '$destinationFilter'")
+        
+        // Log the state of the database reference
+        Log.d("GROUP_REFRESH", "Database reference path: ${activeGroupsRef.path}")
+        Log.i("Firebase", "Database reference path: ${activeGroupsRef.path}")
 
         try {
             withContext(backgroundDispatcher) {
-                // Query by createdAt (used in toMap) instead of timestamp
-                activeGroupsRef.orderByChild("createdAt")
-                    .limitToLast(100)
-                    .addListenerForSingleValueEvent(object : ValueEventListener {
-                        override fun onDataChange(snapshot: DataSnapshot) {
-                            Log.d("MainViewModel", "Got Firebase data: ${snapshot.childrenCount} groups")
-                            viewModelScope.launch(computationDispatcher) {
-                                processGroupsData(snapshot, destinationFilter, cacheKey)
-                            }
+                // Try both timestamp and createdAt for maximal compatibility
+                Log.d("GROUP_REFRESH", "MainViewModel.performGroupsSearch(): Using Firebase ref: $activeGroupsRef")
+                Log.i("Firebase", "MainViewModel.performGroupsSearch(): Using Firebase ref: $activeGroupsRef")
+                
+                // Use simple get() without filters to see all data first
+                activeGroupsRef.get().addOnSuccessListener { snapshot ->
+                    val count = snapshot.childrenCount
+                    Log.d("GROUP_REFRESH", "MainViewModel.performGroupsSearch(): Direct query found: $count groups")
+                    Log.i("Firebase", "MainViewModel.performGroupsSearch(): Direct query found: $count groups")
+                    
+                    // Logging first few group keys for debugging
+                    var counter = 0
+                    snapshot.children.forEach { groupSnap ->
+                        if (counter < 5) {  // Log only first 5 for brevity
+                            Log.d("GROUP_REFRESH", "Group key: ${groupSnap.key}")
+                            Log.i("Firebase", "Group key: ${groupSnap.key}")
                         }
-
-                        override fun onCancelled(error: DatabaseError) {
-                            Log.e("MainViewModel", "Groups search failed: ${error.message}")
-                            _isLoadingGroups.value = false
-                        }
-                    })
+                        counter++
+                    }
+                    
+                    viewModelScope.launch(computationDispatcher) {
+                        Log.d("GROUP_REFRESH", "MainViewModel.performGroupsSearch(): Processing data in computation thread")
+                        Log.i("Firebase", "MainViewModel.performGroupsSearch(): Processing data in computation thread")
+                        processGroupsData(snapshot, destinationFilter, cacheKey)
+                    }
+                }.addOnFailureListener { error ->
+                    Log.e("GROUP_REFRESH", "MainViewModel.performGroupsSearch(): Search failed: ${error.message}", error)
+                    Log.e("Firebase", "MainViewModel.performGroupsSearch(): Search failed: ${error.message}", error)
+                    _isLoadingGroups.value = false
+                }
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Error during groups search", e)
@@ -221,32 +242,51 @@ class MainViewModel @Inject constructor(
      * Process groups data on background thread with 500m location filtering
      */
     private suspend fun processGroupsData(snapshot: DataSnapshot, destinationFilter: String?, cacheKey: String) {
+        Log.d("GROUP_REFRESH", "MainViewModel.processGroupsData(): Processing ${snapshot.childrenCount} group snapshots")
+        Log.i("Firebase", "MainViewModel.processGroupsData(): Processing ${snapshot.childrenCount} group snapshots")
+        
         val newGroupsList = mutableListOf<Group>()
         val userLocation = _currentLocation.value
 
+        // Log raw data for debugging
+        Log.d("GROUP_REFRESH", "Raw data keys: ${snapshot.children.map { it.key }.take(5)}")
+        Log.i("Firebase", "Raw data keys: ${snapshot.children.map { it.key }.take(5)}")
+
         for (groupSnapshot in snapshot.children) {
-            val group = GroupReader.fromSnapshot(groupSnapshot)
-            if (group != null) {
-                // GroupId is already set by GroupReader
+            Log.d("GROUP_REFRESH", "Processing group with key: ${groupSnapshot.key}")
+            Log.i("Firebase", "Processing group with key: ${groupSnapshot.key}")
+            
+            try {
+                val group = GroupReader.fromSnapshot(groupSnapshot)
                 
-                // Use cache if available and group hasn't changed
-                val cachedGroup = groupsCache[group.groupId]
-                if (cachedGroup != null && cachedGroup.timestamp == group.timestamp) {
-                    if (passesFilters(cachedGroup, destinationFilter, userLocation)) {
-                        newGroupsList.add(cachedGroup)
-                    }
-                } else {
-                    // Process new or updated group
+                if (group != null) {
+                    Log.d("GROUP_REFRESH", "Successfully parsed group: ${group.groupId}, destination: ${group.destinationName}")
+                    Log.i("Firebase", "Successfully parsed group: ${group.groupId}, destination: ${group.destinationName}")
+                    
+                    // Skip cache, always use fresh data
                     if (passesFilters(group, destinationFilter, userLocation)) {
                         newGroupsList.add(group)
                         groupsCache[group.groupId!!] = group
+                        Log.d("GROUP_REFRESH", "Added group to results: ${group.groupId}")
+                        Log.i("Firebase", "Added group to results: ${group.groupId}")
+                    } else {
+                        Log.d("GROUP_REFRESH", "Group did not pass filters: ${group.groupId}")
+                        Log.i("Firebase", "Group did not pass filters: ${group.groupId}")
                     }
+                } else {
+                    Log.e("GROUP_REFRESH", "Failed to parse group from snapshot with key: ${groupSnapshot.key}")
+                    Log.e("Firebase", "Failed to parse group from snapshot with key: ${groupSnapshot.key}")
                 }
+            } catch (e: Exception) {
+                Log.e("GROUP_REFRESH", "Error processing group: ${e.message}", e)
+                Log.e("Firebase", "Error processing group: ${e.message}", e)
             }
         }
 
         // Sort and update UI on main thread
         val sortedList = newGroupsList.sortedByDescending { it.timestamp }
+        Log.d("GROUP_REFRESH", "Final sorted list contains ${sortedList.size} groups")
+        Log.i("Firebase", "Final sorted list contains ${sortedList.size} groups")
         
         // Update cache timestamp for this search
         lastSearchTimestamp[cacheKey] = System.currentTimeMillis()
@@ -254,8 +294,10 @@ class MainViewModel @Inject constructor(
         withContext(Dispatchers.Main) {
             _groups.value = sortedList
             _isLoadingGroups.value = false
-            Log.d("MainViewModel", "Updated groups list with ${sortedList.size} groups within 500m")
+            Log.d("GROUP_REFRESH", "Updated main thread groups list with ${sortedList.size} groups")
+            Log.i("Firebase", "Updated main thread groups list with ${sortedList.size} groups")
         }
+    }
     }
 
     /**
@@ -316,8 +358,16 @@ class MainViewModel @Inject constructor(
      * Force refresh groups (for pull-to-refresh scenarios)
      */
     fun refreshGroups() {
-        groupsCache.clear() // Clear cache to force fresh data
+        Log.d("GROUP_REFRESH", "MainViewModel.refreshGroups(): Clearing cache and performing search")
+        Log.i("Firebase", "MainViewModel.refreshGroups(): Clearing cache and performing search")
+        
+        // Clear all caches to force fresh data
+        groupsCache.clear()
+        lastSearchTimestamp.clear()
+        
         viewModelScope.launch {
+            Log.d("GROUP_REFRESH", "MainViewModel.refreshGroups(): Launching search in viewModelScope")
+            Log.i("Firebase", "MainViewModel.refreshGroups(): Launching search in viewModelScope")
             performGroupsSearch(_searchQuery.value.trim().takeIf { it.isNotBlank() })
         }
     }

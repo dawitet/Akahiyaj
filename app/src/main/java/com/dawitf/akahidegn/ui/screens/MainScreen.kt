@@ -2,33 +2,22 @@ package com.dawitf.akahidegn.ui.screens
 
 import androidx.compose.animation.*
 import androidx.compose.animation.core.*
-import androidx.compose.foundation.background
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectTapGestures
-import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
-import androidx.compose.material.ripple.rememberRipple
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.font.FontWeight
@@ -38,23 +27,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.launch
-import com.dawitf.akahidegn.Group
-import com.dawitf.akahidegn.ui.components.RideGroupCard
-import com.dawitf.akahidegn.ui.components.EmptyStateComponent
-import com.dawitf.akahidegn.ui.components.SearchFilters
-import com.dawitf.akahidegn.ui.components.EnhancedPullToRefresh
-import com.dawitf.akahidegn.ui.components.ShimmerGroupList
-import com.dawitf.akahidegn.ui.components.glassmorphism
-import com.dawitf.akahidegn.ui.components.glassCard
-import com.dawitf.akahidegn.ui.components.gradientBackground
-import com.dawitf.akahidegn.ui.components.SuccessAnimationCard
-import com.dawitf.akahidegn.ui.components.GroupsNativeMapView
-import com.dawitf.akahidegn.ui.components.AvailableGroupsBox
-import com.dawitf.akahidegn.ui.components.filterGroups
 import android.location.Location
 import androidx.lifecycle.viewmodel.compose.viewModel
+
+import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.ui.components.*
 import com.dawitf.akahidegn.ui.viewmodel.GroupsMapViewModel
-import androidx.compose.runtime.collectAsState
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -64,16 +42,16 @@ fun MainScreen(
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     selectedFilters: SearchFilters,
-    onFiltersChange: (SearchFilters) -> Unit,
+    _onFiltersChange: (SearchFilters) -> Unit, // Prefixed with underscore to mark as intentionally unused
     onGroupClick: (Group) -> Unit,
     isLoading: Boolean,
     onRefreshGroups: () -> Unit,
     onCreateGroup: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    onNavigateToProfile: () -> Unit,
-    onNavigateToBookmarks: () -> Unit,
+    _onNavigateToProfile: () -> Unit, // Prefixed with underscore to mark as intentionally unused
+    _onNavigateToBookmarks: () -> Unit, // Prefixed with underscore to mark as intentionally unused
     onNavigateToNotifications: () -> Unit,
-    onNavigateToHistory: () -> Unit,
+    _onNavigateToHistory: () -> Unit, // Prefixed with underscore to mark as intentionally unused
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -123,7 +101,7 @@ fun MainScreen(
         } ?: groupsMapViewModel.loadAllGroups()
     }
     
-    // Animated gradient background
+    // Animated gradient background - used in the gradient effect
     val backgroundOffset by infiniteTransition.animateFloat(
         initialValue = 0f,
         targetValue = 1f,
@@ -134,7 +112,7 @@ fun MainScreen(
         label = "background_offset"
     )
     
-    suspend fun handleRefresh() {
+    fun handleRefresh() {
         isRefreshing = true
         hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
         
@@ -303,7 +281,7 @@ fun MainScreen(
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(horizontal = 16.dp, vertical = 12.dp),
-                                textAlign = androidx.compose.ui.text.style.TextAlign.Center
+                                textAlign = TextAlign.Center
                             )
                         }
                     }

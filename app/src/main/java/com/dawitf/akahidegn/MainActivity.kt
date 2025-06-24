@@ -164,19 +164,21 @@ class MainActivity : ComponentActivity() {
     private fun loadRewardedAd() {
         // Only load ads if enabled in build configuration
         if (!BuildConfig.ADS_ENABLED || BuildConfig.ADMOB_REWARDED_ID.isEmpty()) {
-            Log.d("ADS", "Ads disabled in this build configuration")
+            Log.d("ADS", "Ads disabled in this build configuration - ADS_ENABLED: ${BuildConfig.ADS_ENABLED}, REWARDED_ID: '${BuildConfig.ADMOB_REWARDED_ID}'")
             return
         }
         
+        Log.d("ADS", "Loading rewarded ad with ID: ${BuildConfig.ADMOB_REWARDED_ID}")
         val adRequest = AdRequest.Builder().build()
         RewardedAd.load(this, BuildConfig.ADMOB_REWARDED_ID, adRequest, object : RewardedAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 Log.d("ADS", "Rewarded ad failed to load: ${adError.message}")
+                Log.d("ADS", "Error details - Code: ${adError.code}, Domain: ${adError.domain}")
                 rewardedAd = null
             }
 
             override fun onAdLoaded(ad: RewardedAd) {
-                Log.d("ADS", "Rewarded ad loaded")
+                Log.d("ADS", "Rewarded ad loaded successfully")
                 rewardedAd = ad
             }
         })
@@ -185,19 +187,21 @@ class MainActivity : ComponentActivity() {
     private fun loadInterstitialAd() {
         // Only load ads if enabled in build configuration
         if (!BuildConfig.ADS_ENABLED || BuildConfig.ADMOB_INTERSTITIAL_ID.isEmpty()) {
-            Log.d("ADS", "Ads disabled in this build configuration")
+            Log.d("ADS", "Ads disabled in this build configuration - ADS_ENABLED: ${BuildConfig.ADS_ENABLED}, INTERSTITIAL_ID: '${BuildConfig.ADMOB_INTERSTITIAL_ID}'")
             return
         }
         
+        Log.d("ADS", "Loading interstitial ad with ID: ${BuildConfig.ADMOB_INTERSTITIAL_ID}")
         val adRequest = AdRequest.Builder().build()
         InterstitialAd.load(this, BuildConfig.ADMOB_INTERSTITIAL_ID, adRequest, object : InterstitialAdLoadCallback() {
             override fun onAdFailedToLoad(adError: LoadAdError) {
                 Log.d("ADS", "Interstitial ad failed to load: ${adError.message}")
+                Log.d("ADS", "Error details - Code: ${adError.code}, Domain: ${adError.domain}")
                 interstitialAd = null
             }
 
             override fun onAdLoaded(ad: InterstitialAd) {
-                Log.d("ADS", "Interstitial ad loaded")
+                Log.d("ADS", "Interstitial ad loaded successfully")
                 interstitialAd = ad
             }
         })
@@ -206,9 +210,41 @@ class MainActivity : ComponentActivity() {
     private fun refreshGroups() {
         // Use the ViewModel to refresh groups (shows all active groups)
         mainViewModel.refreshGroups()
+
+        // Debug: Log all groups in the database
+        logAllGroups()
     }
     
-    
+    // Debug function to log all groups in Firebase
+    private fun logAllGroups() {
+        groupsRef.get().addOnSuccessListener { dataSnapshot ->
+            if (dataSnapshot.exists()) {
+                val groupCount = dataSnapshot.childrenCount
+                Log.d("FIREBASE_DEBUG", "Total groups in database: $groupCount")
+
+                dataSnapshot.children.forEach { groupSnapshot ->
+                    val group = groupSnapshot.getValue(Group::class.java)
+                    group?.let {
+                        Log.d("FIREBASE_DEBUG", "Group: ${it.destinationName}, " +
+                            "Members: ${it.memberCount}/${it.maxMembers}, " +
+                            "Created: ${java.util.Date(it.timestamp ?: 0L)}, " +
+                            "Creator: ${it.creatorName}")
+
+                        // Log member details
+                        it.memberDetails.forEach { (uid, member) ->
+                            Log.d("FIREBASE_DEBUG", "   Member: ${member.name}, " +
+                                "Phone: ${member.phone}, Avatar: ${member.avatar}")
+                        }
+                    }
+                }
+            } else {
+                Log.d("FIREBASE_DEBUG", "No groups found in database")
+            }
+        }.addOnFailureListener { exception ->
+            Log.e("FIREBASE_DEBUG", "Failed to fetch groups", exception)
+        }
+    }
+
     private fun filterExpiredGroups(groups: List<Group>): List<Group> {
         // Temporarily disable expiration filter for testing - include all groups
         return groups
@@ -590,7 +626,7 @@ class MainActivity : ComponentActivity() {
                 searchQuery = searchQuery,
                 onSearchQueryChange = { query -> searchQuery = query },
                 selectedFilters = selectedFilters,
-                onFiltersChange = { filters -> selectedFilters = filters },
+                _onFiltersChange = { filters -> selectedFilters = filters },
                 onGroupClick = { group ->
                     // Group click callback - show members dialog
                     showGroupMembersDialog(group)
@@ -604,25 +640,20 @@ class MainActivity : ComponentActivity() {
                     // Create group callback - show destination dialog
                     showCreateGroupDialog()
                 },
-                onNavigateToProfile = {
-                    // Navigate to profile callback - placeholder for now
-                    Log.d("MainActivity", "Navigate to profile clicked")
+                onNavigateToSettings = {
+                    // Navigate to settings
+                },
+                _onNavigateToProfile = {
+                    // Navigate to profile (placeholder)
+                },
+                _onNavigateToBookmarks = {
+                    // Navigate to bookmarks (placeholder)
                 },
                 onNavigateToNotifications = {
-                    // Navigate to notifications callback - placeholder for now
-                    Log.d("MainActivity", "Navigate to notifications clicked")
+                    // Navigate to notifications
                 },
-                onNavigateToBookmarks = {
-                    // Navigate to bookmarks callback - placeholder for now
-                    Log.d("MainActivity", "Navigate to bookmarks clicked")
-                },
-                onNavigateToHistory = {
-                    // Navigate to history callback - placeholder for now
-                    Log.d("MainActivity", "Navigate to history clicked")
-                },
-                onNavigateToSettings = {
-                    // Navigate to settings callback - placeholder for now
-                    Log.d("MainActivity", "Navigate to settings clicked")
+                _onNavigateToHistory = {
+                    // Navigate to history (placeholder)
                 }
             )
         }

@@ -5,6 +5,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.Image
@@ -31,21 +32,49 @@ class SplashActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
-        setContent {
-            // Use the enhanced theme with explicit parameters
-            com.dawitf.akahidegn.ui.theme.AkahidegnTheme(
-                darkTheme = false,
-                dynamicColor = false
-            ) {
-                SplashScreen()
+        Log.d("SplashActivity", "Starting SplashActivity on device: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL}")
+        
+        try {
+            setContent {
+                // Use the enhanced theme with explicit parameters
+                com.dawitf.akahidegn.ui.theme.AkahidegnTheme(
+                    darkTheme = false,
+                    dynamicColor = false
+                ) {
+                    SplashScreen()
+                }
+            }
+            
+            // Navigate to MainActivity after 3 seconds
+            Handler(Looper.getMainLooper()).postDelayed({
+                try {
+                    Log.d("SplashActivity", "Attempting to start MainActivity")
+                    startActivity(Intent(this, MainActivity::class.java))
+                    finish()
+                } catch (e: Exception) {
+                    Log.e("SplashActivity", "Error starting MainActivity", e)
+                    // Try again with a fallback
+                    try {
+                        val intent = Intent(this, MainActivity::class.java)
+                        intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+                        startActivity(intent)
+                        finish()
+                    } catch (fallbackError: Exception) {
+                        Log.e("SplashActivity", "Fallback also failed", fallbackError)
+                    }
+                }
+            }, 3000)
+            
+        } catch (e: Exception) {
+            Log.e("SplashActivity", "Error in onCreate", e)
+            // Fallback: directly start MainActivity
+            try {
+                startActivity(Intent(this, MainActivity::class.java))
+                finish()
+            } catch (fallbackError: Exception) {
+                Log.e("SplashActivity", "Complete failure in SplashActivity", fallbackError)
             }
         }
-        
-        // Navigate to MainActivity after 3 seconds
-        Handler(Looper.getMainLooper()).postDelayed({
-            startActivity(Intent(this, MainActivity::class.java))
-            finish()
-        }, 3000)
     }
 }
 

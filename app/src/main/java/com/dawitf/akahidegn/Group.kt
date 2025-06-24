@@ -97,7 +97,5 @@ data class Group(
         Log.d("FIREBASE_DEBUG", "Complete map being written to Firebase: $map")
         
         return map
-        
-        return map
     }
 }

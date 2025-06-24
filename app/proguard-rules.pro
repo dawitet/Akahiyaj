@@ -128,6 +128,21 @@
 -keep class com.google.firebase.FirebaseApp { *; }
 -keep class com.google.firebase.FirebaseOptions { *; }
 
+# Samsung-specific rules
+-keep class com.samsung.** { *; }
+-dontwarn com.samsung.**
+
+# Samsung WebView compatibility
+-keep class android.webkit.** { *; }
+-dontwarn android.webkit.**
+
+# Samsung One UI compatibility
+-keep class com.sec.** { *; }
+-dontwarn com.sec.**
+
+# Samsung device manufacturer detection
+-keep class android.os.Build { *; }
+
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
