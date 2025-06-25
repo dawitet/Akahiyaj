@@ -4,10 +4,10 @@
     <selectionStates>
       <SelectionState runConfigName="app">
         <option name="selectionMode" value="DROPDOWN" />
-        <DropdownSelection timestamp="2025-06-21T20:27:53.783614Z">
+        <DropdownSelection timestamp="2025-06-24T19:29:42.399878Z">
           <Target type="DEFAULT_BOOT">
             <handle>
-              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/dawitsahle/.android/avd/samsung_s10.avd" />
+              <DeviceId pluginId="LocalEmulator" identifier="path=/Users/dawitsahle/.android/avd/Android10_Test.avd" />
             </handle>
           </Target>
         </DropdownSelection>

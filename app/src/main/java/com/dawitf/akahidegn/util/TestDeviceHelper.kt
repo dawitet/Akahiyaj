@@ -106,4 +106,4 @@ object TestDeviceHelper {
         Log.d(TAG, "Board: ${Build.BOARD}")
         Log.d(TAG, "Brand: ${Build.BRAND}")
     }
-}
+}}
