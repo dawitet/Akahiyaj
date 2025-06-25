@@ -128,6 +128,32 @@ fun ShimmerGroupList(
     modifier: Modifier = Modifier,
     itemCount: Int = 6
 ) {
+    // Use a regular Column instead of LazyVerticalGrid to avoid nested scrolling issues
+    Column(
+        modifier = modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        repeat(itemCount.coerceAtMost(6)) {
+            ShimmerGroupCard(
+                modifier = Modifier.fillMaxWidth()
+            )
+            
+            // Add shimmer banner ad placeholder after the 3rd item
+            if (it == 2 && itemCount > 4) {
+                ShimmerBannerAd(
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+        }
+    }
+}
+
+// Keep the original implementation as an alternative when needed outside scrollable containers
+@Composable
+fun ShimmerGroupGridList(
+    modifier: Modifier = Modifier,
+    itemCount: Int = 6
+) {
     LazyVerticalGrid(
         columns = GridCells.Fixed(2),
         modifier = modifier.fillMaxSize(),

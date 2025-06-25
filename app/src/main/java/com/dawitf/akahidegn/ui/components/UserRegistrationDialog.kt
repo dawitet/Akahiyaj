@@ -82,7 +82,7 @@ fun UserRegistrationDialog(
             ) {
                 // Title
                 Text(
-                    text = "🎉 እንኳን ወደ ኣካሂደኛ መጡ!",
+                    text = "🎉 እንኳን ወደ አካሂያጅ በደህና መጡ!",
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -143,7 +143,7 @@ fun UserRegistrationDialog(
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { newValue ->
-                        // Ethiopian phone number validation - prioritize local format (0911000927)
+                        // Ethiopian phone number validation - prioritize local format (0912345678)
                         val cleanedValue = newValue.replace(Regex("[^0-9+]"), "")
                         
                         when {
@@ -176,11 +176,17 @@ fun UserRegistrationDialog(
                         keyboardType = KeyboardType.Phone,
                         imeAction = ImeAction.Done
                     ),
-                    keyboardActions = KeyboardActions(onDone = { focusManager.clearFocus() }),
-                    placeholder = { Text("0911000927") },
+                    keyboardActions = KeyboardActions(
+                        onDone = { 
+                            if (name.isNotBlank() && phone.isNotBlank()) {
+                                onComplete(name.trim(), phone.trim(), selectedAvatar)
+                            }
+                        }
+                    ),
+                    placeholder = { Text("0912345678") },
                     supportingText = { 
                         Text(
-                            text = "ኢትዮጵያዊ ቁጥር: 0911000927 ወይም +251911000927",
+                            text = "ኢትዮጵያዊ ቁጥር: 0912345678 ወይም +251912345678",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )

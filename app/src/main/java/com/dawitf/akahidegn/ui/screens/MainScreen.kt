@@ -4,9 +4,11 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
@@ -251,6 +253,7 @@ fun MainScreen(
                         .fillMaxSize()
                         .padding(innerPadding)
                         .padding(horizontal = 16.dp)
+                        .verticalScroll(rememberScrollState())
                 ) {
                     Spacer(modifier = Modifier.height(16.dp))
                     
@@ -387,7 +390,11 @@ fun MainScreen(
                 
                     // Content with enhanced animations and effects
                     if (isLoading) {
-                        ShimmerGroupList()
+                        Box(
+                            modifier = Modifier.height(300.dp)
+                        ) {
+                            ShimmerGroupList()
+                        }
                     } else if (filteredGroups.isEmpty()) {
                         Box(
                             modifier = Modifier.fillMaxSize(),

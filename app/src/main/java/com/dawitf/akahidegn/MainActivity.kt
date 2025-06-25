@@ -259,6 +259,7 @@ class MainActivity : ComponentActivity() {
             hint = "ወደየት ነው የምትሄደው? (ምሳሌ: ቦሌ፣ መገናኛ፣ ፒያሳ)"
             setPadding(60, 40, 60, 40)
             textSize = 16f
+            setTextColor(android.graphics.Color.BLACK)
             setBackgroundResource(android.R.drawable.edit_text)
         }
         
@@ -361,23 +362,15 @@ class MainActivity : ComponentActivity() {
         val currentUserId = auth.currentUser?.uid ?: return
         val timestamp = System.currentTimeMillis()
         
-        // Create a unique group identifier combining destination, time, and user name
-        val timeFormatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
-        val timeString = timeFormatter.format(java.util.Date(timestamp))
-        
-        // Create a more descriptive group name with time and creator differentiator
-        val creatorName = userName ?: "User"
-        val uniqueDestinationName = "$destinationName ($timeString) - by $creatorName"
-        
         // Get user profile data
         val userPhone = sharedPreferences.getString("user_phone", "") ?: ""
         val userAvatar = sharedPreferences.getString("user_avatar", "avatar_1") ?: "avatar_1"
         
-        // Get a local avatar for the group
+        // Use the destination name directly as the group name
         val newGroup = Group(
             creatorId = currentUserId,
             creatorName = userName ?: "User",
-            destinationName = uniqueDestinationName, // Use time-differentiated name
+            destinationName = destinationName, // Use the destination name directly
             originalDestination = destinationName, // Store original destination
             pickupLat = pickupLatitude,
             pickupLng = pickupLongitude,
@@ -433,79 +426,143 @@ class MainActivity : ComponentActivity() {
         val currentUserId = auth.currentUser?.uid ?: return
         val groupId = group.groupId ?: return
         
+        Log.d("JOIN_GROUP", "Starting to join group: $groupId, user: $currentUserId")
+        
         // Check if group is expired (older than 30 minutes)
         val thirtyMinutesAgo = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30)
         if (group.timestamp != null && group.timestamp!! < thirtyMinutesAgo) {
+            Log.d("JOIN_GROUP", "Group has expired: ${group.timestamp} < $thirtyMinutesAgo")
             onComplete(false, "Group has expired")
             return
         }
         
         // Check if group is full
         if (group.memberCount >= group.maxMembers) {
+            Log.d("JOIN_GROUP", "Group is full: ${group.memberCount}/${group.maxMembers}")
             onComplete(false, "Group is full")
             return
         }
         
         // Check if user is already a member
         if (group.members.containsKey(currentUserId) && group.members[currentUserId] == true) {
+            Log.d("JOIN_GROUP", "User is already a member")
             onComplete(false, "You are already a member of this group")
             return
         }
         
-        // Using transaction for atomic operations to prevent race conditions
+        // Using transaction for atomic operations to ensure consistency
         val groupRef = groupsRef.child(groupId)
         
         // Get user profile data
         val userPhone = sharedPreferences.getString("user_phone", "") ?: ""
         val userAvatar = sharedPreferences.getString("user_avatar", "avatar_1") ?: "avatar_1"
+        val userDisplayName = userName ?: "User"
         
-        // First update the members list and member details
-        val updates = HashMap<String, Any>()
-        updates["members/$currentUserId"] = true
-        updates["memberDetails/$currentUserId/name"] = userName ?: "User"
-        updates["memberDetails/$currentUserId/phone"] = userPhone
-        updates["memberDetails/$currentUserId/avatar"] = userAvatar
-        updates["memberDetails/$currentUserId/joinedAt"] = System.currentTimeMillis()
-        
-        groupRef.updateChildren(updates)
-            .addOnSuccessListener {
-                // Then update member count atomically
-                groupRef.child("memberCount").runTransaction(object : com.google.firebase.database.Transaction.Handler {
-                    override fun doTransaction(mutableData: com.google.firebase.database.MutableData): com.google.firebase.database.Transaction.Result {
-                        val currentCount = mutableData.getValue(Int::class.java) ?: 0
-                        mutableData.value = currentCount + 1
-                        return com.google.firebase.database.Transaction.success(mutableData)
+        // Use a single transaction to update all data atomically
+        groupRef.runTransaction(object : com.google.firebase.database.Transaction.Handler {
+            override fun doTransaction(mutableData: com.google.firebase.database.MutableData): com.google.firebase.database.Transaction.Result {
+                try {
+                    // Get current data as a map to avoid deserialization issues
+                    val currentData = mutableData.getValue() as? Map<String, Any?> ?: return com.google.firebase.database.Transaction.abort()
+                    
+                    // Get the current member count
+                    val currentMemberCount = (currentData["memberCount"] as? Long)?.toInt() ?: 0
+                    val maxMembers = (currentData["maxMembers"] as? Long)?.toInt() ?: 4
+                    
+                    // Verify that the group isn't full
+                    if (currentMemberCount >= maxMembers) {
+                        Log.d("JOIN_GROUP", "Group is full: $currentMemberCount/$maxMembers")
+                        return com.google.firebase.database.Transaction.abort()
                     }
                     
-                    override fun onComplete(
-                        error: com.google.firebase.database.DatabaseError?,
-                        committed: Boolean,
-                        currentData: com.google.firebase.database.DataSnapshot?
-                    ) {
-                        if (error != null) {
-                            Log.e("FIREBASE", "Error updating member count", error.toException())
-                            onComplete(false, error.message)
-                        } else {
-                            onComplete(true, null)
-                            refreshGroups()
-                            Toast.makeText(
-                                this@MainActivity,
-                                "Successfully joined group: ${group.destinationName}",
-                                Toast.LENGTH_SHORT
-                            ).show()
-                        }
+                    // Check timestamp for expiry
+                    val groupTimestamp = currentData["timestamp"] as? Long ?: currentData["createdAt"] as? Long
+                    if (groupTimestamp != null && groupTimestamp < thirtyMinutesAgo) {
+                        Log.d("JOIN_GROUP", "Group has expired: $groupTimestamp < $thirtyMinutesAgo")
+                        return com.google.firebase.database.Transaction.abort()
                     }
-                })
+                    
+                    // Check if user is already a member
+                    val members = currentData["members"] as? Map<String, Any?> ?: HashMap<String, Any?>()
+                    if (members.containsKey(currentUserId)) {
+                        Log.d("JOIN_GROUP", "User is already a member")
+                        return com.google.firebase.database.Transaction.abort()
+                    }
+                    
+                    // Create updated data map
+                    val updatedData = HashMap<String, Any?>(currentData)
+                    
+                    // Update member count
+                    updatedData["memberCount"] = currentMemberCount + 1
+                    
+                    // Add user to members
+                    val updatedMembers = HashMap<String, Any?>(members)
+                    updatedMembers[currentUserId] = true
+                    updatedData["members"] = updatedMembers
+                    
+                    // Add member details
+                    val memberDetails = currentData["memberDetails"] as? Map<String, Any?> ?: HashMap<String, Any?>()
+                    val updatedMemberDetails = HashMap<String, Any?>(memberDetails)
+                    
+                    updatedMemberDetails[currentUserId] = mapOf(
+                        "name" to userDisplayName,
+                        "phone" to userPhone,
+                        "avatar" to userAvatar,
+                        "joinedAt" to System.currentTimeMillis()
+                    )
+                    updatedData["memberDetails"] = updatedMemberDetails
+                    
+                    // Update the data in Firebase
+                    mutableData.value = updatedData
+                    Log.d("JOIN_GROUP", "Transaction data prepared: memberCount=${updatedData["memberCount"]}, added user=$currentUserId")
+                    return com.google.firebase.database.Transaction.success(mutableData)
+                } catch (e: Exception) {
+                    Log.e("JOIN_GROUP", "Error in transaction", e)
+                    return com.google.firebase.database.Transaction.abort()
+                }
             }
-            .addOnFailureListener { e ->
-                Log.e("FIREBASE", "Error joining group", e)
-                onComplete(false, "Permission denied: ${e.message}")
-                Toast.makeText(
-                    this@MainActivity,
-                    "Failed to join group: ${e.message}",
-                    Toast.LENGTH_SHORT
-                ).show()
+            
+            override fun onComplete(
+                error: com.google.firebase.database.DatabaseError?,
+                committed: Boolean,
+                currentData: com.google.firebase.database.DataSnapshot?
+            ) {
+                if (error != null) {
+                    Log.e("JOIN_GROUP", "Transaction failed", error.toException())
+                    onComplete(false, "Failed to join group: ${error.message}")
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Failed to join group: ${error.message}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else if (!committed) {
+                    // Transaction was aborted, check why and provide specific message
+                    val reason = when {
+                        currentData?.child("memberCount")?.getValue(Int::class.java) ?: 0 >= group.maxMembers -> "Group is full"
+                        currentData?.child("members")?.child(currentUserId)?.exists() == true -> "You are already a member"
+                        else -> "Unable to join group"
+                    }
+                    
+                    Log.d("JOIN_GROUP", "Transaction aborted: $reason")
+                    onComplete(false, reason)
+                    Toast.makeText(
+                        this@MainActivity,
+                        reason,
+                        Toast.LENGTH_SHORT
+                    ).show()
+                } else {
+                    // Success
+                    Log.d("JOIN_GROUP", "Successfully joined group $groupId")
+                    onComplete(true, null)
+                    refreshGroups()
+                    Toast.makeText(
+                        this@MainActivity,
+                        "Successfully joined group: ${group.destinationName}",
+                        Toast.LENGTH_SHORT
+                    ).show()
+                }
             }
+        })
     }
     
     private fun checkUserProfile() {

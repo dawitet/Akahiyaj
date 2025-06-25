@@ -67,8 +67,11 @@ object TestDeviceHelper {
         Log.d(TAG, "Model: ${Build.MODEL}")
         Log.d(TAG, "Brand: ${Build.BRAND}")
         Log.d(TAG, "Device: ${Build.DEVICE}")
+        Log.d(TAG, "Product: ${Build.PRODUCT}")
+        Log.d(TAG, "Board: ${Build.BOARD}")
         Log.d(TAG, "Is Samsung: ${isSamsungDevice()}")
         Log.d(TAG, "==========================")
+    }
 
     /**
      * Check if the current device is a Samsung device
@@ -93,17 +96,4 @@ object TestDeviceHelper {
         val digest = md.digest(input.toByteArray())
         return digest.joinToString("") { "%02x".format(it) }
     }
-
-    /**
-     * Logs information about the current device
-     */
-    fun logDeviceInfo() {
-        Log.d(TAG, "Device Information:")
-        Log.d(TAG, "Manufacturer: ${Build.MANUFACTURER}")
-        Log.d(TAG, "Model: ${Build.MODEL}")
-        Log.d(TAG, "Device: ${Build.DEVICE}")
-        Log.d(TAG, "Product: ${Build.PRODUCT}")
-        Log.d(TAG, "Board: ${Build.BOARD}")
-        Log.d(TAG, "Brand: ${Build.BRAND}")
-    }
-}}
+}
