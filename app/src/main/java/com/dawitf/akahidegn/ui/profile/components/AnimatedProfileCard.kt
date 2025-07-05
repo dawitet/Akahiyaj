@@ -100,7 +100,7 @@ fun AnimatedProgressBar(
     }
 
     LinearProgressIndicator(
-        progress = animatedProgress,
+        progress = { animatedProgress },
         modifier = modifier
             .fillMaxWidth()
             .height(8.dp)
@@ -131,4 +131,4 @@ fun AnimatedAchievementIcon(
         tint = if (isUnlocked) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.outline,
         modifier = modifier.scale(scale)
     )
-} 
+}

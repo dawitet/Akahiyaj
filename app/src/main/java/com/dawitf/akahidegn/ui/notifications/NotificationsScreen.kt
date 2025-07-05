@@ -5,6 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.Message
 import androidx.compose.material.icons.filled.*
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -27,8 +29,8 @@ data class NotificationItem(
 
 enum class NotificationType(val icon: androidx.compose.ui.graphics.vector.ImageVector) {
     GROUP_JOINED(Icons.Default.Group),
-    GROUP_LEFT(Icons.Default.ExitToApp),
-    CHAT_MESSAGE(Icons.Default.Message),
+    GROUP_LEFT(Icons.AutoMirrored.Filled.ExitToApp),
+    CHAT_MESSAGE(Icons.AutoMirrored.Filled.Message),
     SYSTEM(Icons.Default.Settings),
     RIDE_UPDATE(Icons.Default.DirectionsCar)
 }

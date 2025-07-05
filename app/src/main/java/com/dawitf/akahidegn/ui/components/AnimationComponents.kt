@@ -107,7 +107,7 @@ fun SuccessAnimationCard(
                     },
                     modifier = Modifier.fillMaxWidth()
                 ) {
-                    Text("በደንብ")
+                    Text("እሺ")
                 }
             }
         }

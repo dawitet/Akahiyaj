@@ -138,19 +138,49 @@ class DriverModeServiceImpl @Inject constructor(
                 
                 val requests = snapshot?.documents?.mapNotNull { doc ->
                     try {
+                        // Safe extraction with proper null checks
+                        val specialRequestsData = doc.get("specialRequests")
+                        val specialRequestsList = when (specialRequestsData) {
+                            is List<*> -> specialRequestsData.filterIsInstance<String>()
+                            else -> emptyList()
+                        }
+
+                        // Safe extraction of location data
+                        val pickupLocationData = doc.get("pickupLocation")
+                        val pickupLocation = when (pickupLocationData) {
+                            is Map<*, *> -> {
+                                val lat = (pickupLocationData["latitude"] as? Number)?.toDouble() ?: 0.0
+                                val lng = (pickupLocationData["longitude"] as? Number)?.toDouble() ?: 0.0
+                                val address = pickupLocationData["address"] as? String ?: ""
+                                LocationData(lat, lng, address)
+                            }
+                            else -> LocationData(0.0, 0.0, "")
+                        }
+
+                        val destinationData = doc.get("destination")
+                        val destination = when (destinationData) {
+                            is Map<*, *> -> {
+                                val lat = (destinationData["latitude"] as? Number)?.toDouble() ?: 0.0
+                                val lng = (destinationData["longitude"] as? Number)?.toDouble() ?: 0.0
+                                val address = destinationData["address"] as? String ?: ""
+                                LocationData(lat, lng, address)
+                            }
+                            else -> LocationData(0.0, 0.0, "")
+                        }
+
                         RideRequest(
                             id = doc.id,
                             passengerId = doc.getString("passengerId") ?: "",
                             passengerName = doc.getString("passengerName") ?: "",
                             passengerRating = doc.getDouble("passengerRating")?.toFloat() ?: 0f,
-                            pickupLocation = doc.get("pickupLocation") as? LocationData ?: LocationData(0.0, 0.0, ""),
-                            destination = doc.get("destination") as? LocationData ?: LocationData(0.0, 0.0, ""),
+                            pickupLocation = pickupLocation,
+                            destination = destination,
                             estimatedDistance = doc.getDouble("estimatedDistance") ?: 0.0,
                             estimatedDuration = doc.getLong("estimatedDuration")?.toInt() ?: 0,
                             suggestedFare = doc.getDouble("suggestedFare") ?: 0.0,
                             requestTime = doc.getLong("requestTime") ?: 0L,
                             expiresAt = doc.getLong("expiresAt") ?: 0L,
-                            specialRequests = doc.get("specialRequests") as? List<String> ?: emptyList(),
+                            specialRequests = specialRequestsList,
                             passengerCount = doc.getLong("passengerCount")?.toInt() ?: 1
                         )
                     } catch (e: Exception) {

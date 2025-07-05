@@ -102,7 +102,7 @@ fun GroupMembersDialog(
                     modifier = Modifier.padding(vertical = 8.dp)
                 )
                 
-                Divider(
+                HorizontalDivider(
                     modifier = Modifier.padding(vertical = 8.dp),
                     color = MaterialTheme.colorScheme.outlineVariant
                 )

@@ -270,6 +270,7 @@ class UserProfileRepositoryImpl @Inject constructor(
         return try {
             val document = usersCollection.document(userId).get().await()
             if (document.exists()) {
+                @Suppress("UNCHECKED_CAST")
                 val preferences = document.get("preferences") as? Map<String, Any>
                 preferences?.let {
                     // Convert map to UserPreferences object

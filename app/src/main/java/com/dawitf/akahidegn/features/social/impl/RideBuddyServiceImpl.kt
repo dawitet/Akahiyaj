@@ -634,8 +634,20 @@ class RideBuddyServiceImpl @Inject constructor(
                 totalRidesTogether = child("totalRidesTogether").getValue(Int::class.java) ?: 0,
                 lastRideDate = child("lastRideDate").getValue(Long::class.java) ?: 0,
                 averageRating = child("averageRating").getValue(Float::class.java) ?: 0f,
-                preferredPickupLocations = (child("preferredPickupLocations").value as? List<String>) ?: emptyList(),
-                commonDestinations = (child("commonDestinations").value as? List<String>) ?: emptyList(),
+                preferredPickupLocations = run {
+                    val locationsData = child("preferredPickupLocations").value
+                    when (locationsData) {
+                        is List<*> -> locationsData.filterIsInstance<String>()
+                        else -> emptyList()
+                    }
+                },
+                commonDestinations = run {
+                    val destinationsData = child("commonDestinations").value
+                    when (destinationsData) {
+                        is List<*> -> destinationsData.filterIsInstance<String>()
+                        else -> emptyList()
+                    }
+                },
                 isActive = child("isActive").getValue(Boolean::class.java) ?: true,
                 addedDate = child("addedDate").getValue(Long::class.java) ?: System.currentTimeMillis()
             )

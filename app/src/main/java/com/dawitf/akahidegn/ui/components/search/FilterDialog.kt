@@ -74,8 +74,8 @@ fun FilterDialog(
                     }
                 }
                 
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-                
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 // Filter content
                 Column(
                     modifier = Modifier
@@ -163,8 +163,8 @@ fun FilterDialog(
                     }
                 }
                 
-                Divider(modifier = Modifier.padding(vertical = 8.dp))
-                
+                HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
                 // Action buttons
                 Row(
                     modifier = Modifier.fillMaxWidth(),

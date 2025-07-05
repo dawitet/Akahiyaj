@@ -1,7 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    id("org.jetbrains.kotlin.kapt")
+    // Removed kapt plugin - using KSP instead
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
     id("org.jetbrains.kotlin.plugin.compose")
@@ -177,12 +177,12 @@ dependencies {
     
     // Hilt for Dependency Injection - simplified for Ethiopian market
     implementation(libs.hilt.android)
-    kapt(libs.hilt.compiler)
+    ksp(libs.hilt.compiler)  // Changed from kapt to ksp
     implementation(libs.androidx.hilt.work)
     implementation(libs.hilt.navigation.compose)
     // Removed complex hilt lifecycle viewmodel - using simpler approach
-    kapt("androidx.hilt:hilt-compiler:1.1.0")
-    
+    ksp("androidx.hilt:hilt-compiler:1.1.0")  // Changed from kapt to ksp
+
     // Paging for performance
     implementation(libs.androidx.paging.runtime)
     implementation(libs.androidx.paging.compose)
@@ -191,8 +191,8 @@ dependencies {
     implementation(libs.androidx.room.runtime)
     implementation(libs.androidx.room.ktx)
     implementation(libs.androidx.room.paging)
-    kapt(libs.androidx.room.compiler) // Enable Room annotation processor
-    
+    ksp(libs.androidx.room.compiler) // Changed from kapt to ksp
+
     // Retrofit for better networking
     implementation(libs.retrofit)
     implementation(libs.retrofit.gson)
@@ -204,7 +204,7 @@ dependencies {
     // WorkManager for background tasks
     implementation(libs.androidx.work.runtime)
     implementation(libs.androidx.hilt.work)
-    // kapt(libs.hilt.compiler) // Use kapt temporarily instead of ksp
+    // ksp(libs.hilt.compiler) // Use ksp instead of kapt
 
     // Advanced UI/UX Dependencies
     implementation("androidx.compose.animation:animation:1.5.4")
@@ -221,17 +221,4 @@ dependencies {
     testImplementation(libs.androidx.work.testing)
     testImplementation("androidx.test:core:1.6.1") // Updated
     // Note: Using native Firestore geo-queries instead of GeoFirestore for simplicity
-}
-
-kapt {
-    correctErrorTypes = true
-    useBuildCache = true
-    arguments {
-        arg("room.schemaLocation", "$projectDir/schemas")
-    }
-    javacOptions {
-        // Increase memory for annotation processing
-        option("-Xmx4g")
-        option("-XX:MaxMetaspaceSize=1g")
-    }
 }

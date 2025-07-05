@@ -75,9 +75,21 @@ class UserProfileServiceImpl @Inject constructor(
                 preferredPaymentMethod = userDoc.getString("preferredPaymentMethod")?.let { 
                     PaymentMethod.valueOf(it) 
                 },
-                languages = userDoc.get("languages") as? List<String> ?: emptyList(),
+                languages = run {
+                    val languagesData = userDoc.get("languages")
+                    when (languagesData) {
+                        is List<*> -> languagesData.filterIsInstance<String>()
+                        else -> emptyList()
+                    }
+                },
                 bio = userDoc.getString("bio"),
-                interests = userDoc.get("interests") as? List<String> ?: emptyList()
+                interests = run {
+                    val interestsData = userDoc.get("interests")
+                    when (interestsData) {
+                        is List<*> -> interestsData.filterIsInstance<String>()
+                        else -> emptyList()
+                    }
+                }
             )
             
             Result.Success(profile)
