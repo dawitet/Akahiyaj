@@ -46,16 +46,14 @@ interface EnhancedGroupDao {
         SELECT * FROM groups_enhanced 
         WHERE isActive = 1 
         AND (:destination = '' OR destinationName LIKE '%' || :destination || '%')
-        AND (:minPrice IS NULL OR pricePerPerson >= :minPrice)
-        AND (:maxPrice IS NULL OR pricePerPerson <= :maxPrice)
+
         AND (:minTime IS NULL OR departureTime >= :minTime)
         AND (:maxTime IS NULL OR departureTime <= :maxTime)
         AND (:maxMemberCount IS NULL OR maxMembers <= :maxMemberCount)
         AND (:availableSeatsOnly = 0 OR availableSeats > 0)
         ORDER BY 
         CASE WHEN :sortBy = 'NEAREST' THEN distanceFromUser END ASC,
-        CASE WHEN :sortBy = 'PRICE_LOW_TO_HIGH' THEN pricePerPerson END ASC,
-        CASE WHEN :sortBy = 'PRICE_HIGH_TO_LOW' THEN pricePerPerson END DESC,
+        
         CASE WHEN :sortBy = 'DEPARTURE_TIME' THEN departureTime END ASC,
         CASE WHEN :sortBy = 'MOST_POPULAR' THEN popularityScore END DESC,
         CASE WHEN :sortBy = 'NEWEST' THEN timestamp END DESC,
@@ -63,8 +61,7 @@ interface EnhancedGroupDao {
     """)
     fun getFilteredGroups(
         destination: String,
-        minPrice: Double?,
-        maxPrice: Double?,
+
         minTime: Long?,
         maxTime: Long?,
         maxMemberCount: Int?,
@@ -182,8 +179,7 @@ interface EnhancedGroupDao {
         SELECT * FROM groups_enhanced 
         WHERE isActive = 1 
         AND (:destination IS NULL OR destinationName LIKE '%' || :destination || '%')
-        AND (:minPrice IS NULL OR pricePerPerson >= :minPrice)
-        AND (:maxPrice IS NULL OR pricePerPerson <= :maxPrice)
+
         AND (:startTime IS NULL OR departureTime >= :startTime)
         AND (:endTime IS NULL OR departureTime <= :endTime)
         AND (:maxMembers IS NULL OR maxMembers <= :maxMembers)
@@ -197,8 +193,7 @@ interface EnhancedGroupDao {
         latitude: Double,
         longitude: Double,
         maxDistance: Double,
-        minPrice: Double?,
-        maxPrice: Double?,
+
         startTime: Long?,
         endTime: Long?,
         maxMembers: Int?,

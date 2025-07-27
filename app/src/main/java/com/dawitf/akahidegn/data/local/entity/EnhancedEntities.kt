@@ -73,7 +73,7 @@ data class UserAnalyticsEntity(
         androidx.room.Index(value = ["destinationName"]),
         androidx.room.Index(value = ["pickupLat", "pickupLng"]),
         androidx.room.Index(value = ["timestamp"]),
-        androidx.room.Index(value = ["pricePerPerson"]),
+        
         androidx.room.Index(value = ["departureTime"]),
         androidx.room.Index(value = ["memberCount"]),
         androidx.room.Index(value = ["availableSeats"])
@@ -93,7 +93,7 @@ data class GroupEntityEnhanced(
     val imageUrl: String?,
     
     // Enhanced fields
-    val pricePerPerson: Double?,
+    
     val departureTime: Long?,
     val availableSeats: Int,
     val description: String?,

@@ -1,4 +1,4 @@
-package com.dawitf.akahidegn.domain.model
+package com.dawitf.akahiyaj.domain.model
 
 /**
  * Font size options for accessibility and user preference settings

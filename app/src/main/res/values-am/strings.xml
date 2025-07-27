@@ -62,12 +62,12 @@
     <string name="apply_filters">ማጣሪያዎችን ተግብር</string>
     <string name="clear_filters">ማጣሪያዎችን አጽዳ</string>
     <string name="distance_filter">ርቀት</string>
-    <string name="price_filter">ዋጋ</string>
+    
     <string name="time_filter">ሰዓት</string>
     <string name="availability_filter">መኖር</string>
     <string name="sort_by">ደርድር በ</string>
     <string name="sort_by_distance">በርቀት</string>
-    <string name="sort_by_price">በዋጋ</string>
+    
     <string name="sort_by_time">በሰዓት</string>
     <string name="sort_by_popularity">በተወዳጅነት</string>
     
@@ -160,19 +160,9 @@
     <string name="trip_date">የጉዞ ቀን</string>
     <string name="trip_duration">የጉዞ ቆይታ</string>
     <string name="trip_distance">የጉዞ ርቀት</string>
-    <string name="trip_cost">የጉዞ ዋጋ</string>
     
-    <!-- Reviews & Ratings -->
-    <string name="leave_review">አስተያየት ስጥ</string>
-    <string name="rate_trip">ጉዞውን ደረጃ ስጥ</string>
-    <string name="rate_driver">ነጂውን ደረጃ ስጥ</string>
-    <string name="rate_passenger">መንገደኛውን ደረጃ ስጥ</string>
-    <string name="review_comment">አስተያየት ይላኩ</string>
-    <string name="excellent">በጣም ጥሩ</string>
-    <string name="good">ጥሩ</string>
-    <string name="average">መካከለኛ</string>
-    <string name="poor">ዝቅተኛ</string>
-    <string name="terrible">መጥፎ</string>
+    
+    
     
     <!-- Errors & Messages -->
     <string name="error_generic">ስህተት ተከስቷል</string>
@@ -185,11 +175,7 @@
     <string name="no_internet_connection">የበይነመረብ ግንኙነት የለም</string>
     <string name="try_again_later">ቆየት በኋላ እንደገና ይሞክሩ</string>
     
-    <!-- Accessibility -->
-    <string name="accessibility_settings">የተደራሽነት ቅንብሮች</string>
-    <string name="high_contrast_mode">ከፍተኛ ንፅፅር ሁነታ</string>
-    <string name="large_text">ትልቅ ፅሁፍ</string>
-    <string name="voice_guidance">የድምፅ መመሪያ</string>
+    
     
     <!-- Advertisements -->
     <string name="create_group_ad_prompt_title">ቡድን መፍጠር</string>
@@ -201,24 +187,9 @@
     <string name="toast_group_created">ቡድን ተፈጥሯል: %1$s</string>
     <string name="toast_group_failed_to_create">ቡድን መፍጠር አልተቻለም: %1$s</string>
     
-    <!-- Offline Mode -->
-    <string name="offline_mode">ከመስመር ውጭ ሁነታ</string>
-    <string name="offline_message">አሁን ከመስመር ውጭ ነዎት</string>
-    <string name="cached_data">የተከማቸ ውሂብ</string>
-    <string name="sync_when_online">በመስመር ላይ ሲሆን ማመሳሰል</string>
     
-    <!-- Analytics -->
-    <string name="carbon_footprint_saved">የተጠበቀ የካርቦን አሻራ</string>
-    <string name="trips_shared">የተጋሩ ጉዞዎች</string>
-    <string name="money_saved">የተጠበቀ ገንዘብ</string>
-    <string name="favorite_destinations">ተወዳጅ መድረሻዎች</string>
     
-    <!-- Driver Information -->
-    <string name="driver_info">የነጂ መረጃ</string>
-    <string name="vehicle_info">የተሽከርካሪ መረጃ</string>
-    <string name="license_plate">የታርጋ ቁጥር</string>
-    <string name="vehicle_model">የተሽከርካሪ ሞዴል</string>
-    <string name="vehicle_color">የተሽከርካሪ ቀለም</string>
-    <string name="driver_license">የመንዳት ፍቃድ</string>
-    <string name="experience_years">የልምድ አመታት</string>
+    
+    
+    
 </resources>

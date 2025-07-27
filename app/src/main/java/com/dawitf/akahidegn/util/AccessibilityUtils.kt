@@ -100,10 +100,9 @@ object AccessibilityUtils {
     fun createGroupAccessibilityDescription(
         destination: String,
         availableSeats: Int,
-        departureTime: String,
-        price: Float
+        departureTime: String
     ): String {
         val seatsDesc = if (availableSeats == 1) "1 seat available" else "$availableSeats seats available" 
-        return "Group to $destination. $seatsDesc. Departing at $departureTime. Price: $price birr."
+        return "Group to $destination. $seatsDesc. Departing at $departureTime."
     }
 }

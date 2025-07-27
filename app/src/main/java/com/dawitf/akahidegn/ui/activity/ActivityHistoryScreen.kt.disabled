@@ -15,13 +15,13 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dawitf.akahidegn.R
 import com.dawitf.akahidegn.domain.model.TripHistoryItem
-import com.dawitf.akahidegn.viewmodel.UserProfileViewModel
+
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ActivityHistoryScreen(
     onNavigateBack: () -> Unit,
-    viewModel: UserProfileViewModel = viewModel()
+    
 ) {
     val tripHistory by viewModel.tripHistory.collectAsState()
     val isLoading by viewModel.isLoading.collectAsState()
@@ -126,12 +126,7 @@ private fun TripHistoryCard(trip: TripHistoryItem) {
                 Column(
                     horizontalAlignment = Alignment.End
                 ) {
-                    Text(
-                        text = "${trip.fare} ${stringResource(R.string.currency_symbol)}",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = MaterialTheme.colorScheme.primary
-                    )
+                    
                     Text(
                         text = trip.status,
                         style = MaterialTheme.typography.bodySmall,

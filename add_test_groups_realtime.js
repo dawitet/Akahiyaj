@@ -7,11 +7,11 @@ const { getDatabase, ref, push, set } = require('firebase/database');
 
 // Firebase config
 const firebaseConfig = {
-  apiKey: "AIzaSyAmqtN3ceDYpkR8o5bCdO1G7Wd0x3vYHj8",
-  authDomain: "akahidegn-79376.firebaseapp.com",
-  databaseURL: "https://akahidegn-79376-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "akahidegn-79376",
-  storageBucket: "akahidegn-79376.firebasestorage.app",
+  apiKey: "AIzaSyA-04oS-c5FmfZ-DekJqdBl_GTnW4b_yAo",
+  authDomain: "akahiyaj-79376.firebaseapp.com",
+  databaseURL: "https://akahiyaj-79376-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "akahiyaj-79376",
+  storageBucket: "akahiyaj-79376.firebasestorage.app",
   messagingSenderId: "81721365267",
   appId: "1:81721365267:android:c9d4be50e95b8d8c0d0c77"
 };

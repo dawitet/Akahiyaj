@@ -52,7 +52,7 @@ object UserProfileMapper {
             cancelledTrips = 0,
             totalPassengers = 0,
             totalDistance = 0.0,
-            totalEarnings = 0.0,
+            
             bio = entity.bio ?: "",
             preferences = UserPreferences(),
             privacySettings = PrivacySettings(),
@@ -92,10 +92,7 @@ object UserProfileMapper {
 }
 
 // Extension functions
-fun UserProfile.toEntity(): UserProfileEntity = UserProfileMapper.toEntity(this)
+fun UserProfile.toUserProfileEntity(): UserProfileEntity = UserProfileMapper.toEntity(this)
 fun UserProfileEntity.toDomain(): UserProfile = UserProfileMapper.toDomain(this)
 fun UserPreferences.toEntity(userId: String): UserProfilePreferencesEntity = UserProfileMapper.preferencesToEntity(this, userId)
 fun UserProfilePreferencesEntity.toDomainPreferences(): UserPreferences = UserProfileMapper.preferencesFromEntity(this)
-
-// Extension function for convenience
-fun UserProfile.toUserProfileEntity(): UserProfileEntity = UserProfileMapper.toEntity(this)

@@ -17,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.dawitf.akahidegn.domain.model.SearchFilters
-import com.dawitf.akahidegn.domain.model.PriceRange
+
 import com.dawitf.akahidegn.domain.model.TimeRange
 import com.dawitf.akahidegn.domain.model.SortOption
 import java.text.SimpleDateFormat
@@ -94,15 +94,7 @@ fun FilterDialog(
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
-                    // Price range filter
-                    FilterSection(title = "የዋጋ ክልል") {
-                        PriceRangeFilter(
-                            priceRange = currentFilters.priceRange,
-                            onPriceRangeChange = { priceRange ->
-                                currentFilters = currentFilters.copy(priceRange = priceRange)
-                            }
-                        )
-                    }
+                    
                     
                     Spacer(modifier = Modifier.height(16.dp))
                     
@@ -250,44 +242,7 @@ private fun DistanceFilter(
     }
 }
 
-@Composable
-private fun PriceRangeFilter(
-    priceRange: PriceRange,
-    onPriceRangeChange: (PriceRange) -> Unit
-) {
-    var minPrice by remember { mutableStateOf(priceRange.min?.toString() ?: "") }
-    var maxPrice by remember { mutableStateOf(priceRange.max?.toString() ?: "") }
-    
-    Row(
-        horizontalArrangement = Arrangement.spacedBy(8.dp)
-    ) {
-        OutlinedTextField(
-            value = minPrice,
-            onValueChange = { value ->
-                minPrice = value
-                val min = value.toDoubleOrNull()
-                onPriceRangeChange(priceRange.copy(min = min))
-            },
-            label = { Text("ዝቅተኛ ዋጋ") },
-            suffix = { Text("ብር") },
-            modifier = Modifier.weight(1f),
-            singleLine = true
-        )
-        
-        OutlinedTextField(
-            value = maxPrice,
-            onValueChange = { value ->
-                maxPrice = value
-                val max = value.toDoubleOrNull()
-                onPriceRangeChange(priceRange.copy(max = max))
-            },
-            label = { Text("ከፍተኛ ዋጋ") },
-            suffix = { Text("ብር") },
-            modifier = Modifier.weight(1f),
-            singleLine = true
-        )
-    }
-}
+
 
 @Composable
 private fun TimeRangeFilter(

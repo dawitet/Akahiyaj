@@ -5,7 +5,10 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.*
+import androidx.compose.material.icons.filled.Notifications
+import androidx.compose.material.icons.filled.Vibration
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -88,19 +91,19 @@ fun SettingsScreen(
                         onCheckedChange = viewModel::setNotificationsEnabled
                     )
 
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                     // Sound Settings
                     SettingsToggleItem(
                         title = "ድምፅ", // Sound
                         description = "ለማሳወቂያዎች ድምፅ አንጻት", // Play sound for notifications
-                        icon = Icons.Default.VolumeUp,
+                        icon = Icons.AutoMirrored.Filled.VolumeUp,
                         checked = soundEnabled,
                         enabled = notificationsEnabled,
                         onCheckedChange = viewModel::setSoundEnabled
                     )
 
-                    Divider(modifier = Modifier.padding(vertical = 8.dp))
+                    HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
                     // Vibration Settings
                     SettingsToggleItem(

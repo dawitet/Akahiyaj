@@ -127,25 +127,7 @@
     <string name="toast_invalid_max_members_range">የአባላት ብዛት በ%1$s እና %2$s መካከል መሆን አለበት።</string>
     <string name="toast_auth_failed_firebase_reason">የማንነት ማረጋገጫ አልተሳካም: %1$s</string>
 
-    <!-- Accessibility and Settings -->
-    <string name="accessibility_settings">የተመረሳሽነት ቅንጅቶች</string>
-    <string name="account_settings">የመለያ ቅንጅቶች</string>
-    <string name="app_settings">የመተግበሪያ ቅንጅቶች</string>
-    <string name="settings">ቅንጅቶች</string>
-    <string name="theme">ገጽታ</string>
-    <string name="language">ቋንቋ</string>
-    <string name="dark_mode">ሸሞናዊ ሁኔታ</string>
-    <string name="light_mode">ብሩህ ሁኔታ</string>
-    <string name="system_theme">የስርዓት ገጽታ</string>
-    <string name="high_contrast_mode">ከፍተኛ ንፅፅር ሁኔታ</string>
-    <string name="large_text">ከፍተኛ ጽሑፍ</string>
-    <string name="notifications">ማሳወቂያዎች</string>
-    <string name="notification_settings">የማሳወቂያ ቅንጅቶች</string>
-    <string name="enable_notifications">ማሳወቂያዎችን አብራ</string>
-    <string name="sound_enabled">ድምፅ ተሞልቷል</string>
-    <string name="vibration_enabled">ንዛዛ ተሞልቷል</string>
-    <string name="privacy_settings">የግላዊነት ቅንጅቶች</string>
-    <string name="location_sharing_enabled">የአካባቢ መጋራት ተሞልቷል</string>
+    
     
     <!-- Trip and Group related -->
     <string name="trip_history">የጉዞ ታሪክ</string>
@@ -154,7 +136,7 @@
     <string name="cancelled_trips">የተሰረዙ ጉዞዎች</string>
     <string name="total_trips">ጠቅላላ ጉዞዎች</string>
     <string name="trips_shared">የተጋሩ ጉዞዎች</string>
-    <string name="trip_cost">የጉዞ ወጪ</string>
+    
     <string name="trip_date">የጉዞ ቀን</string>
     <string name="trip_distance">የጉዞ ርቀት</string>
     <string name="trip_duration">የጉዞ ጊዜ</string>
@@ -199,12 +181,12 @@
     <string name="apply_filters">ማጣሪያዎችን ተግበር</string>
     <string name="clear_filters">ማጣሪያዎችን ጽዳ</string>
     <string name="distance_filter">የርቀት ማጣሪያ</string>
-    <string name="price_filter">የዋጋ ማጣሪያ</string>
+    
     <string name="time_filter">የጊዜ ማጣሪያ</string>
     <string name="availability_filter">የመገኘት ማጣሪያ</string>
     <string name="sort_by">አደራጅ በ</string>
     <string name="sort_by_distance">በርቀት አደራጅ</string>
-    <string name="sort_by_price">በዋጋ አደራጅ</string>
+    
     <string name="sort_by_time">በጊዜ አደራጅ</string>
     <string name="sort_by_popularity">በተወዳጅነት አደራጅ</string>
     
@@ -229,41 +211,13 @@
     <string name="confirm_password">የመተላለፊያ ቃል አረጋግጥ</string>
     <string name="forgot_password">የመተላለፊያ ቃልን ረሳሁ</string>
     
-    <!-- Vehicle and Driver Info -->
-    <string name="vehicle_info">የተሽከርካሪ መረጃ</string>
-    <string name="vehicle_model">የተሽከርካሪ ሞዴል</string>
-    <string name="vehicle_color">የተሽከርካሪ ቀለም</string>
-    <string name="license_plate">የንንቓ ጋ ቢላዋ</string>
-    <string name="driver_info">የሹፌር መረጃ</string>
-    <string name="driver_license">የሹፌር ፍቃድ</string>
-    <string name="experience_years">የልምድ ዓመታት</string>
     
-    <!-- Rating and Reviews -->
-    <string name="rate_trip">ጉዞን ደረጃ ስጥ</string>
-    <string name="rate_driver">ሹፌርን ደረጃ ስጥ</string>
-    <string name="rate_passenger">ተሳፋሪን ደረጃ ስጥ</string>
-    <string name="leave_review">ግምገማ ተው</string>
-    <string name="review_comment">የግምገማ አስተያየት</string>
-    <string name="excellent">እጅግ በጣም ጥሩ</string>
-    <string name="good">ጥሩ</string>
-    <string name="average">መካከለኛ</string>
-    <string name="poor">ደካማ</string>
-    <string name="terrible">አሰቃቂ</string>
     
-    <!-- Statistics and Info -->
-    <string name="money_saved">የተቆጠበ ገንዘብ</string>
-    <string name="carbon_footprint_saved">የተቆጠበ የካርቦን አሳት</string>
-    <string name="favorite_destinations">ተወዳጅ መድረሻዎች</string>
-    <string name="birr_currency">ብር</string>
-    <string name="hours_unit">ሰዓታት</string>
-    <string name="minutes_unit">ደቂቃዎች</string>
     
-    <!-- Offline and Network -->
-    <string name="offline_mode">ከመስመር ውጪ ሁኔታ</string>
-    <string name="offline_message">ከመስመር ውጪ ነዎት</string>
-    <string name="no_internet_connection">የኢንተርኔት ግንኙነት የለም</string>
-    <string name="cached_data">የተከማቸ መረጃ</string>
-    <string name="sync_when_online">መስመር ላይ ሲሆኑ ስምሩ</string>
+    
+    
+    
+    
     
     <!-- Notifications Types -->
     <string name="trip_notifications">የጉዞ ማሳወቂያዎች</string>

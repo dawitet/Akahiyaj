@@ -1,4 +1,4 @@
-package com.dawitf.akahidegn.fixed
+package com.dawitf.akahiyaj.fixed
 
 import android.util.Log
 import com.google.firebase.database.Exclude
@@ -33,7 +33,7 @@ data class Group(
         map["to"] = destinationName ?: ""
         map["departureTime"] = timestamp?.toString() ?: System.currentTimeMillis().toString()
         map["availableSeats"] = (maxMembers - memberCount).coerceIn(1, 8)
-        map["pricePerPerson"] = 0
+        
         map["createdAt"] = timestamp ?: System.currentTimeMillis()
         map["createdBy"] = creatorId ?: ""
         

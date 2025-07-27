@@ -51,7 +51,8 @@ enum class FontSize(val scaleFactor: Float) {
     SMALL(0.85f),
     MEDIUM(1.0f),
     LARGE(1.15f),
-    EXTRA_LARGE(1.3f)
+    EXTRA_LARGE(1.3f),
+    NORMAL(1.0f) // Added NORMAL size
 }
 
 @Singleton
@@ -129,6 +130,7 @@ class ThemeManager @Inject constructor(
             try { 
                 when (FontSize.valueOf(it)) {
                     FontSize.SMALL -> com.dawitf.akahidegn.domain.model.FontSizeOption.SMALL
+                    FontSize.NORMAL -> com.dawitf.akahidegn.domain.model.FontSizeOption.NORMAL
                     FontSize.MEDIUM -> com.dawitf.akahidegn.domain.model.FontSizeOption.MEDIUM
                     FontSize.LARGE -> com.dawitf.akahidegn.domain.model.FontSizeOption.LARGE
                     FontSize.EXTRA_LARGE -> com.dawitf.akahidegn.domain.model.FontSizeOption.EXTRA_LARGE
@@ -239,6 +241,7 @@ class ThemeManager @Inject constructor(
             com.dawitf.akahidegn.domain.model.FontSizeOption.MEDIUM -> FontSize.MEDIUM
             com.dawitf.akahidegn.domain.model.FontSizeOption.LARGE -> FontSize.LARGE
             com.dawitf.akahidegn.domain.model.FontSizeOption.EXTRA_LARGE -> FontSize.EXTRA_LARGE
+            com.dawitf.akahidegn.domain.model.FontSizeOption.NORMAL -> FontSize.NORMAL // Added missing NORMAL branch
         }
         updateFontSize(fontSizeEnum)
     }

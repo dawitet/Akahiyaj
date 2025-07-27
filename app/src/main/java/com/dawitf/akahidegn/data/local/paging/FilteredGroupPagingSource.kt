@@ -54,8 +54,7 @@ class FilteredGroupPagingSource @Inject constructor(
     private suspend fun getFilteredGroups(loadSize: Int, offset: Int): List<GroupEntityEnhanced> {
         // Convert filters to database query parameters
         val destination = filters.destination.trim()
-        val minPrice = filters.priceRange.min
-        val maxPrice = filters.priceRange.max
+        
         val minTime = filters.timeRange.start
         val maxTime = filters.timeRange.end
         val maxMemberCount = filters.maxMembers
@@ -70,8 +69,6 @@ class FilteredGroupPagingSource @Inject constructor(
             // Use the filtered query from the DAO
             dao.getFilteredGroups(
                 destination = destination,
-                minPrice = minPrice,
-                maxPrice = maxPrice,
                 minTime = minTime,
                 maxTime = maxTime,
                 maxMemberCount = maxMemberCount,
@@ -91,18 +88,16 @@ class FilteredGroupPagingSource @Inject constructor(
     private suspend fun processGroups(groups: List<GroupEntityEnhanced>): List<GroupEntityEnhanced> {
         var processedGroups = groups
         
-        // Calculate distances if user location is available
-        if (userLat != null && userLng != null) {
-            processedGroups = processedGroups.map { group ->
-                val distance = if (group.pickupLat != null && group.pickupLng != null) {
-                    LocationUtils.calculateDistance(
-                        userLat, userLng,
-                        group.pickupLat, group.pickupLng
-                    )
-                } else null
-                
-                group.copy(distanceFromUser = distance)
-            }
+        // Calculate distances as userLat and userLng are always non-null Double
+        processedGroups = processedGroups.map { group ->
+            val distance = if (group.pickupLat != null && group.pickupLng != null) {
+                LocationUtils.calculateDistance(
+                    userLat, userLng,
+                    group.pickupLat, group.pickupLng
+                )
+            } else null
+            
+            group.copy(distanceFromUser = distance)
         }
         
         // Apply distance filter if specified
@@ -117,12 +112,7 @@ class FilteredGroupPagingSource @Inject constructor(
             com.dawitf.akahidegn.domain.model.SortOption.NEAREST -> {
                 processedGroups.sortedBy { it.distanceFromUser ?: Double.MAX_VALUE }
             }
-            com.dawitf.akahidegn.domain.model.SortOption.PRICE_LOW_TO_HIGH -> {
-                processedGroups.sortedBy { it.pricePerPerson ?: Double.MAX_VALUE }
-            }
-            com.dawitf.akahidegn.domain.model.SortOption.PRICE_HIGH_TO_LOW -> {
-                processedGroups.sortedByDescending { it.pricePerPerson ?: 0.0 }
-            }
+            
             com.dawitf.akahidegn.domain.model.SortOption.DEPARTURE_TIME -> {
                 processedGroups.sortedBy { it.departureTime ?: Long.MAX_VALUE }
             }

@@ -49,7 +49,7 @@ class AkahidegnApplication : Application(), Configuration.Provider {
             // Schedule group cleanup task
             initializeGroupCleanup()
             
-            Log.d("AkahidegnApp", "Application initialized successfully")
+            Log.d("APP_INIT", "Application initialized successfully")
         } catch (e: Exception) {
             Log.e("AkahidegnApp", "Error during application initialization", e)
             // Don't crash the app, continue with basic functionality
@@ -74,8 +74,9 @@ class AkahidegnApplication : Application(), Configuration.Provider {
     
     private fun initializeFirebaseDatabase() {
         try {
-            FirebaseDatabase.getInstance().setPersistenceEnabled(true)
-            Log.d("APP_INIT", "Firebase Database persistence enabled")
+            FirebaseDatabase.getInstance("https://akahiyaj-79376-default-rtdb.europe-west1.firebasedatabase.app").setPersistenceEnabled(true)
+            FirebaseDatabase.getInstance().setLogLevel(com.google.firebase.database.Logger.Level.DEBUG)
+            Log.d("APP_INIT", "Firebase Database persistence enabled and debug logging set")
         } catch (e: Exception) {
             Log.w("APP_INIT", "Firebase persistence setup failed or already enabled: ${e.message}")
         }

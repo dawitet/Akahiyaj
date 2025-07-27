@@ -65,14 +65,14 @@ class AnalyticsManager @Inject constructor(
         destination: String,
         departureTime: Long,
         maxPassengers: Int,
-        pricePerSeat: Double
+        
     ) {
         logEvent("trip_created", mapOf(
             "trip_id" to tripId,
             "destination" to destination,
             "departure_time" to departureTime,
             "max_passengers" to maxPassengers,
-            "price_per_seat" to pricePerSeat
+            
         ))
     }
 
@@ -208,17 +208,7 @@ class AnalyticsManager @Inject constructor(
     }
 
     // Business Intelligence Events
-    fun logRevenue(
-        tripId: String,
-        amount: Double,
-        currency: String = "ETB"
-    ) {
-        logEvent(FirebaseAnalytics.Event.PURCHASE, mapOf(
-            FirebaseAnalytics.Param.TRANSACTION_ID to tripId,
-            FirebaseAnalytics.Param.VALUE to amount,
-            FirebaseAnalytics.Param.CURRENCY to currency
-        ))
-    }
+    
 
     fun logUserRetention(daysActive: Int, totalSessions: Int) {
         logEvent("user_retention", mapOf(

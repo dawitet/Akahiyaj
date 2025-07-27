@@ -9,7 +9,7 @@ import androidx.compose.runtime.Stable
 data class SearchFilters(
     val destination: String = "",
     val maxDistance: Double = 10.0, // in kilometers
-    val priceRange: PriceRange = PriceRange(),
+    
     val timeRange: TimeRange = TimeRange(),
     val maxMembers: Int? = null,
     val availableSeatsOnly: Boolean = false,
@@ -22,7 +22,7 @@ data class SearchFilters(
     fun hasActiveFilters(): Boolean {
         return destination.isNotBlank() ||
                 maxDistance != 10.0 ||
-                priceRange.hasLimits() ||
+                
                 timeRange.hasLimits() ||
                 maxMembers != null ||
                 availableSeatsOnly ||
@@ -37,20 +37,7 @@ data class SearchFilters(
     }
 }
 
-/**
- * Price range filter for group search.
- */
-@Stable
-data class PriceRange(
-    val min: Double? = null,
-    val max: Double? = null
-) {
-    fun hasLimits(): Boolean = min != null || max != null
-    
-    fun isInRange(price: Double): Boolean {
-        return (min == null || price >= min) && (max == null || price <= max)
-    }
-}
+
 
 /**
  * Time range filter for group search (departure time).
@@ -72,8 +59,7 @@ data class TimeRange(
  */
 enum class SortOption(val displayNameEn: String, val displayNameAm: String) {
     NEAREST("Nearest", "በቅርብ"),
-    PRICE_LOW_TO_HIGH("Price: Low to High", "ዋጋ: ዝቅተኛ ወደ ከፍተኛ"),
-    PRICE_HIGH_TO_LOW("Price: High to Low", "ዋጋ: ከፍተኛ ወደ ዝቅተኛ"),
+    
     DEPARTURE_TIME("Departure Time", "የመነሻ ጊዜ"),
     MOST_POPULAR("Most Popular", "በጣም ተወዳጅ"),
     NEWEST("Newest First", "አዲስ በመጀመሪያ"),

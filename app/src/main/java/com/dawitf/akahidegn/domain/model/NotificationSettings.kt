@@ -1,4 +1,4 @@
-package com.dawitf.akahidegn.domain.model
+package com.dawitf.akahiyaj.domain.model
 
 /**
  * Data class representing user notification preferences

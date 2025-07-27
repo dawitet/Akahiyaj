@@ -184,7 +184,6 @@ class NotificationManagerService @Inject constructor(
                 val pattern = longArrayOf(0, 100, 50, 100)
                 vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
             } else {
-                @Suppress("DEPRECATION")
                 val pattern = longArrayOf(0, 100, 50, 100)
                 vibrator.vibrate(pattern, -1)
             }

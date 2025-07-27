@@ -89,19 +89,8 @@ class AccessibilityManager @Inject constructor(
     }
     
     fun isScreenReaderEnabled(): Boolean {
-        return try {
-            Settings.Secure.getInt(
-                context.contentResolver,
-                Settings.Secure.ACCESSIBILITY_SPEAK_PASSWORD,
-                0
-            ) == 1 || Settings.Secure.getInt(
-                context.contentResolver,
-                "accessibility_enabled",
-                0
-            ) == 1
-        } catch (e: Exception) {
-            false
-        }
+        val accessibilityManager = context.getSystemService(Context.ACCESSIBILITY_SERVICE) as android.view.accessibility.AccessibilityManager
+        return accessibilityManager.isEnabled && accessibilityManager.isTouchExplorationEnabled()
     }
     
     fun getSystemFontScale(): Float {

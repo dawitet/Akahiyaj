@@ -34,7 +34,7 @@ data class GroupMember(
     val id: String,
     val name: String,
     val phone: String,
-    val avatar: String,
+    val avatar: String? = null,
     val isCreator: Boolean = false
 )
 
@@ -285,7 +285,7 @@ private fun MemberCard(
     }
 }
 
-private fun getAvatarResource(avatarId: String): Int? {
+private fun getAvatarResource(avatarId: String?): Int? {
     return when (avatarId) {
         "avatar_1" -> R.drawable.user_avatar_1
         "avatar_2" -> R.drawable.user_avatar_2

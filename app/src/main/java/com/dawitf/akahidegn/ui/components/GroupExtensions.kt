@@ -23,7 +23,7 @@ val Group.departureTime: String get() {
 }
 
 // Mock properties for advanced features (can be extended with real data later)
-val Group.pricePerPerson: Double get() = 25.0 // Mock price
+
 val Group.rating: Float get() = 4.2f // Mock rating
 val Group.isPremium: Boolean get() = false // Mock premium status
 val Group.isWomenOnly: Boolean get() = false // Mock women only status

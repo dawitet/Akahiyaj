@@ -43,7 +43,7 @@ class RouteService @Inject constructor(
         val duration: String,
         val steps: List<RouteStep>,
         val polyline: String,
-        val estimatedFare: Double? = null
+        
     )
     
     data class RouteRequest(
@@ -197,17 +197,7 @@ class RouteService @Inject constructor(
         return getRoute(request)
     }
     
-    suspend fun estimateFare(route: Route, passengers: Int = 1): Double {
-        // Simple fare estimation based on distance
-        // In a real app, you might integrate with pricing APIs
-        val distanceValue = route.distance.replace(Regex("[^\\d.]"), "").toDoubleOrNull() ?: 0.0
-        val baseFare = 50.0 // Base fare in Ethiopian Birr
-        val perKmRate = 15.0 // Rate per kilometer
-        val totalFare = baseFare + (distanceValue * perKmRate)
-        
-        // Split among passengers
-        return totalFare / passengers
-    }
+    
     
     private fun buildDirectionsUrl(request: RouteRequest): String {
         val apiKey = "YOUR_GOOGLE_MAPS_API_KEY" // Should be stored securely

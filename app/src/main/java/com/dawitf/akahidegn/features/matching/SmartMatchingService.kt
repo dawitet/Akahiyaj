@@ -57,7 +57,7 @@ class SmartMatchingService @Inject constructor(
         val group: Group,
         val compatibilityScore: Double,
         val reasons: List<String>,
-        val estimatedSavings: Double,
+        
         val estimatedDetourTime: Int,
         val walkingDistanceKm: Double
     )
@@ -182,14 +182,13 @@ class SmartMatchingService @Inject constructor(
             // Generate compatibility reasons
             val reasons = generateCompatibilityReasons(request, group, walkingDistance, timeDifference, detourTime)
             
-            // Estimate cost savings
-            val estimatedSavings = calculateCostSavings(route, group.memberCount + 1)
+            
             
             return MatchResult(
                 group = group,
                 compatibilityScore = compatibilityScore,
                 reasons = reasons,
-                estimatedSavings = estimatedSavings,
+                
                 estimatedDetourTime = detourTime,
                 walkingDistanceKm = walkingDistance
             )
@@ -274,11 +273,7 @@ class SmartMatchingService @Inject constructor(
         return reasons
     }
     
-    private suspend fun calculateCostSavings(route: RouteService.Route, totalPassengers: Int): Double {
-        val estimatedSoloFare = routeService.estimateFare(route, 1)
-        val estimatedSharedFare = routeService.estimateFare(route, totalPassengers)
-        return estimatedSoloFare - estimatedSharedFare
-    }
+    
     
     private fun calculateSearchRadius(maxWalkingDistance: Double): Double {
         // Expand search radius based on walking tolerance

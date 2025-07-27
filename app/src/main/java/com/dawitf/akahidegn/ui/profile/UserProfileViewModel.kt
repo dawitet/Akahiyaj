@@ -4,7 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.dawitf.akahidegn.analytics.AnalyticsService
 import com.dawitf.akahidegn.core.result.Result
-import com.dawitf.akahidegn.features.profile.*
+
+import com.dawitf.akahidegn.domain.model.UserProfile
+import com.dawitf.akahidegn.domain.model.UserPreferences
+import com.dawitf.akahidegn.features.profile.UserProfileService
+import com.dawitf.akahidegn.features.profile.UserProfileUpdate
+
+
+import com.dawitf.akahidegn.features.profile.Friend
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
@@ -22,12 +29,7 @@ class ProfileFeatureViewModel @Inject constructor(
     private val _userProfile = MutableStateFlow<UserProfile?>(null)
     val userProfile: StateFlow<UserProfile?> = _userProfile.asStateFlow()
     
-    val rideStats: StateFlow<RideStatistics?> = userProfileService.getRideStats()
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.WhileSubscribed(5000),
-            initialValue = null
-        )
+    
 
     val friends: StateFlow<List<Friend>> = userProfileService.getFriends()
         .stateIn(
@@ -147,7 +149,7 @@ class ProfileFeatureViewModel @Inject constructor(
     
     fun sendFriendRequest(userId: String) {
         viewModelScope.launch {
-            when (val result = userProfileService.sendFriendRequest(userId)) {
+            when (val result = userProfileService.addFriend(userId)) {
                 is Result.Success -> {
                     analyticsService.trackEvent("friend_request_sent", emptyMap())
                     _uiState.value = _uiState.value.copy(

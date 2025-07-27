@@ -81,69 +81,7 @@ fun SettingsScreen(
                     }
                 )
                 
-                // Text Size Setting
-                GlassmorphismCard(
-                    modifier = Modifier.fillMaxWidth(),
-                    cornerRadius = 12.dp
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        BilingualText(
-                            englishText = "Text Size",
-                            amharicText = "የፅሁፍ መጠን",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        
-                        Slider(
-                            value = textScaleFactor,
-                            onValueChange = { textScaleFactor = it },
-                            valueRange = 0.8f..1.4f,
-                            steps = 3,
-                            modifier = Modifier.padding(horizontal = 8.dp)
-                        )
-                        
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween
-                        ) {
-                            Text(
-                                text = "A",
-                                style = MaterialTheme.typography.bodySmall
-                            )
-                            Text(
-                                text = "A",
-                                style = MaterialTheme.typography.headlineLarge
-                            )
-                        }
-                    }
-                }
                 
-                // High Contrast Mode Toggle
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        BilingualText(
-                            englishText = "High Contrast Mode",
-                            amharicText = "የከፍተኛ ንፅፅር ሁነታ",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Better visibility in bright light",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = enableHighContrastMode,
-                        onCheckedChange = { enableHighContrastMode = it }
-                    )
-                }
             }
             
             // Notification Settings
@@ -212,38 +150,7 @@ fun SettingsScreen(
                 }
             }
             
-            // Accessibility Settings
-            Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
-                BilingualText(
-                    englishText = "Accessibility",
-                    amharicText = "ተደራሽነት",
-                    style = MaterialTheme.typography.titleLarge.copy(fontWeight = FontWeight.SemiBold)
-                )
-                
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(vertical = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Column(modifier = Modifier.weight(1f)) {
-                        BilingualText(
-                            englishText = "Haptic Feedback",
-                            amharicText = "የንክኪ ምላሽ",
-                            style = MaterialTheme.typography.titleMedium
-                        )
-                        Text(
-                            text = "Vibration when touching interactive elements",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
-                    Switch(
-                        checked = enableHapticFeedback,
-                        onCheckedChange = { enableHapticFeedback = it }
-                    )
-                }
-            }
+            
             
             // About Section
             Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {

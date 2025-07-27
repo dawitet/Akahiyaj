@@ -1,0 +1,3 @@
+package com.dawitf.akahidegn.domain.model
+
+// ...existing code...

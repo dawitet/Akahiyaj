@@ -5,6 +5,7 @@ import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.core.result.Result
 import com.dawitf.akahidegn.data.local.dao.UserPreferencesDao
 import com.dawitf.akahidegn.data.mapper.toEntity
+
 import com.dawitf.akahidegn.domain.model.UserProfile
 import com.dawitf.akahidegn.domain.model.UserReview
 import com.dawitf.akahidegn.domain.model.TripHistoryItem
@@ -23,9 +24,8 @@ import kotlinx.coroutines.tasks.await
 import java.util.*
 import javax.inject.Inject
 import javax.inject.Singleton
-import com.dawitf.akahidegn.features.profile.RideStatistics
 import com.dawitf.akahidegn.data.repository.model.UserProfileUpdate
-import com.dawitf.akahidegn.data.repository.model.Ride
+
 
 @Singleton
 class UserProfileRepositoryImpl @Inject constructor(
@@ -160,8 +160,7 @@ class UserProfileRepositoryImpl @Inject constructor(
             
             reviewsCollection.document(reviewWithId.reviewId).set(reviewWithId).await()
             
-            // Update user's rating
-            updateUserRating(review.targetUserId)
+            
             
             Result.success(reviewWithId)
         } catch (e: Exception) {
@@ -351,35 +350,7 @@ class UserProfileRepositoryImpl @Inject constructor(
         awaitClose { listener.remove() }
     }
 
-    override fun getRideStats(): Flow<RideStatistics?> = callbackFlow {
-        val userId = getCurrentUserId() ?: throw IllegalStateException("User not logged in")
-        
-        val listener = firestore.collection("rides")
-            .whereEqualTo("userId", userId)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    close(error)
-                    return@addSnapshotListener
-                }
-                
-                val rides = snapshot?.documents?.mapNotNull { doc ->
-                    doc.toObject(Ride::class.java)
-                } ?: emptyList()
-                
-                val stats = RideStatistics(
-                    totalRides = rides.size,
-                    totalDistance = rides.sumOf { it.distance },
-                    totalSpent = rides.sumOf { it.earnings }, // Using earnings as total spent for now
-                    averageRating = rides.mapNotNull { it.rating }.average().toFloat(),
-                    totalTimeSaved = rides.sumOf { it.duration.toLong() }, // Convert to Long
-                    carbonSaved = rides.sumOf { it.distance * 0.21 } // Simple carbon calculation
-                )
-                
-                trySend(stats)
-            }
-        
-        awaitClose { listener.remove() }
-    }
+    
 
     // Achievement system removed for simplicity
     // override fun getAchievements(): Flow<List<Achievement>> = ...
@@ -388,28 +359,7 @@ class UserProfileRepositoryImpl @Inject constructor(
     // override fun getCarbonFootprint(): Flow<CarbonFootprintData?> = ...
 
     // Helper methods
-    private suspend fun updateUserRating(userId: String) {
-        try {
-            val reviews = reviewsCollection
-                .whereEqualTo("targetUserId", userId)
-                .get()
-                .await()
-            
-            val totalRatings = reviews.size()
-            val averageRating = if (totalRatings > 0) {
-                reviews.documents.mapNotNull { it.getDouble("rating") }.average()
-            } else 0.0
-            
-            usersCollection.document(userId).update(
-                mapOf(
-                    "rating" to averageRating.toFloat(),
-                    "reviewCount" to totalRatings
-                )
-            ).await()
-        } catch (e: Exception) {
-            // Log error but don't throw
-        }
-    }
+    
 
     // Achievement helper methods
     private fun getAchievementTitle(achievementId: String): String {

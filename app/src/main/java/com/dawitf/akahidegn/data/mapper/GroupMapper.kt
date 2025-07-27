@@ -20,7 +20,7 @@ fun GroupEntity.toDomainModel(): Group {
     )
 }
 
-fun Group.toEntity(): GroupEntity {
+fun Group.toGroupEntity(): GroupEntity {
     return GroupEntity(
         id = groupId ?: "",
         name = "",
@@ -42,6 +42,6 @@ fun Group.toEntity(): GroupEntity {
 // Extension for mapping list of entities to domain models
 fun List<GroupEntity>.toDomainModels(): List<Group> = map { it.toDomainModel() }
 
-fun List<Group>.toEntities(): List<GroupEntity> {
-    return map { it.toEntity() }
+fun List<Group>.toGroupEntities(): List<GroupEntity> {
+    return map { it.toGroupEntity() }
 }

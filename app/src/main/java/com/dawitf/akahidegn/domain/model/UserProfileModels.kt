@@ -1,167 +1,143 @@
 package com.dawitf.akahidegn.domain.model
 
-import androidx.compose.ui.graphics.Color
+import com.dawitf.akahidegn.domain.model.LanguageOption
 
 /**
- * Enhanced user profile model with additional features.
+ * User profile domain model
  */
 data class UserProfile(
     val userId: String,
     val displayName: String,
-    val profilePictureUrl: String?,
-    val email: String?,
-    val phoneNumber: String?,
+    val profilePictureUrl: String? = null,
+    val email: String? = null,
+    val phoneNumber: String? = null,
     val isVerified: Boolean = false,
-    val joinDate: Long,
-    val lastActiveDate: Long,
-    
-    // Rating and reviews
+    val joinDate: Long = System.currentTimeMillis(),
+    val lastActiveDate: Long = System.currentTimeMillis(),
     val rating: Float = 0f,
     val reviewCount: Int = 0,
-    
-    // Trip statistics
     val totalTrips: Int = 0,
     val completedTrips: Int = 0,
     val cancelledTrips: Int = 0,
     val totalPassengers: Int = 0,
-    val totalDistance: Double = 0.0, // in kilometers
-    val totalEarnings: Double = 0.0, // in currency
-    
-    // Profile settings
+    val totalDistance: Double = 0.0,
+
     val bio: String = "",
     val preferences: UserPreferences = UserPreferences(),
     val privacySettings: PrivacySettings = PrivacySettings(),
-    
-    // Status
     val isActive: Boolean = true,
     val accountStatus: AccountStatus = AccountStatus.ACTIVE
 )
 
 /**
- * User preferences for customization.
+ * User preferences model
  */
 data class UserPreferences(
-    val preferredLanguage: String = "system",
+    val preferredLanguage: String = LanguageOption.ENGLISH.code,
+    val language: String = LanguageOption.ENGLISH.code, // Added for compatibility with UserProfileServiceImpl
+    val theme: String = "SYSTEM", // Added for compatibility with UserProfileServiceImpl
     val notificationSettings: NotificationSettings = NotificationSettings(),
-    val searchRadius: Double = 25.0, // in kilometers
-    val autoAcceptRadius: Double = 5.0, // in kilometers
+    val notifications: NotificationPreferences = NotificationPreferences(), // Added for compatibility with UserProfileServiceImpl
+    val privacy: PrivacyPreferences = PrivacyPreferences(), // Added for compatibility with UserProfileServiceImpl
+    val searchRadius: Double = 25.0,
+    val autoAcceptRadius: Double = 5.0,
     val maxPassengers: Int = 4,
-    val vehicleInfo: VehicleInfo? = null
+    val vehicleInfo: String? = null
 )
 
 /**
- * Vehicle information for drivers.
+ * Notification settings model
  */
-data class VehicleInfo(
-    val make: String,
-    val model: String,
-    val year: Int,
-    val color: String,
-    val licensePlate: String,
-    val seatCount: Int = 4,
-    val isVerified: Boolean = false
+data class NotificationSettings(
+    val notificationsEnabled: Boolean = true,
+    val chatNotificationsEnabled: Boolean = true,
+    val tripNotificationsEnabled: Boolean = true,
+    val systemNotificationsEnabled: Boolean = true,
+    val soundEnabled: Boolean = true,
+    val vibrationEnabled: Boolean = true,
+    val quietHoursEnabled: Boolean = false,
+    val quietHoursStart: String = "22:00",
+    val quietHoursEnd: String = "07:00"
 )
 
 /**
- * Privacy settings for user profile.
+ * Privacy settings model
  */
 data class PrivacySettings(
-    val showEmail: Boolean = false,
-    val showPhoneNumber: Boolean = false,
-    val showLastActive: Boolean = true,
-    val showTripHistory: Boolean = true,
-    val allowLocationSharing: Boolean = true,
-    val allowReviews: Boolean = true
+    val locationSharingEnabled: Boolean = true,
+    val profileVisibilityEnabled: Boolean = true,
+    val phoneNumberVisible: Boolean = false,
+    val emailVisible: Boolean = false
 )
 
 /**
- * Account status enumeration.
+ * Account status enum
  */
 enum class AccountStatus {
     ACTIVE,
     SUSPENDED,
-    BANNED,
-    PENDING_VERIFICATION,
-    DEACTIVATED
+    INACTIVE,
+    BANNED
 }
 
 /**
- * User review model.
+ * User review model
  */
 data class UserReview(
-    val reviewId: String,
-    val reviewerId: String,
-    val reviewerName: String,
-    val reviewerProfilePicture: String?,
-    val targetUserId: String,
-    val tripId: String?,
-    val rating: Float, // 1.0 to 5.0
-    val comment: String,
-    val timestamp: Long,
-    val isVerified: Boolean = false, // Verified trip-based review
-    val helpfulCount: Int = 0,
-    val reportCount: Int = 0,
-    
-    // Review categories
-    val punctuality: Float? = null,
-    val communication: Float? = null,
-    val vehicleCondition: Float? = null,
-    val safety: Float? = null,
-    val overall: Float = rating
+    val reviewId: String = "",
+    val reviewerId: String = "",
+    val reviewerName: String = "",
+    val targetUserId: String = "",
+    val rating: Float = 0f,
+    val comment: String = "",
+    val timestamp: Long = System.currentTimeMillis(),
+    val tripId: String? = null
 )
 
 /**
- * Trip history model.
+ * Trip history item model
  */
-data class TripHistory(
-    val tripId: String,
-    val groupId: String?,
-    val destination: String,
-    val origin: String,
-    val date: Long,
-    val status: String, // completed, cancelled, in_progress, pending
-    val role: String, // driver, passenger, co_passenger
-    val passengerCount: Int,
-    val price: Double,
-    val distance: Double,
-    val duration: Long, // in minutes
-    val rating: Float? = null,
-    val wasRated: Boolean = false,
-    val notes: String = ""
+data class TripHistoryItem(
+    val tripId: String = "",
+    val groupId: String = "",
+    val destinationName: String = "",
+    val date: Long = System.currentTimeMillis(),
+    val memberCount: Int = 0,
+    val role: String = "PASSENGER", // DRIVER, PASSENGER
+    val status: String = "COMPLETED" // COMPLETED, CANCELLED, ONGOING
 )
 
 /**
- * User achievement model.
- */
-data class Achievement(
-    val achievementId: String,
-    val title: String,
-    val description: String,
-    val emoji: String,
-    val color: Color,
-    val category: AchievementCategory,
-    val unlockedDate: Long,
-    val rarity: AchievementRarity = AchievementRarity.COMMON,
-    val progress: Int = 100, // Percentage completed
-    val maxProgress: Int = 100
-)
-
-/**
- * User analytics data.
+ * User analytics model
  */
 data class UserAnalytics(
-    val userId: String,
-    val totalAppUsage: Long, // in milliseconds
-    val averageSessionLength: Long, // in milliseconds
-    val searchCount: Int,
-    val groupCreationCount: Int,
-    val groupJoinCount: Int,
-    val messagesSent: Int,
-    val favoriteDestinations: List<String>,
-    val peakUsageHours: List<Int>, // 0-23 hours
-    val mostActiveDay: String, // Monday, Tuesday, etc.
-    val conversionRate: Float, // searches to actual trips
-    val referralCount: Int,
-    val reportsMade: Int,
-    val reportsReceived: Int
+    val userId: String = "",
+    val totalTrips: Int = 0,
+    val completedTrips: Int = 0,
+    val cancelledTrips: Int = 0,
+    val averageRating: Float = 0f,
+    val totalDistance: Double = 0.0,
+
+    val totalSpent: Double = 0.0,
+    val totalTimeSaved: Double = 0.0,
+    val carbonSaved: Double = 0.0,
+    val joinDate: Long = System.currentTimeMillis(),
+    val lastActive: Long = System.currentTimeMillis(),
+    val totalAppUsage: Long = 0L,
+    val averageSessionLength: Long = 0L,
+    val searchCount: Int = 0,
+    val groupCreationCount: Int = 0,
+    val groupJoinCount: Int = 0,
+    val messagesSent: Int = 0,
+    val favoriteDestinations: List<String> = emptyList(),
+    val peakUsageHours: List<Int> = emptyList(),
+    val mostActiveDay: String = "",
+    val conversionRate: Float = 0f,
+    val referralCount: Int = 0,
+    val reportsMade: Int = 0,
+    val reportsReceived: Int = 0,
+    val searchRadius: Double = 10.0,
+    val autoAcceptRadius: Double = 5.0,
+    val maxPassengers: Int = 4,
+    val vehicleInfo: String = ""
 )

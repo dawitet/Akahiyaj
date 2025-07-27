@@ -5,15 +5,34 @@
 -->
 <data-extraction-rules>
     <cloud-backup>
-        <!-- TODO: Use <include> and <exclude> to control what is backed up.
-        <include .../>
-        <exclude .../>
-        -->
+        <!-- Include all shared preferences files for backup -->
+        <include domain="sharedpref" path="."/>
+
+        <!-- Include app-specific database files -->
+        <include domain="database" path="."/>
+
+        <!-- Include app-specific files directory except for temporary or cached data -->
+        <include domain="file" path="."/>
+        <exclude domain="file" path="cache/"/>
+        <exclude domain="file" path="temp/"/>
+        <exclude domain="file" path="logs/"/>
+
+        <!-- Exclude any analytics or tracking data that shouldn't be restored -->
+        <exclude domain="database" path="analytics.db"/>
+        <exclude domain="sharedpref" path="com.google.android.gms.analytics.prefs.xml"/>
+
+        <!-- Exclude user-specific authentication tokens for security -->
+        <exclude domain="sharedpref" path="auth_tokens.xml"/>
     </cloud-backup>
-    <!--
+
     <device-transfer>
-        <include .../>
-        <exclude .../>
+        <!-- Include all app data for device-to-device transfers -->
+        <include domain="sharedpref" path="."/>
+        <include domain="database" path="."/>
+        <include domain="file" path="."/>
+
+        <!-- Exclude only temporary files and caches -->
+        <exclude domain="file" path="cache/"/>
+        <exclude domain="file" path="temp/"/>
     </device-transfer>
-    -->
 </data-extraction-rules>

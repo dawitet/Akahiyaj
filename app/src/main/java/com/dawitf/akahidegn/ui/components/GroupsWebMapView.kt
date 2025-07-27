@@ -41,8 +41,8 @@ fun GroupsWebMapView(
                 settings.displayZoomControls = false
                 
                 // Samsung compatibility fixes
-                settings.allowUniversalAccessFromFileURLs = true
-                settings.allowFileAccessFromFileURLs = true
+                @Suppress("DEPRECATION") settings.allowUniversalAccessFromFileURLs = true
+                @Suppress("DEPRECATION") settings.allowFileAccessFromFileURLs = true
                 settings.javaScriptCanOpenWindowsAutomatically = true
                 settings.setSupportZoom(true)
                 

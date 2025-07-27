@@ -27,7 +27,7 @@ class FirestoreGeoGroupService(
 
     fun getNearbyGroups(lat: Double, lng: Double, radiusMeters: Double): Flow<List<Group>> = callbackFlow {
         val reg = groupsRef.addSnapshotListener { snapshot, _ ->
-            val allGroups = snapshot?.toObjects<Group>() ?: emptyList()
+            val allGroups = snapshot?.documents?.mapNotNull { it.toObject(Group::class.java) } ?: emptyList()
             val nearbyGroups = allGroups.filter { group ->
                 group.pickupLat?.let { groupLat ->
                     group.pickupLng?.let { groupLng ->
@@ -42,7 +42,7 @@ class FirestoreGeoGroupService(
 
     fun getAllGroups(): Flow<List<Group>> = callbackFlow {
         val reg = groupsRef.addSnapshotListener { snapshot, _ ->
-            val groups = snapshot?.toObjects<Group>() ?: emptyList()
+            val groups = snapshot?.documents?.mapNotNull { it.toObject(Group::class.java) } ?: emptyList()
             trySend(groups)
         }
         awaitClose { reg.remove() }

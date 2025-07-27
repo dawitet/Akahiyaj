@@ -8,7 +8,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
@@ -186,7 +186,7 @@ fun SuccessWithLeaveGroupDialog(
                                 shape = RoundedCornerShape(12.dp)
                             ) {
                                 Icon(
-                                    imageVector = Icons.Default.ExitToApp,
+                                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                                     contentDescription = "Leave Group",
                                     tint = Color.White,
                                     modifier = Modifier.size(20.dp)

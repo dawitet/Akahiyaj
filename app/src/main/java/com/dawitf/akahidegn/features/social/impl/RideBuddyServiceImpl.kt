@@ -634,20 +634,8 @@ class RideBuddyServiceImpl @Inject constructor(
                 totalRidesTogether = child("totalRidesTogether").getValue(Int::class.java) ?: 0,
                 lastRideDate = child("lastRideDate").getValue(Long::class.java) ?: 0,
                 averageRating = child("averageRating").getValue(Float::class.java) ?: 0f,
-                preferredPickupLocations = run {
-                    val locationsData = child("preferredPickupLocations").value
-                    when (locationsData) {
-                        is List<*> -> locationsData.filterIsInstance<String>()
-                        else -> emptyList()
-                    }
-                },
-                commonDestinations = run {
-                    val destinationsData = child("commonDestinations").value
-                    when (destinationsData) {
-                        is List<*> -> destinationsData.filterIsInstance<String>()
-                        else -> emptyList()
-                    }
-                },
+                preferredPickupLocations = child("preferredPickupLocations").children.mapNotNull { it.getValue(String::class.java) },
+                commonDestinations = child("commonDestinations").children.mapNotNull { it.getValue(String::class.java) },
                 isActive = child("isActive").getValue(Boolean::class.java) ?: true,
                 addedDate = child("addedDate").getValue(Long::class.java) ?: System.currentTimeMillis()
             )
@@ -681,10 +669,10 @@ class RideBuddyServiceImpl @Inject constructor(
             RegularGroup(
                 groupId = child("groupId").getValue(String::class.java) ?: return null,
                 groupName = child("groupName").getValue(String::class.java) ?: "Unnamed Group",
-                members = (child("members").value as? List<String>) ?: emptyList(),
+                members = child("members").children.mapNotNull { it.getValue(String::class.java) },
                 creatorId = child("creatorId").getValue(String::class.java) ?: "",
                 commonRoute = child("commonRoute").getValue(String::class.java) ?: "",
-                preferredTimes = (child("preferredTimes").value as? List<String>) ?: emptyList(),
+                preferredTimes = child("preferredTimes").children.mapNotNull { it.getValue(String::class.java) },
                 isActive = child("isActive").getValue(Boolean::class.java) ?: true,
                 totalTrips = child("totalTrips").getValue(Int::class.java) ?: 0,
                 createdDate = child("createdDate").getValue(Long::class.java) ?: System.currentTimeMillis(),

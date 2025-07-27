@@ -4,6 +4,8 @@ import androidx.compose.animation.*
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.KeyboardActions
@@ -28,13 +30,12 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import kotlinx.coroutines.launch
-import android.location.Location
 import androidx.lifecycle.viewmodel.compose.viewModel
-
 import com.dawitf.akahidegn.Group
 import com.dawitf.akahidegn.ui.components.*
 import com.dawitf.akahidegn.ui.viewmodel.GroupsMapViewModel
+import kotlinx.coroutines.launch
+import android.location.Location
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -43,17 +44,17 @@ fun MainScreen(
     userLocation: Location?,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
-    selectedFilters: SearchFilters,
-    _onFiltersChange: (SearchFilters) -> Unit, // Prefixed with underscore to mark as intentionally unused
+    
+    
     onGroupClick: (Group) -> Unit,
     isLoading: Boolean,
     onRefreshGroups: () -> Unit,
     onCreateGroup: () -> Unit,
     onNavigateToSettings: () -> Unit,
-    _onNavigateToProfile: () -> Unit, // Prefixed with underscore to mark as intentionally unused
-    _onNavigateToBookmarks: () -> Unit, // Prefixed with underscore to mark as intentionally unused
+    
+    
     onNavigateToNotifications: () -> Unit,
-    _onNavigateToHistory: () -> Unit, // Prefixed with underscore to mark as intentionally unused
+    
     modifier: Modifier = Modifier
 ) {
     val coroutineScope = rememberCoroutineScope()
@@ -71,9 +72,9 @@ fun MainScreen(
     // Use Firestore groups if available, otherwise fallback to passed groups
     val displayGroups = if (firestoreGroups.isNotEmpty()) firestoreGroups else groups
     
-    // Apply search and filters to displayed groups
-    val filteredGroups = remember(displayGroups, searchQuery, selectedFilters) {
-        val groupsWithSearch = if (searchQuery.isNotBlank()) {
+    // Apply search to displayed groups
+    val filteredGroups = remember(displayGroups, searchQuery) {
+        if (searchQuery.isNotBlank()) {
             displayGroups.filter { group ->
                 group.destinationName?.contains(searchQuery, ignoreCase = true) == true ||
                 group.originalDestination?.contains(searchQuery, ignoreCase = true) == true ||
@@ -82,9 +83,6 @@ fun MainScreen(
         } else {
             displayGroups
         }
-        
-        // Apply additional filters
-        filterGroups(groupsWithSearch, selectedFilters)
     }
     
     // Check for recent groups (created in last 30 minutes)
@@ -138,342 +136,93 @@ fun MainScreen(
         label = "fab_scale"
     )
     
-    Box(
+    Column(
         modifier = modifier
             .fillMaxSize()
-            .gradientBackground()
+            .pointerInput(Unit) {
+                detectTapGestures(onTap = { focusManager.clearFocus() })
+            }
     ) {
-        Scaffold(
-            topBar = {
-                // Enhanced TopAppBar with glassmorphism effect
-                TopAppBar(
-                    title = { 
-                        Text(
-                            "አካሂያጅ",
-                            style = MaterialTheme.typography.headlineSmall.copy(
-                                fontWeight = FontWeight.Bold,
-                                letterSpacing = 0.5.sp
-                            )
-                        )
-                    },
-                    actions = {
-                        // Notification button with badge indicator
-                        IconButton(
-                            onClick = {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onNavigateToNotifications()
-                            }
-                        ) {
-                            Box {
-                                Icon(Icons.Default.Notifications, contentDescription = "Notifications")
-                                // Add notification badge if needed
-                                Badge(
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .offset(x = 4.dp, y = (-4).dp)
-                                ) {
-                                    Text("3", style = MaterialTheme.typography.labelSmall)
-                                }
-                            }
-                        }
-                        
-                        // Settings button with micro-interaction
-                        IconButton(
-                            onClick = {
-                                hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                onNavigateToSettings()
-                            }
-                        ) {
-                            Icon(Icons.Default.Settings, contentDescription = "Settings")
-                        }
-                    },
-                    colors = TopAppBarDefaults.topAppBarColors(
-                        containerColor = Color.Transparent
-                    ),
-                    modifier = Modifier.glassmorphism(blurRadius = 8.dp, alpha = 0.1f)
-                )
-            },
-            floatingActionButton = {
-                // Enhanced FAB with animations and micro-interactions
-                FloatingActionButton(
-                    onClick = {
-                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                        onCreateGroup()
-                    },
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .scale(fabAnimatedScale)
-                        .pointerInput(Unit) {
-                            detectTapGestures(
-                                onPress = {
-                                    fabScale = 0.95f
-                                    tryAwaitRelease()
-                                    fabScale = 1f
-                                }
-                            )
-                        },
-                    containerColor = MaterialTheme.colorScheme.primary,
-                    elevation = FloatingActionButtonDefaults.elevation(
-                        defaultElevation = 8.dp,
-                        pressedElevation = 12.dp
-                    )
-                ) {
-                    Row(
-                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier.padding(horizontal = 16.dp)
-                    ) {
-                        Icon(
-                            Icons.Default.Add, 
-                            contentDescription = "Create Group",
-                            tint = MaterialTheme.colorScheme.onPrimary
-                        )
-                        Text(
-                            "ቡድን ፍጠር",
-                            style = MaterialTheme.typography.labelLarge.copy(
-                                fontWeight = FontWeight.Bold
-                            ),
-                            color = MaterialTheme.colorScheme.onPrimary
-                        )
-                    }
+        // Enhanced header with better animations
+        AnimatedHeader(
+            searchQuery = searchQuery,
+            onSearchQueryChange = onSearchQueryChange,
+            onRefresh = {
+                isRefreshing = true
+                coroutineScope.launch {
+                    onRefreshGroups()
+                    kotlinx.coroutines.delay(1000)
+                    isRefreshing = false
                 }
             },
-            containerColor = Color.Transparent
-        ) { innerPadding ->
-            EnhancedPullToRefresh(
-                isRefreshing = isRefreshing,
-                onRefresh = { 
-                    coroutineScope.launch { 
-                        handleRefresh() 
-                    }
-                }
+            onNavigateToSettings = onNavigateToSettings,
+            onNavigateToNotifications = onNavigateToNotifications,
+            isRefreshing = isRefreshing,
+            notificationCount = 0 // This should come from notification service
+        )
+
+        // Map view showing groups as pins
+        GroupsMapView(
+            groups = filteredGroups,
+            userLocation = userLocation,
+            onGroupClick = onGroupClick,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp)
+        )
+
+        // Groups list below the map
+        if (filteredGroups.isNotEmpty()) {
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f),
+                contentPadding = PaddingValues(16.dp),
+                verticalArrangement = Arrangement.spacedBy(12.dp)
             ) {
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(innerPadding)
-                        .padding(horizontal = 16.dp)
-                        .verticalScroll(rememberScrollState())
-                ) {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Amharic tagline above search bar
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = slideInVertically() + fadeIn(),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .glassCard(alpha = 0.15f),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.8f)
-                            ),
-                            shape = RoundedCornerShape(16.dp)
-                        ) {
-                            Text(
-                                text = "የታክሲ ሰልፍ ረጅም ከሆነ ከሌሎች ሰዎች ጋር በመሆን ራይድ/ፈረስ ጠርተው በአንድ ሰው ሂሳብ በመሄድ ዋጋውን ይካፈሉ",
-                                style = MaterialTheme.typography.bodySmall.copy(
-                                    fontWeight = FontWeight.Medium,
-                                    letterSpacing = 0.3.sp,
-                                    lineHeight = 18.sp
-                                ),
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp, vertical = 12.dp),
-                                textAlign = TextAlign.Center
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Enhanced Search Bar with glassmorphism and animations
-                    AnimatedVisibility(
-                        visible = true,
-                        enter = slideInVertically() + fadeIn(),
-                        modifier = Modifier.fillMaxWidth()
-                    ) {
-                        Card(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .glassCard(alpha = 0.2f),
-                            elevation = CardDefaults.cardElevation(defaultElevation = 6.dp),
-                            colors = CardDefaults.cardColors(
-                                containerColor = MaterialTheme.colorScheme.surface.copy(alpha = 0.95f)
-                            ),
-                            shape = RoundedCornerShape(20.dp)
-                        ) {
-                            OutlinedTextField(
-                                value = searchQuery,
-                                onValueChange = onSearchQueryChange,
-                                placeholder = { 
-                                    Text(
-                                        "ቡድን ፈልግ...",
-                                        style = MaterialTheme.typography.bodyLarge
-                                    ) 
-                                },
-                                leadingIcon = {
-                                    Icon(
-                                        Icons.Default.Search, 
-                                        contentDescription = "Search",
-                                        tint = MaterialTheme.colorScheme.primary
-                                    )
-                                },
-                                trailingIcon = {
-                                    if (searchQuery.isNotEmpty()) {
-                                        IconButton(
-                                            onClick = { 
-                                                onSearchQueryChange("")
-                                                hapticFeedback.performHapticFeedback(HapticFeedbackType.TextHandleMove)
-                                            }
-                                        ) {
-                                            Icon(
-                                                Icons.Default.Clear, 
-                                                contentDescription = "Clear",
-                                                tint = MaterialTheme.colorScheme.onSurfaceVariant
-                                            )
-                                        }
-                                    }
-                                },
-                                keyboardOptions = KeyboardOptions(
-                                    imeAction = ImeAction.Search,
-                                    keyboardType = KeyboardType.Text
-                                ),
-                                keyboardActions = KeyboardActions(
-                                    onSearch = {
-                                        // Trigger search when Enter is pressed
-                                        hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                        // Clear focus to hide keyboard
-                                        focusManager.clearFocus()
-                                    }
-                                ),
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(12.dp),
-                                colors = OutlinedTextFieldDefaults.colors(
-                                    focusedBorderColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedBorderColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f),
-                                    focusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                    unfocusedTextColor = MaterialTheme.colorScheme.onSurface,
-                                    cursorColor = MaterialTheme.colorScheme.primary,
-                                    focusedLeadingIconColor = MaterialTheme.colorScheme.primary,
-                                    unfocusedLeadingIconColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    focusedContainerColor = Color.Transparent,
-                                    unfocusedContainerColor = Color.Transparent
-                                ),
-                                shape = RoundedCornerShape(16.dp),
-                                singleLine = true
-                            )
-                        }
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Always visible Available Groups Box below search
-                    AvailableGroupsBox(
-                        groups = recentGroups, // Use groups from GroupsMapViewModel
-                        onGroupSelected = onGroupClick,
-                        onRefresh = {
-                            coroutineScope.launch {
-                                handleRefresh()
-                            }
-                        },
-                        isRefreshing = isRefreshing,
-                        modifier = Modifier.fillMaxWidth()
+                items(filteredGroups) { group ->
+                    GroupCard(
+                        group = group,
+                        userLocation = userLocation,
+                        onClick = { onGroupClick(group) },
+                        modifier = Modifier.animateItem()
                     )
-                    
-                    Spacer(modifier = Modifier.height(24.dp))
-                
-                    // Content with enhanced animations and effects
-                    if (isLoading) {
-                        Box(
-                            modifier = Modifier.height(300.dp)
-                        ) {
-                            ShimmerGroupList()
-                        }
-                    } else if (filteredGroups.isEmpty()) {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center
-                        ) {
-                            EmptyStateComponent(
-                                icon = Icons.Default.DirectionsCar,
-                                title = "ምንም ቡድን የለም",
-                                subtitle = if (displayGroups.isNotEmpty()) "የፍተሻ ሁኔታዎች ወይም ፍልተሮች ምንም ውጤት አላመጡም" else "የእርስዎ አካባቢ ላይ ምንም ቡድን አልተገኘም። አንድ ቡድን ይፍጠሩ!",
-                                actionText = "ቡድን ፍጠር",
-                                onActionClick = {
-                                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                                    onCreateGroup()
-                                }
-                            )
-                        }
-                    } else {
-                        // Groups Map View - Lean and Fast
-                        Column {
-                            // Simple header showing group count
-                            if (filteredGroups.isNotEmpty()) {
-                                Row(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(vertical = 16.dp),
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                    verticalAlignment = Alignment.CenterVertically
-                                ) {
-                                    Text(
-                                        text = "በአቅራቢያዎ ያሉ ቡድኖች",
-                                        style = MaterialTheme.typography.titleLarge.copy(
-                                            fontWeight = FontWeight.Bold
-                                        ),
-                                        color = MaterialTheme.colorScheme.onSurface
-                                    )
-                                    
-                                    Row(
-                                        horizontalArrangement = Arrangement.spacedBy(8.dp),
-                                        verticalAlignment = Alignment.CenterVertically
-                                    ) {
-                                        Card(
-                                            shape = RoundedCornerShape(12.dp),
-                                            colors = CardDefaults.cardColors(
-                                                containerColor = MaterialTheme.colorScheme.primaryContainer
-                                            )
-                                        ) {
-                                            Text(
-                                                text = "${filteredGroups.size} ቡድኖች",
-                                                style = MaterialTheme.typography.labelMedium.copy(
-                                                    fontWeight = FontWeight.Medium
-                                                ),
-                                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                                modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp)
-                                            )
-                                        }
-                                    }
-                                }
-                            }
-                            
-                            // Native Map View (reliable alternative to WebView)
-                            GroupsNativeMapView(
-                                groups = filteredGroups,
-                                onJoinGroup = { group -> onGroupClick(group) },
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .clip(RoundedCornerShape(16.dp))
-                            )
-                        }
-                    }
                 }
             }
+        } else {
+            // Empty state
+            EmptyGroupsState(
+                isLoading = isLoading,
+                modifier = Modifier.weight(1f)
+            )
         }
-        
-        // Success Animation Overlay
-        SuccessAnimationCard(
-            isVisible = showSuccessAnimation,
-            title = "በተሳካ ሁኔታ ታደሰ!",
-            subtitle = "ቡድኖች ዝርዝሩ ተዘምኗል",
-            onDismiss = { showSuccessAnimation = false }
-        )
+
+        // Create Group FAB
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
+            horizontalArrangement = Arrangement.End
+        ) {
+            FloatingActionButton(
+                onClick = {
+                    hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
+                    coroutineScope.launch {
+                        fabScale = 0.8f
+                        kotlinx.coroutines.delay(100)
+                        fabScale = 1f
+                        onCreateGroup()
+                    }
+                },
+                modifier = Modifier.scale(fabScale),
+                containerColor = MaterialTheme.colorScheme.primary
+            ) {
+                Icon(
+                    imageVector = Icons.Default.Add,
+                    contentDescription = "Create Group",
+                    tint = MaterialTheme.colorScheme.onPrimary
+                )
+            }
+        }
     }
+
+    
 }

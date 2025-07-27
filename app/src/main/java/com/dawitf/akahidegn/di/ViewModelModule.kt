@@ -7,7 +7,7 @@ import com.dawitf.akahidegn.ui.social.SocialViewModel
 import com.dawitf.akahidegn.viewmodel.EnhancedSearchViewModel
 import com.dawitf.akahidegn.viewmodel.MainViewModel
 import com.dawitf.akahidegn.viewmodel.SettingsViewModel
-import com.dawitf.akahidegn.viewmodel.UserProfileViewModel
+
 import dagger.Binds
 import dagger.Module
 import dagger.hilt.InstallIn
@@ -48,8 +48,5 @@ abstract class ViewModelModule {
     @ViewModelKey(EnhancedSearchViewModel::class)
     abstract fun bindEnhancedSearchViewModel(viewModel: EnhancedSearchViewModel): ViewModel
 
-    @Binds
-    @IntoMap
-    @ViewModelKey(UserProfileViewModel::class)
-    abstract fun bindUserProfileViewModel(viewModel: UserProfileViewModel): ViewModel
+    
 } 

@@ -67,12 +67,12 @@ android {
             signingConfig = signingConfigs.getByName("release")
             manifestPlaceholders["crashlyticsCollectionEnabled"] = true
             
-            // Disable ads in production until you get real AdMob IDs
-            buildConfigField("String", "ADMOB_APP_ID", "\"\"")
-            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"\"")
-            buildConfigField("String", "ADMOB_REWARDED_ID", "\"\"")
-            buildConfigField("String", "ADMOB_BANNER_ID", "\"\"")
-            buildConfigField("Boolean", "ADS_ENABLED", "false")
+            // Your real AdMob IDs for production
+            buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3787918879230745~9551227357\"") // Your actual app ID
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3787918879230745/6242537735\"") // Native advanced for joining
+            buildConfigField("String", "ADMOB_REWARDED_ID", "\"ca-app-pub-3787918879230745/7293294323\"") // Rewarded for creation
+            buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3787918879230745/6242537735\"") // Same as interstitial
+            buildConfigField("Boolean", "ADS_ENABLED", "true") // Enable real ads in production
             buildConfigField("Boolean", "DEBUG_LOGGING", "false")
             
             // Production optimizations

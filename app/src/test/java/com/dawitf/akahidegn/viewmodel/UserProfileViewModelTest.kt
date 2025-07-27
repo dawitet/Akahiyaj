@@ -15,14 +15,14 @@ import org.junit.Assert.*
 @ExperimentalCoroutinesApi
 class UserProfileViewModelTest {
 
-    private lateinit var viewModel: UserProfileViewModel
+    
     private val mockRepository = mockk<UserProfileRepository>()
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
-        viewModel = UserProfileViewModel(mockRepository)
+        
     }
 
     @After

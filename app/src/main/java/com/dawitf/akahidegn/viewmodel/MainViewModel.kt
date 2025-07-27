@@ -172,6 +172,7 @@ class MainViewModel @Inject constructor(
      * Perform groups search with optimization and smart caching
      */
     private suspend fun performGroupsSearch(destinationFilter: String?) {
+        Log.d("MainViewModel", "performGroupsSearch called. Filter: $destinationFilter, User ID: $currentFirebaseUserId")
         if (_isLoadingGroups.value) {
             Log.d("MainViewModel", "Search already in progress, skipping")
             return
@@ -190,7 +191,7 @@ class MainViewModel @Inject constructor(
         }
 
         _isLoadingGroups.value = true
-        Log.d("MainViewModel", "Performing optimized groups search. Filter: '$destinationFilter'")
+        Log.d("MainViewModel", "Performing optimized groups search. Filter: '$destinationFilter'. User Location: ${_currentLocation.value?.latitude}, ${_currentLocation.value?.longitude}")
 
         try {
             withContext(backgroundDispatcher) {
@@ -199,7 +200,7 @@ class MainViewModel @Inject constructor(
                     .limitToLast(100)
                     .addListenerForSingleValueEvent(object : ValueEventListener {
                         override fun onDataChange(snapshot: DataSnapshot) {
-                            Log.d("MainViewModel", "Got Firebase data: ${snapshot.childrenCount} groups")
+                            Log.d("MainViewModel", "Firebase snapshot received. Children count: ${snapshot.childrenCount}")
                             viewModelScope.launch(computationDispatcher) {
                                 processGroupsData(snapshot, destinationFilter, cacheKey)
                             }
@@ -223,6 +224,7 @@ class MainViewModel @Inject constructor(
     private suspend fun processGroupsData(snapshot: DataSnapshot, destinationFilter: String?, cacheKey: String) {
         val newGroupsList = mutableListOf<Group>()
         val userLocation = _currentLocation.value
+        Log.d("MainViewModel", "Processing groups data. Snapshot children: ${snapshot.childrenCount}")
 
         for (groupSnapshot in snapshot.children) {
             val group = GroupReader.fromSnapshot(groupSnapshot)
@@ -287,6 +289,7 @@ class MainViewModel @Inject constructor(
 
         // Only check if group is not expired (30 minutes)
         val thirtyMinutesAgo = System.currentTimeMillis() - (30 * 60 * 1000L)
+        Log.d("MainViewModel", "Filtering group '${group.originalDestination}'. Group Timestamp: ${group.timestamp}, Thirty Minutes Ago: $thirtyMinutesAgo")
         if (group.timestamp != null && group.timestamp!! <= thirtyMinutesAgo) {
             Log.d("MainViewModel", "Group '${group.originalDestination}' filtered out - expired")
             return false
@@ -333,6 +336,7 @@ class MainViewModel @Inject constructor(
      * Initialize Firebase references and user ID for the ViewModel
      */
     fun initializeFirebase(activeGroupsRef: DatabaseReference, firebaseUserId: String) {
+        Log.d("MainViewModel", "initializeFirebase called with user ID: $firebaseUserId")
         this.activeGroupsRef = activeGroupsRef
         this.currentFirebaseUserId = firebaseUserId
         Log.d("MainViewModel", "Firebase initialized with user ID: $firebaseUserId")

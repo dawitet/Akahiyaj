@@ -96,6 +96,39 @@ class SocialViewModel @Inject constructor(
     fun clearMessage() {
         _uiState.value = _uiState.value.copy(message = null)
     }
+
+    fun syncContacts(onComplete: () -> Unit = {}) {
+        viewModelScope.launch {
+            _uiState.value = _uiState.value.copy(isLoading = true)
+            try {
+                // Simulate contacts sync with a delay
+                kotlinx.coroutines.delay(1500)
+
+                // In a real implementation, you would:
+                // 1. Read contacts from the device
+                // 2. Send them to your backend to find matches
+                // 3. Get back a list of potential friends
+
+                // Log analytics event
+                analyticsService.trackEvent("contacts_synced", emptyMap())
+
+                // Update UI state with success
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    message = "Contacts synced successfully"
+                )
+
+                // Call the completion handler
+                onComplete()
+            } catch (e: Exception) {
+                _uiState.value = _uiState.value.copy(
+                    isLoading = false,
+                    error = "Failed to sync contacts: ${e.message}"
+                )
+                onComplete()
+            }
+        }
+    }
 }
 
 data class SocialUiState(

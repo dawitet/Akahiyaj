@@ -66,7 +66,7 @@ abstract class AkahidegnDatabase : RoomDatabase() {
                         `maxMembers` INTEGER NOT NULL DEFAULT 4,
                         `memberCount` INTEGER NOT NULL DEFAULT 0,
                         `imageUrl` TEXT,
-                        `pricePerPerson` REAL,
+                        
                         `departureTime` INTEGER,
                         `availableSeats` INTEGER NOT NULL,
                         `description` TEXT,
@@ -88,7 +88,7 @@ abstract class AkahidegnDatabase : RoomDatabase() {
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_groups_enhanced_destinationName` ON `groups_enhanced` (`destinationName`)")
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_groups_enhanced_pickupLat_pickupLng` ON `groups_enhanced` (`pickupLat`, `pickupLng`)")
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_groups_enhanced_timestamp` ON `groups_enhanced` (`timestamp`)")
-                database.execSQL("CREATE INDEX IF NOT EXISTS `index_groups_enhanced_pricePerPerson` ON `groups_enhanced` (`pricePerPerson`)")
+                
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_groups_enhanced_departureTime` ON `groups_enhanced` (`departureTime`)")
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_groups_enhanced_memberCount` ON `groups_enhanced` (`memberCount`)")
                 database.execSQL("CREATE INDEX IF NOT EXISTS `index_groups_enhanced_availableSeats` ON `groups_enhanced` (`availableSeats`)")

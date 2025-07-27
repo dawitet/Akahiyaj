@@ -45,8 +45,7 @@ interface EnhancedGroupDao {
         SELECT * FROM groups_enhanced 
         WHERE isActive = 1 
         AND (:destination = '' OR destinationName LIKE '%' || :destination || '%')
-        AND (:minPrice IS NULL OR pricePerPerson >= :minPrice)
-        AND (:maxPrice IS NULL OR pricePerPerson <= :maxPrice)
+        
         AND (:minTime IS NULL OR departureTime >= :minTime)
         AND (:maxTime IS NULL OR departureTime <= :maxTime)
         AND (:maxMemberCount IS NULL OR maxMembers <= :maxMemberCount)
@@ -181,8 +180,7 @@ interface EnhancedGroupDao {
         SELECT * FROM groups_enhanced 
         WHERE isActive = 1 
         AND (:destination IS NULL OR destinationName LIKE '%' || :destination || '%')
-        AND (:minPrice IS NULL OR pricePerPerson >= :minPrice)
-        AND (:maxPrice IS NULL OR pricePerPerson <= :maxPrice)
+        
         AND (:startTime IS NULL OR departureTime >= :startTime)
         AND (:endTime IS NULL OR departureTime <= :endTime)
         AND (:maxMembers IS NULL OR maxMembers <= :maxMembers)

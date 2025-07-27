@@ -6,7 +6,7 @@ import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.core.result.Result
 import com.dawitf.akahidegn.data.local.dao.GroupDao
 import com.dawitf.akahidegn.data.mapper.toDomainModel
-import com.dawitf.akahidegn.data.mapper.toEntity
+import com.dawitf.akahidegn.data.mapper.toGroupEntity
 import com.dawitf.akahidegn.data.mapper.toDomainModels
 import com.dawitf.akahidegn.data.remote.service.FirebaseGroupService
 import com.dawitf.akahidegn.domain.repository.GroupRepository
@@ -45,7 +45,7 @@ class GroupRepositoryImpl @Inject constructor(
                     val remoteGroups = remoteResult.getOrNull() ?: emptyList()
                     // Cache remote data locally
                     try {
-                        localDataSource.insertGroups(remoteGroups.map { it.toEntity() })
+                        localDataSource.insertGroups(remoteGroups.map { it.toGroupEntity() })
                     } catch (e: Exception) {
                         // Log error but don't fail the operation
                     }
@@ -75,7 +75,7 @@ class GroupRepositoryImpl @Inject constructor(
             val group = remoteResult.getOrNull()
             if (group != null) {
                 // Cache locally
-                localDataSource.insertGroup(group.toEntity())
+                localDataSource.insertGroup(group.toGroupEntity())
                 return Result.success(group)
             }
         }
@@ -95,7 +95,7 @@ class GroupRepositoryImpl @Inject constructor(
                     val remoteGroups = remoteResult.getOrNull() ?: emptyList()
                     // Cache remote data locally
                     try {
-                        localDataSource.insertGroups(remoteGroups.map { it.toEntity() })
+                        localDataSource.insertGroups(remoteGroups.map { it.toGroupEntity() })
                     } catch (e: Exception) {
                         // Log error but don't fail the operation
                     }
@@ -118,7 +118,7 @@ class GroupRepositoryImpl @Inject constructor(
             val createdGroup = result.getOrNull()
             if (createdGroup != null) {
                 // Cache locally
-                localDataSource.insertGroup(createdGroup.toEntity())
+                localDataSource.insertGroup(createdGroup.toGroupEntity())
             }
         }
         return result
@@ -128,7 +128,7 @@ class GroupRepositoryImpl @Inject constructor(
         val result = remoteDataSource.updateGroup(group)
         if (result.isSuccess) {
             // Update local cache
-            localDataSource.updateGroup(group.toEntity())
+            localDataSource.updateGroup(group.toGroupEntity())
         }
         return result
     }

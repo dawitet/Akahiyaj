@@ -243,13 +243,7 @@ private fun EnhancedGroupCard(
                     }
                 }
                 
-                if (group.pricePerPerson != null) {
-                    Text(
-                        text = "${group.pricePerPerson.toInt()} ብር",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.primary
-                    )
-                }
+                
             }
             
             Spacer(modifier = Modifier.height(8.dp))

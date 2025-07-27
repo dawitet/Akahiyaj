@@ -1,5 +1,7 @@
 package com.dawitf.akahidegn.ui.social
 
+import android.content.pm.PackageManager
+import androidx.activity.ComponentActivity
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -15,9 +17,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
 import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.dawitf.akahidegn.features.profile.Friend
@@ -30,6 +34,9 @@ import com.dawitf.akahidegn.ui.components.FilterChipRow
 import com.dawitf.akahidegn.ui.components.FilterOption
 import com.dawitf.akahidegn.ui.components.AnimatedPressableCard
 import com.dawitf.akahidegn.ui.components.StatusBadge
+
+// Constants
+private const val CONTACTS_PERMISSION_CODE = 100
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -123,7 +130,8 @@ fun SocialScreen(
             )
             2 -> DiscoverTab(
                 onSendRequest = viewModel::sendFriendRequest,
-                onFindByPhone = viewModel::findFriendByPhone
+                onFindByPhone = viewModel::findFriendByPhone,
+                viewModel = viewModel
             )
         }
         
@@ -178,7 +186,7 @@ private fun FriendCard(
     var showMenu by remember { mutableStateOf(false) }
     
     AnimatedPressableCard(
-        onClick = { onFriendProfile(friend.id) },
+        onClick = { onFriendProfile(friend.userId) }, // Changed from friend.id to friend.userId
         modifier = Modifier.fillMaxWidth()
     ) {
         Row(
@@ -189,7 +197,7 @@ private fun FriendCard(
         ) {
             // Profile Photo
             AsyncImage(
-                model = friend.photoUrl ?: "",
+                model = friend.profilePicture ?: "", // Changed from friend.photoUrl to friend.profilePicture
                 contentDescription = "Profile photo",
                 modifier = Modifier
                     .size(48.dp)
@@ -229,7 +237,7 @@ private fun FriendCard(
                     DropdownMenuItem(
                         text = { Text("View Profile") },
                         onClick = {
-                            onFriendProfile(friend.id)
+                            onFriendProfile(friend.userId)
                             showMenu = false
                         },
                         leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) }
@@ -237,7 +245,7 @@ private fun FriendCard(
                     DropdownMenuItem(
                         text = { Text("Remove Friend") },
                         onClick = {
-                            onRemoveFriend(friend.id)
+                            onRemoveFriend(friend.userId)
                             showMenu = false
                         },
                         leadingIcon = { Icon(Icons.Default.Delete, contentDescription = null) }
@@ -343,7 +351,8 @@ private fun FriendRequestCard(
 @Composable
 private fun DiscoverTab(
     onSendRequest: (String) -> Unit,
-    onFindByPhone: (String) -> Unit
+    onFindByPhone: (String) -> Unit,
+    viewModel: SocialViewModel
 ) {
     var phoneNumber by remember { mutableStateOf("") }
     var userId by remember { mutableStateOf("") }
@@ -417,12 +426,16 @@ private fun DiscoverTab(
         }
         
         // Suggested friends (placeholder)
-        SuggestedFriendsSection()
+        SuggestedFriendsSection(
+            onSyncContacts = { onComplete ->
+                viewModel.syncContacts(onComplete)
+            }
+        )
     }
 }
 
 @Composable
-private fun SuggestedFriendsSection() {
+private fun SuggestedFriendsSection(onSyncContacts: (onComplete: () -> Unit) -> Unit) {
     Card(modifier = Modifier.fillMaxWidth()) {
         Column(modifier = Modifier.padding(16.dp)) {
             Text(
@@ -442,13 +455,72 @@ private fun SuggestedFriendsSection() {
             
             Spacer(modifier = Modifier.height(12.dp))
             
+            val context = LocalContext.current
+            var isSyncing by remember { mutableStateOf(false) }
+            var showPermissionDialog by remember { mutableStateOf(false) }
+
             OutlinedButton(
-                onClick = { /* TODO: Implement contact sync */ },
-                modifier = Modifier.fillMaxWidth()
+                onClick = {
+                    if (ContextCompat.checkSelfPermission(
+                            context,
+                            android.Manifest.permission.READ_CONTACTS
+                        ) == PackageManager.PERMISSION_GRANTED
+                    ) {
+                        // Permission granted, start sync
+                        isSyncing = true
+                        onSyncContacts {
+                            isSyncing = false
+                        }
+                    } else {
+                        // Show permission dialog
+                        showPermissionDialog = true
+                    }
+                },
+                modifier = Modifier.fillMaxWidth(),
+                enabled = !isSyncing
             ) {
-                Icon(Icons.Default.Phone, contentDescription = null)
-                Spacer(modifier = Modifier.width(8.dp))
-                Text("Sync Contacts")
+                if (isSyncing) {
+                    CircularProgressIndicator(
+                        modifier = Modifier.size(20.dp),
+                        strokeWidth = 2.dp
+                    )
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Syncing...")
+                } else {
+                    Icon(Icons.Default.Phone, contentDescription = null)
+                    Spacer(modifier = Modifier.width(8.dp))
+                    Text("Sync Contacts")
+                }
+            }
+
+            // Permission dialog
+            if (showPermissionDialog) {
+                AlertDialog(
+                    onDismissRequest = { showPermissionDialog = false },
+                    title = { Text("Contact Permission Required") },
+                    text = { Text("We need access to your contacts to find friends using this app.") },
+                    confirmButton = {
+                        TextButton(
+                            onClick = {
+                                showPermissionDialog = false
+                                // Launch permission request
+                                if (context is ComponentActivity) {
+                                    context.requestPermissions(
+                                        arrayOf(android.Manifest.permission.READ_CONTACTS),
+                                        CONTACTS_PERMISSION_CODE
+                                    )
+                                }
+                            }
+                        ) {
+                            Text("Grant Permission")
+                        }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { showPermissionDialog = false }) {
+                            Text("Cancel")
+                        }
+                    }
+                )
             }
         }
     }

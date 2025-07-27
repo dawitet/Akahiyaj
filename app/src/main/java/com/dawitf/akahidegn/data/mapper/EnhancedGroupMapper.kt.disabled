@@ -38,7 +38,7 @@ fun Group.toEnhancedEntity(): GroupEntityEnhanced {
         imageUrl = imageUrl,
         
         // Enhanced fields with defaults
-        pricePerPerson = null, // Would be extracted from additional Group fields if available
+        
         departureTime = timestamp, // Use timestamp as departure time if no specific field
         availableSeats = maxMembers - memberCount,
         description = null,

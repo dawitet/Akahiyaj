@@ -15,7 +15,7 @@ fun Group.toEnhancedEntity(): GroupEntityEnhanced {
         maxMembers = this.maxMembers,
         memberCount = this.memberCount,
         imageUrl = this.imageUrl,
-        pricePerPerson = 25.0, // Default price
+        
         departureTime = this.timestamp,
         availableSeats = maxOf(0, this.maxMembers - this.memberCount),
         description = "",

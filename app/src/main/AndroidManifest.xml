@@ -103,7 +103,7 @@
             android:exported="false"
             tools:node="remove">
             <intent-filter>
-                <action android:name="com.dawitf.akahidegn.DEBUG_TEST_FIREBASE_RULES" />
+                <action android:name="com.dawitf.akahiyaj.DEBUG_TEST_FIREBASE_RULES" />
             </intent-filter>
         </receiver>
 

@@ -66,7 +66,7 @@ data class Group(
         map["to"] = destinationName ?: ""  // Must be non-empty string
         map["departureTime"] = timestamp?.toString() ?: System.currentTimeMillis().toString()  // Must be non-empty string
         map["availableSeats"] = (maxMembers - memberCount).coerceIn(1, 8)  // Must be between 1 and 8
-        map["pricePerPerson"] = 0  // Must be >= 0
+        
         map["createdAt"] = timestamp ?: System.currentTimeMillis()  // Must be <= now
         map["timestamp"] = timestamp ?: System.currentTimeMillis()  // For backward compatibility and expiry checks
         map["createdBy"] = creatorId ?: ""  // Must match auth.uid

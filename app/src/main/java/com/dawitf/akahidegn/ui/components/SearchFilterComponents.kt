@@ -47,7 +47,7 @@ enum class GroupSortOption(val label: String) {
     NEAREST("ቅርብ"),
     DEPARTURE_TIME("የመነሻ ሰዓት"),
     AVAILABLE_SEATS("ተለዋዋጭ ስፍራ"),
-    PRICE("ዋጋ"),
+    
     RATING("ደረጃ")
 }
 
@@ -63,8 +63,7 @@ data class SearchFilters(
     val query: String = "",
     val sortOption: GroupSortOption = GroupSortOption.NEAREST,
     val filterType: GroupFilterType = GroupFilterType.ALL,
-    val maxPrice: Float = 100f,
-    val departureTimeRange: ClosedFloatingPointRange<Float> = 0f..24f,
+    
     val minimumSeats: Int = 1
 )
 
@@ -103,10 +102,7 @@ fun filterGroups(groups: List<Group>, filters: SearchFilters): List<Group> {
         }
     }
     
-    // Apply price filter
-    filteredGroups = filteredGroups.filter { group -> 
-        group.pricePerPerson <= filters.maxPrice
-    }
+    
     
     // Apply minimum seats filter
     filteredGroups = filteredGroups.filter { group ->
@@ -148,7 +144,7 @@ fun filterGroups(groups: List<Group>, filters: SearchFilters): List<Group> {
         GroupSortOption.AVAILABLE_SEATS -> filteredGroups.sortedByDescending { group ->
             group.maxMembers - group.memberCount
         }
-        GroupSortOption.PRICE -> filteredGroups.sortedBy { it.pricePerPerson }
+        
         GroupSortOption.RATING -> filteredGroups.sortedByDescending { it.rating }
     }
     
