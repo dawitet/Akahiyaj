@@ -13,7 +13,16 @@
           "package_name": "com.dawitf.akahidegn"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "81721365267-j5gcdpot5fvjhr7gqbma8qmhr99hj0ub.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dawitf.akahidegn",
+            "certificate_hash": "dd1e1230e3661dd41d68b0dc3537b1fd2057f856"
+          }
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyA-04oS-c5FmfZ-DekJqdBl_GTnW4b_yAo"
@@ -23,7 +32,8 @@
         "appinvite_service": {
           "other_platform_oauth_client": []
         }
-      }
+      },
+      "admob_app_id": "ca-app-pub-3787918879230745~9551227357"
     }
   ],
   "configuration_version": "1"
