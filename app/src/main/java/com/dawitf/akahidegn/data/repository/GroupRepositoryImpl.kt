@@ -6,9 +6,9 @@ import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.core.result.Result
 import com.dawitf.akahidegn.data.local.dao.GroupDao
 import com.dawitf.akahidegn.data.mapper.toDomainModel
-import com.dawitf.akahidegn.data.mapper.toGroupEntity
+import com.dawitf.akahidegn.data.mapper.toEntity
 import com.dawitf.akahidegn.data.mapper.toDomainModels
-import com.dawitf.akahidegn.data.remote.service.FirebaseGroupService
+import com.dawitf.akahidegn.data.remote.service.GroupService
 import com.dawitf.akahidegn.domain.repository.GroupRepository
 import kotlinx.coroutines.flow.*
 import javax.inject.Inject
@@ -17,19 +17,14 @@ import javax.inject.Singleton
 @Singleton
 class GroupRepositoryImpl @Inject constructor(
     private val localDataSource: GroupDao,
-    private val remoteDataSource: FirebaseGroupService
+    private val remoteDataSource: GroupService
 ) : GroupRepository {
 
     @OptIn(ExperimentalPagingApi::class)
     override fun getAllGroupsPaged(): Flow<PagingData<Group>> {
         return Pager(
-            config = PagingConfig(
-                pageSize = 20,
-                enablePlaceholders = false,
-                prefetchDistance = 5
-            ),
-            remoteMediator = GroupRemoteMediator(remoteDataSource, localDataSource),
-            pagingSourceFactory = { localDataSource.getAllGroupsPaged() }
+            PagingConfig(pageSize = 20),
+        pagingSourceFactory = { localDataSource.getAllGroupsPaged() }
         ).flow.map { pagingData ->
             pagingData.map { it.toDomainModel() }
         }
@@ -45,7 +40,7 @@ class GroupRepositoryImpl @Inject constructor(
                     val remoteGroups = remoteResult.getOrNull() ?: emptyList()
                     // Cache remote data locally
                     try {
-                        localDataSource.insertGroups(remoteGroups.map { it.toGroupEntity() })
+                        localDataSource.insertGroups(remoteGroups.map { it.toEntity() })
                     } catch (e: Exception) {
                         // Log error but don't fail the operation
                     }
@@ -75,41 +70,12 @@ class GroupRepositoryImpl @Inject constructor(
             val group = remoteResult.getOrNull()
             if (group != null) {
                 // Cache locally
-                localDataSource.insertGroup(group.toGroupEntity())
+                localDataSource.insertGroup(group.toEntity())
                 return Result.success(group)
             }
         }
 
         return remoteResult
-    }
-
-    override fun getNearbyGroups(latitude: Double, longitude: Double, radiusKm: Double): Flow<Result<List<Group>>> {
-        val radiusSquared = (radiusKm * 1000) * (radiusKm * 1000) // Convert to meters and square
-
-        return combine(
-            localDataSource.getNearbyGroups(latitude, longitude, radiusSquared),
-            remoteDataSource.getNearbyGroups(latitude, longitude, radiusKm)
-        ) { localGroups, remoteResult ->
-            when {
-                remoteResult.isSuccess -> {
-                    val remoteGroups = remoteResult.getOrNull() ?: emptyList()
-                    // Cache remote data locally
-                    try {
-                        localDataSource.insertGroups(remoteGroups.map { it.toGroupEntity() })
-                    } catch (e: Exception) {
-                        // Log error but don't fail the operation
-                    }
-                    Result.success(remoteGroups)
-                }
-                localGroups.isNotEmpty() -> {
-                    // Return cached data if remote fails but we have local data
-                    Result.success(localGroups.map { it.toDomainModel() })
-                }
-                else -> {
-                    remoteResult // Return the remote error
-                }
-            }
-        }
     }
 
     override suspend fun createGroup(group: Group): Result<Group> {
@@ -118,7 +84,7 @@ class GroupRepositoryImpl @Inject constructor(
             val createdGroup = result.getOrNull()
             if (createdGroup != null) {
                 // Cache locally
-                localDataSource.insertGroup(createdGroup.toGroupEntity())
+                localDataSource.insertGroup(createdGroup.toEntity())
             }
         }
         return result
@@ -128,7 +94,7 @@ class GroupRepositoryImpl @Inject constructor(
         val result = remoteDataSource.updateGroup(group)
         if (result.isSuccess) {
             // Update local cache
-            localDataSource.updateGroup(group.toGroupEntity())
+            localDataSource.updateGroup(group.toEntity())
         }
         return result
     }
@@ -148,7 +114,10 @@ class GroupRepositoryImpl @Inject constructor(
             // Update local cache
             val localGroup = localDataSource.getGroupById(groupId)
             if (localGroup != null) {
-                localDataSource.updateMemberCount(groupId, localGroup.memberCount + 1)
+                // memberCount is now part of GroupEntity, no need for separate updateMemberCount
+                // localDataSource.updateMemberCount(groupId, localGroup.memberCount + 1)
+                val updatedGroup = localGroup.copy(memberCount = localGroup.memberCount + 1)
+                localDataSource.updateGroup(updatedGroup)
             }
         }
         return result
@@ -160,7 +129,10 @@ class GroupRepositoryImpl @Inject constructor(
             // Update local cache
             val localGroup = localDataSource.getGroupById(groupId)
             if (localGroup != null) {
-                localDataSource.updateMemberCount(groupId, maxOf(0, localGroup.memberCount - 1))
+                // memberCount is now part of GroupEntity, no need for separate updateMemberCount
+                // localDataSource.updateMemberCount(groupId, maxOf(0, localGroup.memberCount - 1))
+                val updatedGroup = localGroup.copy(memberCount = maxOf(0, localGroup.memberCount - 1))
+                localDataSource.updateGroup(updatedGroup)
             }
         }
         return result
@@ -196,56 +168,53 @@ class GroupRepositoryImpl @Inject constructor(
             val thirtyMinutesAgo = System.currentTimeMillis() - (30 * 60 * 1000) // 30 minutes in milliseconds
             
             // Get expired groups
-            when (val expiredGroupsResult = remoteDataSource.getExpiredGroups(thirtyMinutesAgo)) {
-                is Result.Success -> {
-                    val expiredGroups = expiredGroupsResult.data
-                    if (expiredGroups.isNotEmpty()) {
-                        val groupIds = expiredGroups.mapNotNull { it.groupId }
-                        
-                        // Delete expired groups from Firebase
-                        when (val deleteResult = remoteDataSource.deleteExpiredGroups(groupIds)) {
-                            is Result.Success -> {
-                                // Also clean up from local cache
-                                try {
-                                    groupIds.forEach { groupId ->
-                                        localDataSource.deleteGroupById(groupId)
-                                    }
-                                } catch (e: Exception) {
-                                    // Log error but don't fail the operation
-                                }
-                                Result.success(groupIds.size)
+            val expiredGroupsResult = remoteDataSource.getExpiredGroups(thirtyMinutesAgo)
+            if (expiredGroupsResult is Result.Success) {
+                val expiredGroups = expiredGroupsResult.data
+                if (expiredGroups.isNotEmpty()) {
+                    val groupIds = expiredGroups.mapNotNull { it.groupId }
+                    
+                    // Delete expired groups from Firebase
+                    val deleteResult = remoteDataSource.deleteExpiredGroups(groupIds)
+                    if (deleteResult is Result.Success) {
+                        // Also clean up from local cache
+                        withContext(Dispatchers.IO) {
+                            groupIds.forEach { groupId ->
+                                localDataSource.deleteGroupById(groupId)
                             }
-                            is Result.Error -> Result.success(0)
                         }
+                        Result.success(groupIds.size)
                     } else {
                         Result.success(0)
                     }
+                } else {
+                    Result.success(0)
                 }
-                is Result.Error -> Result.success(0)
+            } else {
+                Result.success(0)
             }
         } catch (e: Exception) {
             Result.failure(AppError.NetworkError.FirebaseError(e.message ?: "Failed to cleanup expired groups"))
         }
     }
-}
 
-// Simple RemoteMediator for demonstration
-@OptIn(ExperimentalPagingApi::class)
-class GroupRemoteMediator(
-    private val remoteDataSource: FirebaseGroupService,
-    private val localDataSource: GroupDao
-) : RemoteMediator<Int, com.dawitf.akahidegn.data.local.entity.GroupEntity>() {
+    override suspend fun getCreatedGroupsCount(userId: String): Result<Int> {
+        return remoteDataSource.getCreatedGroupsCount(userId)
+    }
 
-    override suspend fun load(
-        loadType: LoadType,
-        state: PagingState<Int, com.dawitf.akahidegn.data.local.entity.GroupEntity>
-    ): MediatorResult {
-        return try {
-            // For now, just return success. In a real implementation,
-            // you would load data from remote and cache it locally
-            MediatorResult.Success(endOfPaginationReached = false)
-        } catch (e: Exception) {
-            MediatorResult.Error(e)
+    override suspend fun getJoinedGroupsCount(userId: String): Result<Int> {
+        return remoteDataSource.getJoinedGroupsCount(userId)
+    }
+
+    override suspend fun updateGroupStatus(groupId: String, status: String): Result<Unit> {
+        val result = remoteDataSource.updateGroupStatus(groupId, status)
+        if (result.isSuccess) {
+            // Update local cache if needed, or refetch the group
+            val localGroup = localDataSource.getGroupById(groupId)
+            if (localGroup != null) {
+                localDataSource.updateGroup(localGroup.copy(status = status))
+            }
         }
+        return result
     }
 }

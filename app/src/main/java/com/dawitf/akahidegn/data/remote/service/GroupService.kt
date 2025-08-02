@@ -5,13 +5,13 @@ import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.core.result.Result
 import kotlinx.coroutines.flow.Flow
 
-interface FirebaseGroupService {
+interface GroupService {
     
     fun getAllGroups(): Flow<Result<List<Group>>>
     
     suspend fun getGroupById(groupId: String): Result<Group>
     
-    fun getNearbyGroups(latitude: Double, longitude: Double, radiusKm: Double): Flow<Result<List<Group>>>
+    
     
     suspend fun createGroup(group: Group): Result<Group>
     
@@ -27,4 +27,10 @@ interface FirebaseGroupService {
     suspend fun getExpiredGroups(thresholdTimestamp: Long): Result<List<Group>>
     
     suspend fun deleteExpiredGroups(groupIds: List<String>): Result<Unit>
+
+    suspend fun getCreatedGroupsCount(userId: String): Result<Int>
+
+    suspend fun getJoinedGroupsCount(userId: String): Result<Int>
+
+    suspend fun updateGroupStatus(groupId: String, status: String): Result<Unit>
 }

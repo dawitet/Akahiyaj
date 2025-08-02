@@ -12,6 +12,7 @@ import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -23,21 +24,29 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.collectAsState
 import androidx.compose.ui.Modifier
-import androidx.compose.runtime.Composable
+import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.dawitf.akahidegn.ui.screens.MainScreen
 import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
 import com.dawitf.akahidegn.viewmodel.MainViewModel
-import com.dawitf.akahidegn.ui.components.GroupMembersWithDialerDialog
-import com.dawitf.akahidegn.service.GroupEventMonitorService
-import com.dawitf.akahidegn.notifications.service.NotificationManagerService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
 import com.google.firebase.ktx.Firebase
-import kotlinx.coroutines.delay
+import java.util.Locale
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withContext
+import java.util.concurrent.TimeUnit
 import android.content.SharedPreferences
+import androidx.compose.runtime.Composable
+import com.dawitf.akahidegn.ui.components.UserRegistrationDialog
+import com.dawitf.akahidegn.ui.components.GroupMembersDialog
+import com.dawitf.akahidegn.ui.components.GroupMember
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
@@ -48,35 +57,19 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import android.app.AlertDialog
 import android.widget.EditText
 import dagger.hilt.android.AndroidEntryPoint
-import androidx.activity.result.contract.ActivityResultContracts
-import java.util.concurrent.TimeUnit
-import javax.inject.Inject
-
-// Correct imports for missing classes
-import com.dawitf.akahidegn.Group
-import com.dawitf.akahidegn.MemberInfo
-import com.dawitf.akahidegn.ui.components.SuccessWithLeaveGroupDialog
-import com.dawitf.akahidegn.ui.components.GroupMembersDialog
-import com.dawitf.akahidegn.ui.components.GroupMember
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     // ViewModel instance for the activity
     private val mainViewModel: MainViewModel by viewModels()
     
-    // Inject notification service
-    @Inject
-    lateinit var notificationService: NotificationManagerService
-
-    // Inject group event monitor service
-    @Inject
-    lateinit var groupEventMonitorService: GroupEventMonitorService
-
     private lateinit var database: FirebaseDatabase
     private lateinit var groupsRef: DatabaseReference
     private lateinit var auth: FirebaseAuth
     private val currentGroups = mutableListOf<Group>()
-
+    private var currentDestination = ""
+    private var selectedGroupForDialog by mutableStateOf<Group?>(null)
+    
     // Ad variables
     private var rewardedAd: RewardedAd? = null
     private var interstitialAd: InterstitialAd? = null
@@ -85,24 +78,9 @@ class MainActivity : ComponentActivity() {
     private var userLocation: Location? = null
     private lateinit var locationManager: LocationManager
     private var lastLocationUpdate = 0L
-
-    // Modern permission handling
-    private val locationPermissionLauncher = registerForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted ->
-        if (isGranted) {
-            // Permission granted, start location updates
-            setupLocationUpdates()
-        } else {
-            // Permission denied, show a message to the user
-            Toast.makeText(this, "Location permission is required for this feature", Toast.LENGTH_SHORT).show()
-        }
-    }
-
     private val locationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
             userLocation = location
-            Log.d("LOCATION_UPDATE", "Location received in MainActivity: ${location.latitude}, ${location.longitude}")
             
             // Real-time location updates: 30 seconds for group creators, 1 minute for members
             val currentTime = System.currentTimeMillis()
@@ -138,14 +116,15 @@ class MainActivity : ComponentActivity() {
     companion object {
         // Theme mode key for preferences
         val THEME_MODE_KEY = androidx.datastore.preferences.core.stringPreferencesKey("theme_mode")
+        private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         
         // Initialize SharedPreferences
-        sharedPreferences = getSharedPreferences("akahiyaj_prefs", Context.MODE_PRIVATE)
-
+        sharedPreferences = getSharedPreferences("akahidegn_prefs", Context.MODE_PRIVATE)
+        
         // Initialize location manager
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         
@@ -158,7 +137,7 @@ class MainActivity : ComponentActivity() {
         }
         
         // Initialize Firebase components
-        database = Firebase.database("https://akahiyaj-79376-default-rtdb.europe-west1.firebasedatabase.app")
+        database = Firebase.database
         groupsRef = database.reference.child("groups")
         auth = Firebase.auth
         
@@ -167,18 +146,20 @@ class MainActivity : ComponentActivity() {
         loadInterstitialAd()
         
         // Ensure the user is signed in anonymously
-        // TEMPORARY BYPASS: Directly initialize main screen for debugging
-        auth.signInAnonymously().addOnCompleteListener { task ->
-            if (task.isSuccessful) {
-                Log.d("AUTH", "signInAnonymously:success - Bypassing user profile check")
-                // Hardcode a user name for testing purposes
-                userName = "DebugUser"
-                initializeMainScreen()
-            } else {
-                Log.w("AUTH", "signInAnonymously:failure", task.exception)
-                // Handle authentication failure, maybe show an error message
+        if (auth.currentUser == null) {
+            auth.signInAnonymously().addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d("AUTH", "signInAnonymously:success")
+                    checkUserProfile()
+                } else {
+                    Log.w("AUTH", "signInAnonymously:failure", task.exception)
+                }
             }
+        } else {
+            checkUserProfile()
         }
+        
+        // Removed early setContent call - let proper initialization flow handle UI
     }
     
     private fun loadRewardedAd() {
@@ -228,7 +209,6 @@ class MainActivity : ComponentActivity() {
     }
     
     private fun refreshGroups() {
-        Log.d("GROUP_REFRESH", "refreshGroups() called")
         // Use the ViewModel to refresh groups (shows all active groups)
         mainViewModel.refreshGroups()
 
@@ -246,7 +226,7 @@ class MainActivity : ComponentActivity() {
                 dataSnapshot.children.forEach { groupSnapshot ->
                     val group = groupSnapshot.getValue(Group::class.java)
                     group?.let {
-                        Log.d("FIREBASE_DEBUG", "Group: ${it.destinationName}, " +
+                        Log.d("FIREBASE_DEBUG", "Group: ${it.to}, " +
                             "Members: ${it.memberCount}/${it.maxMembers}, " +
                             "Created: ${java.util.Date(it.timestamp ?: 0L)}, " +
                             "Creator: ${it.creatorName}")
@@ -267,110 +247,11 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun filterExpiredGroups(groups: List<Group>): List<Group> {
-        try {
-            val currentTime = System.currentTimeMillis()
-            val thirtyMinutesAgo = currentTime - TimeUnit.MINUTES.toMillis(30)
-
-            // Enhanced expiration filter with proper timestamp logic AND 500m radius filtering
-            val filteredGroups = groups.filter { group ->
-                // First check expiration
-                val isNotExpired = when {
-                    // Keep groups with null timestamp (legacy data)
-                    group.timestamp == null -> {
-                        Log.d("EXPIRATION_FILTER", "Keeping group ${group.destinationName} - null timestamp (legacy)")
-                        true
-                    }
-                    // Keep groups within 30 minutes
-                    group.timestamp!! > thirtyMinutesAgo -> {
-                        val ageMinutes = (currentTime - group.timestamp!!) / (1000 * 60)
-                        Log.d("EXPIRATION_FILTER", "Keeping group ${group.destinationName} - age: ${ageMinutes}min")
-                        true
-                    }
-                    // Filter out expired groups
-                    else -> {
-                        val ageMinutes = (currentTime - group.timestamp!!) / (1000 * 60)
-                        Log.d("EXPIRATION_FILTER", "Filtering out expired group ${group.destinationName} - age: ${ageMinutes}min")
-                        false
-                    }
-                }
-
-                // Then check 500m radius if user location is available
-                val isWithinRange = if (userLocation != null && group.pickupLat != null && group.pickupLng != null) {
-                    val results = FloatArray(1)
-                    android.location.Location.distanceBetween(
-                        userLocation!!.latitude, userLocation!!.longitude,
-                        group.pickupLat!!, group.pickupLng!!,
-                        results
-                    )
-                    val distance = results[0]
-                    val isNear = distance <= 500f // 500 meters
-
-                    Log.d("LOCATION_FILTER", "🎯 DISTANCE CHECK: Group '${group.destinationName}' is ${distance.toInt()}m away from user")
-                    Log.d("LOCATION_FILTER", "📍 User: (${userLocation!!.latitude}, ${userLocation!!.longitude})")
-                    Log.d("LOCATION_FILTER", "📍 Group: (${group.pickupLat}, ${group.pickupLng})")
-                    Log.d("LOCATION_FILTER", "✅ Decision: ${if (isNear) "INCLUDE (≤500m)" else "EXCLUDE (>500m)"}")
-                    isNear
-                } else {
-                    // If no location data, include the group (fallback)
-                    Log.d("LOCATION_FILTER", "⚠️ No location data available - including group ${group.destinationName} (fallback)")
-                    true
-                }
-
-                isNotExpired && isWithinRange
-            }
-
-            // Show user feedback if groups were filtered out
-            val expiredCount = groups.size - filteredGroups.size
-            if (expiredCount > 0) {
-                showExpirationNotification(expiredCount)
-            }
-
-            Log.d("GROUP_FILTER", "Filtered ${groups.size} groups -> ${filteredGroups.size} active groups within 500m")
-            return filteredGroups
-
-        } catch (e: Exception) {
-            Log.e("GROUP_FILTER", "Error filtering groups, returning all groups", e)
-            // Fallback: return all groups if filtering fails
-            return groups
-        }
-    }
-
-    private fun showExpirationNotification(expiredCount: Int) {
-        // Enhanced with our new animation system
-        try {
-            runOnUiThread {
-                setContent {
-                    AkahidegnTheme {
-                        val animationViewModel: com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                        val notifications by animationViewModel.notifications.collectAsState()
-
-                        // Show expiration warning animation
-                        LaunchedEffect(Unit) {
-                            animationViewModel.showSuccess(
-                                title = "ቡድኖች ተዘምኑ!",
-                                subtitle = "ቀድሞ የነበሩ $expiredCount ቡድኖች ተወግደዋል (ከ30 ደቂቃ በላይ የቆዩ)",
-                                preset = com.dawitf.akahidegn.ui.components.NotificationPresets.quickSuccess("ቡድኖች ተዘምኑ")
-                            )
-
-                            // Auto-dismiss after 2 seconds and return to main screen
-                            kotlinx.coroutines.delay(2000)
-                            initializeMainScreen()
-                        }
-
-                        // Display animations
-                        com.dawitf.akahidegn.ui.components.AnimatedNotificationList(
-                            notifications = notifications,
-                            modifier = Modifier.fillMaxSize()
-                        )
-                    }
-                }
-            }
-
-            Log.i("EXPIRATION_FILTER", "Showed expiration notification for $expiredCount groups")
-
-        } catch (e: Exception) {
-            Log.e("EXPIRATION_FILTER", "Error showing expiration notification", e)
-        }
+        // Temporarily disable expiration filter for testing - include all groups
+        return groups
+        // TODO: Re-enable expiration filter with proper timestamp logic later
+        // val thirtyMinutesAgo = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30)
+        // return groups.filter { it.timestamp == null || it.timestamp!! > thirtyMinutesAgo }
     }
     
     private fun showCreateGroupDialog() {
@@ -379,7 +260,6 @@ class MainActivity : ComponentActivity() {
             hint = "ወደየት ነው የምትሄደው? (ምሳሌ: ቦሌ፣ መገናኛ፣ ፒያሳ)"
             setPadding(60, 40, 60, 40)
             textSize = 16f
-            setTextColor(android.graphics.Color.BLACK)
             setBackgroundResource(android.R.drawable.edit_text)
         }
         
@@ -411,18 +291,18 @@ class MainActivity : ComponentActivity() {
             }
         } else {
             Log.d("ADS", "Rewarded ad not ready, creating group without ad")
-            // Create group without showing any message to user
+            Toast.makeText(this, "Ad not ready, creating group anyway", Toast.LENGTH_SHORT).show()
             createGroupAfterAd(destination)
         }
     }
     
-    private fun createGroupAfterAd(destinationName: String) {
+    private fun createGroupAfterAd(destination: String) {
         // Use current location exactly, or default Addis Ababa coordinates without random offset
-        val lat = 9.005401
-        val lng = 38.763611
+        val lat = userLocation?.latitude ?: 8.9806
+        val lng = userLocation?.longitude ?: 38.7578
         
-        Log.d("GROUP_CREATION", "Creating group '$destinationName' at exact location: $lat, $lng (userLocation: $userLocation)")
-        createGroupInFirebase(destinationName, lat, lng)
+        Log.d("GROUP_CREATION", "Creating group '$destination' at exact location: $lat, $lng (userLocation: $userLocation)")
+        createGroupInFirebase(toDestination = destination, pickupLatitude = lat, pickupLongitude = lng)
     }
     
     private fun handleGroupSelection(group: Group) {
@@ -446,7 +326,7 @@ class MainActivity : ComponentActivity() {
             }
         } else {
             Log.d("ADS", "Interstitial ad not ready, joining group without ad")
-            // Join group without showing any message to user
+            Toast.makeText(this, "Ad not ready, joining group anyway", Toast.LENGTH_SHORT).show()
             joinGroupAfterAd(group)
         }
     }
@@ -455,16 +335,14 @@ class MainActivity : ComponentActivity() {
         // When a group is selected, try to join it
         joinGroupInFirebase(group) { success, message ->
             if (success) {
-                // Play success vibration and show success dialog
-                notificationService.playSuccessVibration()
-
-                // Send notification to other group members about new member joining
-                val currentUserName = userName ?: "User"
-                notificationService.showUserJoinedNotification(group, currentUserName)
-
-                // Show success animation and then group members with phone numbers
-                showSuccessAndGroupMembers(group)
-
+                Toast.makeText(
+                    this,
+                    "Successfully joined group to ${group.to}",
+                    Toast.LENGTH_SHORT
+                ).show()
+                
+                // Show group members view after successful join
+                showGroupMembersDialog(group)
                 refreshGroups()
             } else {
                 Toast.makeText(
@@ -476,82 +354,43 @@ class MainActivity : ComponentActivity() {
         }
     }
     
-    /**
-     * Show success animation followed by group members dialog with phone numbers
-     */
-    private fun showSuccessAndGroupMembers(group: Group) {
-        setContent {
-            AkahidegnTheme {
-                var showSuccess by remember { mutableStateOf(true) }
-                var showGroupMembers by remember { mutableStateOf(false) }
-
-                // Success Dialog with Leave Group option
-                if (showSuccess) {
-                    SuccessWithLeaveGroupDialog(
-                        group = group,
-                        isVisible = true,
-                        onDismiss = {
-                            showSuccess = false
-                            showGroupMembers = true
-                        },
-                        onLeaveGroup = {
-                            leaveGroup(group)
-                            showSuccess = false
-                            // Return to main screen after leaving
-                            initializeMainScreen()
-                        }
-                    )
-                }
-
-                // Group Members Dialog with Phone Dialer
-                if (showGroupMembers) {
-                    GroupMembersWithDialerDialog(
-                        group = group,
-                        isVisible = true,
-                        onDismiss = {
-                            showGroupMembers = false
-                            // Return to main screen
-                            initializeMainScreen()
-                        },
-                        onLeaveGroup = {
-                            leaveGroup(group)
-                            showGroupMembers = false
-                            // Return to main screen after leaving
-                            initializeMainScreen()
-                        }
-                    )
-                }
-            }
-        }
-    }
-
     private fun createGroupInFirebase(
-        destinationName: String,
+        toDestination: String,
         pickupLatitude: Double,
         pickupLongitude: Double
     ) {
         val currentUserId = auth.currentUser?.uid ?: return
         val timestamp = System.currentTimeMillis()
         
+        // Create a unique group identifier combining destination, time, and user name
+        val timeFormatter = java.text.SimpleDateFormat("HH:mm", java.util.Locale.getDefault())
+        val timeString = timeFormatter.format(java.util.Date(timestamp))
+        
+        // Create a more descriptive group name with time and creator differentiator
+        val creatorName = userName ?: "User"
+        val uniqueDestinationName = "$toDestination ($timeString) - by $creatorName"
+        
         // Get user profile data
         val userPhone = sharedPreferences.getString("user_phone", "") ?: ""
         val userAvatar = sharedPreferences.getString("user_avatar", "avatar_1") ?: "avatar_1"
         
-        // Use the destination name directly as the group name
+        // Get a local avatar for the group
         val newGroup = Group(
             creatorId = currentUserId,
             creatorName = userName ?: "User",
-            destinationName = destinationName, // Use the destination name directly
-            originalDestination = destinationName, // Store original destination
-            pickupLat = pickupLatitude,
-            pickupLng = pickupLongitude,
+            from = "Current Location", // Assuming 'from' is current location for now
+            to = toDestination,
             timestamp = timestamp,
             maxMembers = 4,
             memberCount = 1,
-            imageUrl = null // Force use of local images
+            imageUrl = null, // Force use of local images
+            isPremium = false,
+            pricePerPerson = 0.0,
+            rating = 0.0,
+            status = "active"
         )
         
-        Log.d("GROUP_CREATION", "Creating group '${destinationName}' at location: ${pickupLatitude}, ${pickupLongitude}")
+        Log.d("GROUP_CREATION", "Creating group '${toDestination}' at location: ${pickupLatitude}, ${pickupLongitude}")
         
         // Add current user as a member
         newGroup.members[currentUserId] = true
@@ -571,78 +410,25 @@ class MainActivity : ComponentActivity() {
         newGroup.groupId = newGroupRef.key
         
         // Log the group creation for debugging
-        Log.d("FIREBASE", "Attempting to write group to Firebase: ${newGroup.destinationName} with ID: ${newGroup.groupId}")
-        Log.d("FIREBASE", "Executing setValue for group: ${newGroup.groupId}")
+        Log.d("FIREBASE", "Creating group: ${newGroup.to} with ID: ${newGroup.groupId}")
         
         newGroupRef.setValue(newGroup.toMap())
             .addOnSuccessListener {
-                Log.d("FIREBASE", "Group created successfully: ${newGroup.destinationName} - Firebase write SUCCESS")
+                Log.d("FIREBASE", "Group created successfully: ${newGroup.to}")
                 refreshGroups() // Refresh groups to immediately show the new group
-
-                // Enhanced with animation system instead of basic Toast
-                runOnUiThread {
-                    setContent {
-                        AkahidegnTheme {
-                            val animationViewModel: com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                            val notifications by animationViewModel.notifications.collectAsState()
-
-                            // Show group creation success animation
-                            LaunchedEffect(Unit) {
-                                animationViewModel.showSuccess(
-                                    title = "ቡድን ተፈጠረ!",
-                                    subtitle = "'${newGroup.destinationName}' ቡድን በተሳካ ሁኔታ ተፈጠረ።",
-                                    preset = com.dawitf.akahidegn.ui.components.ContextPresets.FormSubmission.success
-                                )
-
-                                // After animation, return to main screen
-                                kotlinx.coroutines.delay(3000)
-                                initializeMainScreen()
-                            }
-
-                            // Display animations
-                            com.dawitf.akahidegn.ui.components.AnimatedNotificationList(
-                                notifications = notifications,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    }
-                }
+                Toast.makeText(
+                    this@MainActivity,
+                    "Group created: ${newGroup.to}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
             .addOnFailureListener { e ->
-                Log.e("FIREBASE", "Error creating group: ${newGroup.destinationName} - Firebase write FAILED", e)
-
-                // Enhanced error handling with animation system
-                runOnUiThread {
-                    setContent {
-                        AkahidegnTheme {
-                            val animationViewModel: com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                            val notifications by animationViewModel.notifications.collectAsState()
-
-                            // Show error animation
-                            LaunchedEffect(Unit) {
-                                animationViewModel.showError(
-                                    title = "ቡድን መፍጠር አልተሳካም!",
-                                    subtitle = "ስህተት: ${e.message}",
-                                    preset = com.dawitf.akahidegn.ui.components.ContextPresets.FormSubmission.error,
-                                    onRetry = {
-                                        // Retry group creation
-                                        createGroupInFirebase(destinationName, pickupLatitude, pickupLongitude)
-                                    }
-                                )
-
-                                // After animation, return to main screen
-                                kotlinx.coroutines.delay(5000)
-                                initializeMainScreen()
-                            }
-
-                            // Display animations
-                            com.dawitf.akahidegn.ui.components.AnimatedNotificationList(
-                                notifications = notifications,
-                                modifier = Modifier.fillMaxSize()
-                            )
-                        }
-                    }
-                }
+                Log.e("FIREBASE", "Error creating group: ${newGroup.to}", e)
+                Toast.makeText(
+                    this@MainActivity,
+                    "Failed to create group: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
             }
     }
     
@@ -650,170 +436,79 @@ class MainActivity : ComponentActivity() {
         val currentUserId = auth.currentUser?.uid ?: return
         val groupId = group.groupId ?: return
         
-        Log.d("JOIN_GROUP", "Starting to join group: $groupId, user: $currentUserId")
-        
         // Check if group is expired (older than 30 minutes)
         val thirtyMinutesAgo = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30)
         if (group.timestamp != null && group.timestamp!! < thirtyMinutesAgo) {
-            Log.d("JOIN_GROUP", "Group has expired: ${group.timestamp} < $thirtyMinutesAgo")
             onComplete(false, "Group has expired")
             return
         }
         
         // Check if group is full
         if (group.memberCount >= group.maxMembers) {
-            Log.d("JOIN_GROUP", "Group is full: ${group.memberCount}/${group.maxMembers}")
             onComplete(false, "Group is full")
             return
         }
         
         // Check if user is already a member
         if (group.members.containsKey(currentUserId) && group.members[currentUserId] == true) {
-            Log.d("JOIN_GROUP", "User is already a member")
             onComplete(false, "You are already a member of this group")
             return
         }
         
-        // Using transaction for atomic operations to ensure consistency
+        // Using transaction for atomic operations to prevent race conditions
         val groupRef = groupsRef.child(groupId)
         
         // Get user profile data
         val userPhone = sharedPreferences.getString("user_phone", "") ?: ""
         val userAvatar = sharedPreferences.getString("user_avatar", "avatar_1") ?: "avatar_1"
-        val userDisplayName = userName ?: "User"
         
-        // Use a single transaction to update all data atomically
-        groupRef.runTransaction(object : com.google.firebase.database.Transaction.Handler {
-            override fun doTransaction(mutableData: com.google.firebase.database.MutableData): com.google.firebase.database.Transaction.Result {
-                try {
-                    // Get current data as a map to avoid deserialization issues
-                    @Suppress("UNCHECKED_CAST")
-                    val currentData = mutableData.getValue() as? Map<String, Any?> ?: return com.google.firebase.database.Transaction.abort()
-                    
-                    // Get the current member count
-                    val currentMemberCount = (currentData["memberCount"] as? Long)?.toInt() ?: 0
-                    val maxMembers = (currentData["maxMembers"] as? Long)?.toInt() ?: 4
-                    
-                    // Verify that the group isn't full
-                    if (currentMemberCount >= maxMembers) {
-                        Log.d("JOIN_GROUP", "Group is full: $currentMemberCount/$maxMembers")
-                        return com.google.firebase.database.Transaction.abort()
+        // First update the members list and member details
+        val updates = HashMap<String, Any>()
+        updates["members/$currentUserId"] = true
+        updates["memberDetails/$currentUserId/name"] = userName ?: "User"
+        updates["memberDetails/$currentUserId/phone"] = userPhone
+        updates["memberDetails/$currentUserId/avatar"] = userAvatar
+        updates["memberDetails/$currentUserId/joinedAt"] = System.currentTimeMillis()
+        
+        groupRef.updateChildren(updates)
+            .addOnSuccessListener {
+                // Then update member count atomically
+                groupRef.child("memberCount").runTransaction(object : com.google.firebase.database.Transaction.Handler {
+                    override fun doTransaction(mutableData: com.google.firebase.database.MutableData): com.google.firebase.database.Transaction.Result {
+                        val currentCount = mutableData.getValue(Int::class.java) ?: 0
+                        mutableData.value = currentCount + 1
+                        return com.google.firebase.database.Transaction.success(mutableData)
                     }
                     
-                    // Check timestamp for expiry
-                    val groupTimestamp = currentData["timestamp"] as? Long ?: currentData["createdAt"] as? Long
-                    if (groupTimestamp != null && groupTimestamp < thirtyMinutesAgo) {
-                        Log.d("JOIN_GROUP", "Group has expired: $groupTimestamp < $thirtyMinutesAgo")
-                        return com.google.firebase.database.Transaction.abort()
-                    }
-                    
-                    // Get members list safely
-                    @Suppress("UNCHECKED_CAST")
-                    val members = currentData["members"] as? Map<String, Any?> ?: HashMap<String, Any?>()
-                    if (members.containsKey(currentUserId)) {
-                        Log.d("JOIN_GROUP", "User is already a member")
-                        return com.google.firebase.database.Transaction.abort()
-                    }
-                    
-                    // Create updated data map
-                    val updatedData = HashMap<String, Any?>(currentData)
-                    
-                    // Update member count
-                    updatedData["memberCount"] = currentMemberCount + 1
-                    
-                    // Add user to members
-                    val updatedMembers = HashMap<String, Any?>(members)
-                    updatedMembers[currentUserId] = true
-                    updatedData["members"] = updatedMembers
-                    
-                    // Add member details
-                    @Suppress("UNCHECKED_CAST")
-                    val memberDetails = currentData["memberDetails"] as? Map<String, Any?> ?: HashMap<String, Any?>()
-                    val updatedMemberDetails = HashMap<String, Any?>(memberDetails)
-                    
-                    updatedMemberDetails[currentUserId] = mapOf(
-                        "name" to userDisplayName,
-                        "phone" to userPhone,
-                        "avatar" to userAvatar,
-                        "joinedAt" to System.currentTimeMillis()
-                    )
-                    updatedData["memberDetails"] = updatedMemberDetails
-                    
-                    // Update the data in Firebase
-                    mutableData.value = updatedData
-                    Log.d("JOIN_GROUP", "Transaction data prepared: memberCount=${updatedData["memberCount"]}, added user=$currentUserId")
-                    return com.google.firebase.database.Transaction.success(mutableData)
-                } catch (e: Exception) {
-                    Log.e("JOIN_GROUP", "Error in transaction", e)
-                    return com.google.firebase.database.Transaction.abort()
-                }
-            }
-            
-            override fun onComplete(
-                error: com.google.firebase.database.DatabaseError?,
-                committed: Boolean,
-                currentData: com.google.firebase.database.DataSnapshot?
-            ) {
-                if (error != null) {
-                    Log.e("JOIN_GROUP", "Transaction failed", error.toException())
-                    onComplete(false, "Failed to join group: ${error.message}")
-                    Toast.makeText(
-                        this@MainActivity,
-                        "Failed to join group: ${error.message}",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else if (!committed) {
-                    // Transaction was aborted, check why and provide specific message
-                    val reason = when {
-                        currentData?.child("memberCount")?.getValue(Int::class.java) ?: 0 >= group.maxMembers -> "Group is full"
-                        currentData?.child("members")?.child(currentUserId)?.exists() == true -> "You are already a member"
-                        else -> "Unable to join group"
-                    }
-                    
-                    Log.d("JOIN_GROUP", "Transaction aborted: $reason")
-                    onComplete(false, reason)
-                    Toast.makeText(
-                        this@MainActivity,
-                        reason,
-                        Toast.LENGTH_SHORT
-                    ).show()
-                } else {
-                    // Success - Enhanced with animation system
-                    Log.d("JOIN_GROUP", "Successfully joined group $groupId")
-                    onComplete(true, null)
-                    refreshGroups()
-
-                    // Use animation system instead of basic Toast
-                    runOnUiThread {
-                        setContent {
-                            AkahidegnTheme {
-                                val animationViewModel: com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
-                                val notifications by animationViewModel.notifications.collectAsState()
-
-                                // Show success animation
-                                LaunchedEffect(Unit) {
-                                    animationViewModel.showSuccess(
-                                        title = "ወደ ቡድን ገብተዋል!",
-                                        subtitle = "በተሳካ ሁኔታ ወደ '${group.destinationName}' ቡድን ገብተዋል።",
-                                        preset = com.dawitf.akahidegn.ui.components.ContextPresets.FormSubmission.success
-                                    )
-
-                                    // After animation, return to main screen
-                                    kotlinx.coroutines.delay(3000)
-                                    initializeMainScreen()
-                                }
-
-                                // Display animations
-                                com.dawitf.akahidegn.ui.components.AnimatedNotificationList(
-                                    notifications = notifications,
-                                    modifier = Modifier.fillMaxSize()
-                                )
-                            }
+                    override fun onComplete(
+                        error: com.google.firebase.database.DatabaseError?,
+                        committed: Boolean,
+                        currentData: com.google.firebase.database.DataSnapshot?
+                    ) {
+                        if (error != null) {
+                            Log.e("FIREBASE", "Error updating member count", error.toException())
+                            onComplete(false, error.message)
+                        } else {
+                            onComplete(true, null)
+                            refreshGroups()
+                            Toast.makeText(
+                                this@MainActivity,
+                                "Successfully joined group: ${group.to}",
+                                Toast.LENGTH_SHORT
+                            ).show()
                         }
                     }
-                }
+                })
             }
-        })
+            .addOnFailureListener { e ->
+                Log.e("FIREBASE", "Error joining group", e)
+                onComplete(false, "Permission denied: ${e.message}")
+                Toast.makeText(
+                    this@MainActivity,
+                    "Failed to join group: ${e.message}",
+                    Toast.LENGTH_SHORT
+                ).show()
+            }
     }
     
     private fun checkUserProfile() {
@@ -839,11 +534,10 @@ class MainActivity : ComponentActivity() {
         
         setContent {
             AkahidegnTheme {
-                // Use the safe registration dialog with emoji avatars
-                com.dawitf.akahidegn.ui.components.SafeUserRegistrationDialog(
-                    onComplete = { name, phone, _ -> // Ignore avatar
+                UserRegistrationDialog(
+                    onComplete = { name, phone, avatar ->
                         if (name.isNotEmpty() && phone.isNotEmpty()) {
-                            saveUserProfile(name, phone)
+                            saveUserProfile(name, phone, avatar)
                         } else {
                             Toast.makeText(context, "Please fill all fields", Toast.LENGTH_SHORT).show()
                         }
@@ -854,12 +548,12 @@ class MainActivity : ComponentActivity() {
         }
     }
     
-    private fun saveUserProfile(name: String, phone: String) {
-        Log.d("USER_PROFILE", "Attempting to save user profile for: $name")
+    private fun saveUserProfile(name: String, phone: String, avatar: String) {
         userName = name
         sharedPreferences.edit()
             .putString("user_name", name)
             .putString("user_phone", phone)
+            .putString("user_avatar", avatar)
             .putLong("user_registration_time", System.currentTimeMillis())
             .apply()
         
@@ -870,19 +564,19 @@ class MainActivity : ComponentActivity() {
             val userMap = mapOf(
                 "name" to name,
                 "phone" to phone,
+                "avatar" to avatar,
                 "registrationTime" to System.currentTimeMillis(),
                 "lastActive" to System.currentTimeMillis()
             )
             
             userRef.setValue(userMap)
                 .addOnSuccessListener {
-                    Log.d("USER_PROFILE", "User profile saved successfully to Firebase for: $name")
                     Log.d("USER_PROFILE", "User profile saved: $name")
                     Toast.makeText(this, "Welcome, $name!", Toast.LENGTH_SHORT).show()
                     initializeMainScreen()
                 }
                 .addOnFailureListener { e ->
-                    Log.e("USER_PROFILE", "Failed to save user profile to Firebase", e)
+                    Log.e("USER_PROFILE", "Failed to save user profile", e)
                     // Still proceed with local storage
                     Toast.makeText(this, "Welcome, $name!", Toast.LENGTH_SHORT).show()
                     initializeMainScreen()
@@ -897,18 +591,7 @@ class MainActivity : ComponentActivity() {
         val currentUserId = auth.currentUser?.uid
         if (currentUserId != null) {
             mainViewModel.initializeFirebase(groupsRef, currentUserId)
-
-            // Ensure MainViewModel has an initial location for filtering
-            val initialLocation = Location("manual").apply {
-                latitude = 9.005401
-                longitude = 38.763611
-            }
-            mainViewModel.updateLocation(initialLocation)
-
-            // Start monitoring groups that the user is a member of for real-time notifications
-            groupEventMonitorService.startMonitoringUserGroups(groupsRef)
-
-            Log.d("MAIN_SCREEN", "ViewModel and group monitoring initialized with Firebase")
+            Log.d("MAIN_SCREEN", "ViewModel initialized with Firebase")
         }
         
         setContent {
@@ -927,27 +610,28 @@ class MainActivity : ComponentActivity() {
             // Observe ViewModel state properly
             val groups by mainViewModel.groups.collectAsState()
             val vmIsLoading by mainViewModel.isLoadingGroups.collectAsState()
-            Log.d("MAIN_SCREEN_CONTENT", "Groups received: ${groups.size}, Is Loading: $vmIsLoading")
             
-            // Initial load of groups is now handled by updateLocation in initializeMainScreen
-            // LaunchedEffect(Unit) {
-            //     refreshGroups()
-            // }
+            // Initial load of groups
+            LaunchedEffect(Unit) {
+                refreshGroups()
+            }
             
-            // State for search
+            // Create empty filters of the correct type
+            val emptyFilters = com.dawitf.akahidegn.ui.components.SearchFilters()
+            
+            // State for search and filters
             var searchQuery by remember { mutableStateOf("") }
-            
+            var selectedFilters by remember { mutableStateOf(emptyFilters) }
             
             MainScreen(
                 groups = filterExpiredGroups(groups),
-                userLocation = userLocation,
                 searchQuery = searchQuery,
                 onSearchQueryChange = { query -> searchQuery = query },
-                
-                
+                selectedFilters = selectedFilters,
+                onFiltersChange = { filters -> selectedFilters = filters },
                 onGroupClick = { group ->
-                    // Group click callback - try to join group
-                    handleGroupSelection(group)
+                    // Group click callback - show members dialog
+                    showGroupMembersDialog(group)
                 },
                 isLoading = vmIsLoading,
                 onRefreshGroups = {
@@ -959,58 +643,84 @@ class MainActivity : ComponentActivity() {
                     showCreateGroupDialog()
                 },
                 onNavigateToSettings = {
-                    // Navigate to settings - show settings screen
-                    showSettingsScreen()
+                    // Navigate to settings
                 },
-                
-                
                 onNavigateToNotifications = {
-                    // Navigate to notifications - show notification screen
-                    showNotificationScreen()
+                    // Navigate to notifications
                 },
-                
+                onNavigateToActiveGroups = {
+                    // Navigate to active groups (placeholder)
+                }
             )
 
-            // Removed success dialog and group members dialog from here
-        }
-    }
-    
-    private fun showGroupMembersDialog(group: Group) {
-        // Convert group member details to GroupMember objects
-        val currentUserId = auth.currentUser?.uid ?: ""
-        val members = group.memberDetails.map { (userId, memberInfo) ->
-            GroupMember(
-                id = userId,
-                name = memberInfo.name,
-                phone = memberInfo.phone,
-                avatar = memberInfo.avatar,
-                isCreator = userId == group.creatorId
-            )
-        }
-        
-        setContent {
-            AkahidegnTheme {
+            selectedGroupForDialog?.let { group ->
+                val currentUserId = auth.currentUser?.uid ?: ""
+                val members = group.memberDetails.map { (userId, memberInfo) ->
+                    GroupMember(
+                        id = userId,
+                        name = memberInfo.name,
+                        phone = memberInfo.phone,
+                        avatar = memberInfo.avatar,
+                        isCreator = userId == group.creatorId
+                    )
+                }
                 GroupMembersDialog(
                     group = group,
                     members = members,
-                    currentUserId = auth.currentUser?.uid ?: "",
-                    onDismiss = { 
-                        // Return to main screen
-                        initializeMainScreen()
+                    currentUserId = currentUserId,
+                    onDismiss = {
+                        selectedGroupForDialog = null
+                        // Optionally refresh groups or perform other actions after dialog dismissal
+                    },
+                    onLeaveGroup = { groupId, userId ->
+                        // TODO: Implement leave group functionality
+                        Log.d("MainActivity", "Leave group clicked for group $groupId by user $userId")
                     }
                 )
             }
         }
     }
     
+    private fun showGroupMembersDialog(group: Group) {
+        selectedGroupForDialog = group
+    }
+    
     private fun setupLocationUpdates() {
-        // Hardcode user location for debugging purposes
-        userLocation = Location("manual").apply {
-            latitude = 9.005401
-            longitude = 38.763611
+        // Check for location permission
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            // Permission granted, request location updates (less frequent to prevent ANR)
+            locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                30000, // 30 seconds (increased from 5 seconds)
+                50f, // 50 meters (increased from 10 meters)
+                locationListener
+            )
+            Log.d("LOCATION", "Location updates started")
+        } else {
+            // Request location permission
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
         }
-        Log.d("LOCATION_UPDATE", "User location hardcoded to: ${userLocation?.latitude}, ${userLocation?.longitude}")
-        // No need to request location updates from system when hardcoding
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                // Permission granted, restart location updates
+                setupLocationUpdates()
+            } else {
+                // Permission denied, show a message to the user
+                Toast.makeText(this, "Location permission is required for this feature", Toast.LENGTH_SHORT).show()
+            }
+        }
     }
 
     override fun onDestroy() {
@@ -1023,7 +733,7 @@ class MainActivity : ComponentActivity() {
     
     // Function to handle group creation from MainScreen
     private fun createGroup(group: Group) {
-        Log.d("MainActivity", "Creating group: ${group.destinationName}")
+        Log.d("MainActivity", "Creating group: ${group.to}")
         
         // Validate user authentication
         val currentUserId = auth.currentUser?.uid
@@ -1033,7 +743,7 @@ class MainActivity : ComponentActivity() {
         }
         
         // Use existing logic from createGroupAfterAd but with the provided Group object
-        val destinationName = group.destinationName ?: "Unknown Destination"
+        val toDestination = group.to ?: "Unknown Destination"
         
         // Get user location if available, otherwise use default location
         val pickupLatitude = userLocation?.latitude ?: 9.005401 // Default to Addis Ababa
@@ -1041,7 +751,7 @@ class MainActivity : ComponentActivity() {
         
         // Create the group in Firebase using existing function
         createGroupInFirebase(
-            destinationName = destinationName,
+            toDestination = toDestination,
             pickupLatitude = pickupLatitude,
             pickupLongitude = pickupLongitude
         )
@@ -1054,129 +764,5 @@ class MainActivity : ComponentActivity() {
     
     private fun getUserPhoneNumber(): String {
         return auth.currentUser?.phoneNumber ?: ""
-    }
-
-    /**
-     * Leave group functionality with notifications
-     */
-    private fun leaveGroup(group: Group) {
-        val currentUserId = auth.currentUser?.uid ?: return
-        val groupId = group.groupId ?: return
-
-        Log.d("LEAVE_GROUP", "User $currentUserId leaving group $groupId")
-
-        val groupRef = groupsRef.child(groupId)
-
-        // Use transaction to safely remove user from group
-        groupRef.runTransaction(object : com.google.firebase.database.Transaction.Handler {
-            override fun doTransaction(mutableData: com.google.firebase.database.MutableData): com.google.firebase.database.Transaction.Result {
-                try {
-                    @Suppress("UNCHECKED_CAST")
-                    val currentData = mutableData.getValue() as? Map<String, Any?> ?: return com.google.firebase.database.Transaction.abort()
-
-                    val currentMemberCount = (currentData["memberCount"] as? Long)?.toInt() ?: 0
-
-                    // Remove user from members
-                    @Suppress("UNCHECKED_CAST")
-                    val members = currentData["members"] as? MutableMap<String, Any?> ?: return com.google.firebase.database.Transaction.abort()
-
-                    if (!members.containsKey(currentUserId)) {
-                        Log.d("LEAVE_GROUP", "User is not a member of this group")
-                        return com.google.firebase.database.Transaction.abort()
-                    }
-
-                    members.remove(currentUserId)
-
-                    // Remove from member details
-                    @Suppress("UNCHECKED_CAST")
-                    val memberDetails = currentData["memberDetails"] as? MutableMap<String, Any?> ?: mutableMapOf()
-                    memberDetails.remove(currentUserId)
-
-                    // Update data
-                    val updatedData = HashMap<String, Any?>(currentData)
-                    updatedData["memberCount"] = maxOf(0, currentMemberCount - 1)
-                    updatedData["members"] = members
-                    updatedData["memberDetails"] = memberDetails
-
-                    // If this was the creator and group becomes empty, mark for deletion
-                    val creatorId = currentData["creatorId"] as? String
-                    if (creatorId == currentUserId || updatedData["memberCount"] == 0) {
-                        // Mark group as disbanded
-                        updatedData["disbanded"] = true
-                        updatedData["disbandedAt"] = System.currentTimeMillis()
-                    }
-
-                    mutableData.value = updatedData
-                    return com.google.firebase.database.Transaction.success(mutableData)
-                } catch (e: Exception) {
-                    Log.e("LEAVE_GROUP", "Error in leave group transaction", e)
-                    return com.google.firebase.database.Transaction.abort()
-                }
-            }
-
-            override fun onComplete(
-                error: com.google.firebase.database.DatabaseError?,
-                committed: Boolean,
-                currentData: com.google.firebase.database.DataSnapshot?
-            ) {
-                if (error != null) {
-                    Log.e("LEAVE_GROUP", "Failed to leave group", error.toException())
-                    Toast.makeText(this@MainActivity, "Failed to leave group: ${error.message}", Toast.LENGTH_SHORT).show()
-                } else if (!committed) {
-                    Log.d("LEAVE_GROUP", "Leave group transaction was aborted")
-                    Toast.makeText(this@MainActivity, "Unable to leave group", Toast.LENGTH_SHORT).show()
-                } else {
-                    // Success
-                    Log.d("LEAVE_GROUP", "Successfully left group")
-
-                    // Send notifications to remaining members
-                    val currentUserName = userName ?: "User"
-                    notificationService.showUserLeftNotification(group, currentUserName)
-
-                    // Check if group was disbanded
-                    val memberCount = currentData?.child("memberCount")?.getValue(Int::class.java) ?: 0
-                    if (memberCount == 0) {
-                        notificationService.showGroupDisbandedNotification(group)
-                    } else if (memberCount >= group.maxMembers) {
-                        notificationService.showGroupFullNotification(group)
-                    }
-
-                    Toast.makeText(this@MainActivity, "Left group: ${group.destinationName}", Toast.LENGTH_SHORT).show()
-                    refreshGroups()
-                }
-            }
-        })
-    }
-
-    /**
-     * Show settings screen
-     */
-    private fun showSettingsScreen() {
-        setContent {
-            AkahidegnTheme {
-                com.dawitf.akahidegn.ui.screens.SettingsScreen(
-                    onNavigateBack = {
-                        // Return to main screen
-                        initializeMainScreen()
-                    }
-                )
-            }
-        }
-    }
-
-    /**
-     * Show notification screen
-     */
-    private fun showNotificationScreen() {
-        setContent {
-            AkahidegnTheme {
-                com.dawitf.akahidegn.ui.screens.NotificationScreen(
-                    onNavigateBack = {
-                        // Return to main screen
-                        initializeMainScreen()
-                    }
-                )
-            }
-        }
     }
 }

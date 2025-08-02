@@ -1,109 +1,159 @@
-# Akahidegn Android Application
+# Akahidegn Android App
 
 ## Overview
-Akahidegn is a real-time, location-based carpooling/ride-sharing Android application. It allows users to create and join temporary groups with others traveling to the same destination. The app is primarily targeted at users in Ethiopia, specifically Addis Ababa, as indicated by the use of Amharic strings and default coordinates.
 
-## Key Features
-*   **Group Management:** Create and join temporary ride-sharing groups. Groups expire after 30 minutes to maintain active listings.
-*   **Real-time Location:** Uses device GPS to display nearby groups (within a 500m radius) and updates user location in real-time.
-*   **User Profiles:** Users have profiles with name, phone number, and avatar. This information is shared within groups for communication.
-*   **In-App Communication:** Facilitates communication between group members by displaying contact information and enabling direct calls.
-*   **Notifications:** Utilizes Firebase for real-time notifications for group events (member joins/leaves, group disbanded).
-*   **Monetization:** Integrates Google AdMob for displaying ads (interstitial and rewarded) at key interaction points (e.g., before creating/joining a group).
-*   **Technology Stack:** Built with Kotlin and Jetpack Compose for UI, Firebase (Authentication, Realtime Database) for backend services.
+This document outlines the current state and future direction of the Akahidegn Android application. The project is pivoting from a real-time GPS-based matching system to a more robust, form-based system with user profiles.
 
-## Firebase Configuration
-*   **Project ID:** `akahidegn-79376`
-*   **Realtime Database URL:** `https://akahiyaj-79376-default-rtdb.europe-west1.firebasedatabase.app`
-*   **`google-services.json`:** Located at `app/google-services.json`. **Confirmed to match Firebase Console settings.**
-*   **Firebase CLI:** The Firebase CLI should be configured to use the `akahidegn-79376` project. If not, navigate to the project root (`/Users/dawitsahle/AndroidStudioProjects/Akahidegn`) and run `firebase use akahidegn-79376`. If `firebase init` is needed, ensure only "Realtime Database" is selected.
-*   **Realtime Database Rules:** The rules are defined in `database.rules.json` at the project root.
-    *   **Current State (Debugging):** Rules are temporarily set to allow authenticated users to read and write to the `groups` node (`.read": "auth != null", ".write": "auth != null"`) for debugging purposes.
-    *   **Original Rules:** The original rules were complex and included extensive `.validate` rules, which were suspected of causing silent write failures.
+## Project Details
 
-## Known Issues & Debugging Notes
+*   **Project Name:** Akahidegn
+*   **Platform:** Android
+*   **Language:** Kotlin
+*   **UI Framework:** Jetpack Compose
+*   **Dependency Injection:** Hilt
+*   **Database:** Room
+*   **Networking:** Retrofit
+*   **Backend:** Firebase (Realtime Database, Authentication, Crashlytics, Messaging), Cloudflare (for user profiles)
 
-### Current Critical Issue: Firebase `PERMISSION_DENIED` for Installations Service
-*   **Problem:** The app is consistently receiving `403 Forbidden: PERMISSION_DENIED` errors from the Firebase Installations Service (FIS). This prevents the app from properly authenticating with Firebase, leading to silent failures for Realtime Database write operations (data is not reaching the Firebase Console).
-*   **Symptoms:**
-    *   `E FirebaseMessaging: Failed to get FIS auth token`
-    *   `E FirebaseMessaging: Firebase Installations Service is unavailable.`
-    *   `W Firebase-Installations: Error when communicating with the Firebase Installations server API. HTTP response: [403 Forbidden: {"error": {"code": 403, "message": "The caller does not have permission", "status": "PERMISSION_DENIED"}}]`
-    *   `W PersistentConnection: pc_0 - Firebase Database connection was forcefully killed by the server.`
-*   **Troubleshooting Steps Taken:**
-    *   Verified `google-services.json` contents against Firebase Console settings (all match).
-    *   Updated Google Play Services on the emulator (now up to date and signed in).
-    *   Enabled Firebase Realtime Database debug logging in `AkahidegnApplication.kt`.
-    *   Hardcoded group creation location to Addis Ababa in `MainActivity.kt` (`9.005401, 38.763611`).
-    *   Hardcoded user's current location to Addis Ababa in `MainActivity.kt` (`9.005401, 38.763611`) to bypass emulator GPS issues and ensure groups pass the 500m filter.
-    *   Temporarily bypassed user registration dialog for debugging.
-    *   Simplified Realtime Database rules to allow authenticated reads/writes for `groups` and `users`.
-    *   Enabled open read/write rules for Cloud Firestore.
-    *   Explicitly set Realtime Database URL in `FirebaseDatabase.getInstance()` calls in `AkahidegnApplication.kt` and `MainActivity.kt`.
-    *   Cleared app data on the emulator.
-*   **Current Hypothesis:** The `PERMISSION_DENIED` error is most likely due to **API Key restrictions** in the Google Cloud Project, where the API key is not explicitly allowed to access the Firebase Installations API or other necessary Firebase APIs.
+## Core Functionality (New Direction)
 
-### Other Issues:
-*   **Registration Issue:** Initially, registration was failing. This was temporarily bypassed. The root cause was likely related to the Firebase `PERMISSION_DENIED` error, as user profile saving also involves Firebase.
-*   **Group Visibility:** Groups were not appearing due to a combination of Firebase project mismatch, incorrect database rules, and emulator location filtering. These have been addressed by previous steps, but the core Firebase connectivity issue (FIS error) is still blocking full functionality.
-*   **Deprecation Warnings:** `vibrate` deprecation warning in `NotificationManagerService.kt` (line 188). (Lower priority)
+While the app is still under development, the core functionality is shifting to:
 
-## Remaining Steps (High Priority)
+*   **User Profiles:** Users sign in with Google and provide their phone number to create a profile.
+*   **Group Creation:** Users can create groups by filling out a form with their starting point, destination, and the number of seats they need.
+*   **Group Management:** Users can view and manage their active groups in a dedicated tab.
+*   **Notifications:** Users receive push notifications for important group events (e.g., group full, group disbanded).
+*   **Peer-to-Peer Communication:** Group members can see each other's phone numbers to coordinate.
 
-1.  **Check API Key Restrictions in Google Cloud Console:**
-    *   **Goal:** Identify and enable any missing API permissions for the project's API key.
-    *   **Action:**
-        1.  Go to Google Cloud Console: [https://console.cloud.google.com/](https://console.cloud.google.com/)
-        2.  Select project: `akahidegn-79376`.
-        3.  Navigate to **"APIs & Services" > "Credentials"**.
-        4.  Find the API key matching `AIzaSyA-04oS-c5FmfZ-DekJqdBl_GTnW4b_yAo`.
-        5.  Click on the API key name to edit its settings.
-        6.  Under **"API restrictions"**, ensure the following APIs are explicitly listed and enabled:
-            *   **Firebase Installations API**
-            *   **Identity Toolkit API**
-            *   **Firebase Realtime Database API**
-        7.  Add any missing APIs and save changes.
-    *   **Expected Outcome:** The `PERMISSION_DENIED` error for FIS should disappear from logs, and Firebase Realtime Database writes should succeed.
+## New To-Do List
 
-2.  **Verify Data Upload (App to Firebase) after API Key Fix:**
-    *   **Goal:** Confirm that group creation attempts are now successfully reaching the Firebase Realtime Database.
-    *   **Action:** After fixing API key restrictions, create a group in the emulator and then check the Firebase Console directly at `https://console.firebase.google.com/project/akahidegn-79376/database/akahidegn-79376-default-rtdb/data/~2F`.
-    *   **Expected Outcome:** New group entries appear in the Firebase Realtime Database.
+*   **[x] Overhaul User Authentication & Profiles:**
+    *   [x] Replace Anonymous Auth with Google Sign-In.
+    *   [x] Create user profiles with name, age, and sex from Google, and a user-provided phone number.
+    *   [x] Implement a one-time registration form for the phone number.
+    *   [x] Offload user profile data to Cloudflare to manage Firebase usage.
 
-3.  **Verify Data Retrieval and Display:**
-    *   **Goal:** Confirm groups are fetched and displayed correctly in the app.
-    *   **Action:** If groups appear in the Firebase Console, check the app's UI. Monitor `adb logcat` for `MainViewModel` and `GROUP_FILTER` logs to ensure groups are being processed and not filtered out.
+*   **[x] Rework Group Matching System:**
+    *   [x] Remove all real-time GPS location fetching and 500-meter radius matching logic.
+    *   [x] Implement a form for group creation with fields: "From," "Via (Optional)," "To," and "Seats Needed."
+    *   [x] Show a rewarded ad before a user can create a group.
 
-## CLI Usage Notes
-*   **Use Google Cloud CLI and Firebase CLI:** When debugging Firebase issues, use the `gcloud` and `firebase` command-line tools to inspect project configurations, API key restrictions, and database rules.
-*   **Avoid Long-Running Tasks:** Do not run commands that monitor or ping services for extended periods, as they can block further interaction.
+*   **[x] Enhance Group Management:**
+    *   [x] Create a new tab titled "የእርስዎ ንቁ ቡድኖች" (Your Active Groups) to show user's created/joined groups.
+    *   [x] Enforce a limit: a user can create only 1 group.
+    *   [x] Enforce a limit: a user can join a maximum of 2 groups.
+    *   [x] Allow group members to see each other's phone numbers.
+    *   [ ] Implement options for group creator to disband, mark unavailable, mark full, or delete the group.
+    *   [ ] Implement option for user to leave a group.
 
-## Troubleshooting Guide for Future Interactions
+*   **[x] Implement Notifications:**
+    *   [x] Configure and enable push notifications.
+    *   [x] Send a notification when a user's group is full.
+    *   [x] Send a notification when a user's group is disbanded.
+    *   [x] Send a notification when a user joins a group for other members.
 
-### Getting Unstuck During `adb shell ping` or Network Tests
-If `adb shell ping` or other network tests get stuck or fail without clear errors, it indicates a deeper network connectivity issue on the emulator or host machine.
+*   **[x] UI & UX Revamp:**
+    *   [x] Implement dynamic color schemes for navigation tabs and ensure all necessary imports are in place.
+        *   **Plan for Dynamic Color Schemes and Navigation:**
+            1.  **Verify `ui/theme/Theme.kt`:**
+                *   Ensure `AkahidegnTheme` composable function accepts a `selectedColorScheme: ColorScheme? = null` parameter.
+                *   Confirm that `HomeColorScheme`, `ActiveGroupsColorScheme`, and `SettingsColorScheme` are defined as `lightColorScheme` instances with distinct colors.
+                *   Verify that `currentColorScheme` is correctly set to `selectedColorScheme ?: systemColorScheme`.
+            2.  **Modify `MainActivity.kt`:**
+                *   **Imports:**
+                    *   Add `import androidx.compose.material3.NavigationBar`
+                    *   Add `import androidx.compose.material3.NavigationBarItem`
+                    *   Add `import androidx.navigation.compose.currentBackStackEntryAsState`
+                    *   Add `import androidx.navigation.NavDestination.Companion.hierarchy`
+                    *   Add `import androidx.navigation.NavGraph.Companion.findStartDestination`
+                    *   Add `import com.dawitf.akahidegn.ui.navigation.Screen`
+                    *   Add `import androidx.compose.material.icons.filled.Home`
+                    *   Add `import androidx.compose.material.icons.filled.List`
+                    *   Add `import androidx.compose.material.icons.filled.Settings`
+                    *   Add `import androidx.compose.material3.Scaffold`
+                    *   Add `import androidx.compose.foundation.layout.padding`
+                    *   Add `import androidx.compose.material3.Icon`
+                    *   Add `import androidx.compose.material3.Text`
+                    *   Add `import com.dawitf.akahidegn.ui.theme.HomeColorScheme`
+                    *   Add `import com.dawitf.akahidegn.ui.theme.ActiveGroupsColorScheme`
+                    *   Add `import com.dawitf.akahidegn.ui.theme.SettingsColorScheme`
+                *   **`initializeMainScreen()` function:**
+                    *   Inside `setContent`, retrieve the `navController` and `currentRoute`.
+                    *   Implement a `when` statement to determine the `colorScheme` based on the `currentRoute` (e.g., `Screen.Main.route -> HomeColorScheme`).
+                    *   Wrap the `NavHost` and its content within a `Scaffold` composable.
+                    *   Inside the `Scaffold`, define the `bottomBar` using `NavigationBar`.
+                    *   For each `Screen` (Main, ActiveGroups, Settings), create a `NavigationBarItem` with the appropriate icon, label, selected state, and `onClick` logic for navigation.
+                    *   Ensure the `NavHost` uses `modifier = Modifier.padding(innerPadding)` to account for the bottom navigation bar.
+                    *   Update the `composable` blocks to call the respective screen composables (e.g., `MainScreenContent(navController)`).
+            3.  **Rebuild the application** to ensure all changes are correctly applied and there are no compilation errors.
+    *   [x] Create a distinct color scheme for each main tab for clear visual separation.
+    *   [x] Ensure UI components adhere to a native Android look and feel.
+    *   [x] Update the app's launcher icon to use one of the splash screen images.
+    *   [x] Set the other image as the app's splash screen.
+    *   [x] Remove decorative images from the Settings and Notifications screens to simplify the UI.
+    *   [x] Add a "ሰርቪሥ" (Service) tab as a "Coming Soon" placeholder with a descriptive text about a future subscription service.
 
-*   **Check Emulator Network Settings:**
-    *   Ensure the emulator's Wi-Fi is enabled (if applicable).
-    *   Check proxy settings if you are behind a corporate proxy.
-*   **Check Host Machine Firewall/Antivirus:**
-    *   Temporarily disable your computer's firewall or antivirus to see if it's blocking the emulator's network traffic.
-*   **Try a Different Emulator/Device:**
-    *   If possible, try running the app on a different emulator (e.g., a different API level or device type) or a physical Android device to rule out emulator-specific network issues.
-*   **Restart ADB Server:**
-    *   Sometimes, restarting the ADB server can resolve connectivity glitches:
-        ```bash
-        adb kill-server
-        adb start-server
-        ```
-*   **Reboot Emulator:**
-    *   A full reboot of the emulator can often clear transient network problems.
-*   **Check Host Machine Internet Connection:**
-    *   Ensure your development machine has a stable internet connection.
+*   **[x] App Features & Compatibility:**
+    *   [x] Add a "Recommend App" feature in Settings that uses the native Android share functionality to send the APK.
+    *   [x] Remove price calculation, carbon footprint, and other non-essential features.
+    *   [x] Ensure app compatibility with older Android versions and a range of devices, including Samsung.
+    *   [x] Add native advanced ad ID.
 
-### General Debugging Strategy
-*   **Start with Logs:** Always check `adb logcat` first. Use specific `grep` filters to narrow down relevant messages.
-*   **Isolate the Problem:** Break down the issue into smaller, testable components (e.g., Firebase write vs. Firebase read vs. UI display).
-*   **Simplify Temporarily:** For complex issues, temporarily simplify parts of the code (like security rules or hardcoding values) to isolate the problem area. **Remember to revert these changes later.**
-*   **Verify External Services:** For cloud services like Firebase, always verify the state directly in the console (e.g., database content, API enablement, billing status).
-*   **Communicate Clearly:** Provide detailed observations and the exact output of commands.
+*   **[x] Backend & Firebase:**
+    *   [x] Update Firebase Realtime Database rules to support the new data model (Google Auth, user profiles, group structure).
+    *   [x] Restructure the Firebase database to store user profiles and the new group format.
+
+## Completed Tasks
+
+*   [x] Improve UI color tones (avoid yellow-on-yellow, use more readable colors)
+*   [x] Use Firebase CLI for database management; only use Cloudflare/Cloud CLI if absolutely needed
+*   [x] Clean up code and dependencies for minimal, fast MVP
+*   [x] Removed redundant files and and directories (e.g., `MainActivity.kt.backup`, `fixed`, `simple`, `standalone`, `utils`).
+*   [x] Removed empty `FormatUtils.kt`.
+*   [x] Renamed `FirebaseGroupService` to `GroupService` and `FirebaseGroupServiceImpl` to `GroupServiceImpl` for naming consistency.
+*   [x] Updated deprecated `Icons.Default.List` to `Icons.AutoMirrored.Filled.List` in `MainScreen.kt`.
+*   [x] Removed unused Firebase Firestore, Storage, and Google Maps dependencies.
+*   [x] **Gradle Sync and Compilation Issues:**
+    *   [x] Updated Android Gradle Plugin (AGP), Kotlin, Hilt, and other library versions in `build.gradle.kts` and `libs.versions.toml` to resolve compatibility issues.
+    *   [x] Addressed "unresolved reference" errors by ensuring all necessary components and data classes were correctly defined and imported.
+    *   [x] Resolved internal compiler errors by cleaning the build cache and ensuring proper Compose compiler extension versioning.
+    *   [x] Fixed "integer number too large" error in `BuildConfig.java` by correctly quoting the `ADMOB_BANNER_ID` string in `app/build.gradle.kts`.
+    *   [x] Removed problematic `accessibility` and `performance` packages to resolve persistent internal compiler errors, indicating potential deeper incompatibilities or unused code.
+    *   [x] Simplified `MainActivity.kt` and `SplashActivity.kt` by removing complex UI logic and replacing it with basic composables to isolate and resolve compilation issues.
+    *   [x] Removed theme-related code from `SettingsViewModel` and `SettingsScreen.kt` to align with the removal of `ThemeManager`.
+    *   [x] Created missing `SwipeAction.kt`, `ThemeMode.kt`, `LanguageOption.kt`, `FontSizeOption.kt`, `NotificationPreferencesManager.kt`, `FirebaseModule.kt`, and `FirebaseGroupServiceImpl.kt` files to resolve unresolved references and Hilt injection issues.
+    *   [x] Restored `EmptyStateComponents.kt` after repeated internal compiler errors, indicating a transient issue rather than a code problem.
+
+## Debugging and UI Fixes (July 30, 2025)
+
+*   [x] **Emulator Launch and APK Installation:**
+    *   [x] Launched Pixel 9 emulator using `emulator -avd Pixel_9`.
+    *   [x] Uninstalled previous app version (`com.dawitf.akahidegn`) using `adb uninstall`.
+    *   [x] Installed new debug APK (`app-debug.apk`) using `adb install`.
+    *   [x] Copied debug APK to desktop.
+
+*   [x] **App Crash Debugging:**
+    *   [x] Identified `NoSuchMethodException` for `MainViewModel` in logcat.
+    *   [x] Added `@HiltViewModel` annotation to `MainViewModel.kt`.
+    *   [x] Identified `AkahidegnDatabase_Impl does not exist` error in logcat.
+    *   [x] Uncommented `@Database` annotation in `AkahidegnDatabase.kt`.
+    *   [x] Performed multiple Gradle clean and rebuild operations (`./gradlew clean`, `./gradlew assembleDebug`) to resolve build cache and annotation processing issues.
+    *   [x] Cleared Gradle caches (`rm -rf ~/.gradle/caches`, `rm -rf ~/.gradle/wrapper/dists`) to force fresh builds and dependency downloads.
+
+*   [x] **UI Rendering Fixes:**
+    *   [x] Addressed "white screen with cut off writing" by reconstructing `MainScreen.kt`.
+    *   [x] Replaced placeholder UI in `MainScreen.kt` with a more complete structure including `EnhancedSearchBar`, `FilterChips`, `SearchResultsHeader`, and a `LazyColumn` for groups.
+    *   [x] Ensured correct imports for Compose UI components (`Notifications`, `Settings`, `clickable`) in `MainScreen.kt`.
+
+## Recent Problems and Solutions
+
+*   **Problem:** Firebase Realtime Database deployment failed due to syntax errors in `database.rules.json` (unsupported `every`, `isMap()`, `size()` functions).
+    *   **Solution:** Simplified the validation rules in `database.rules.json` to use supported methods and ensure correct JSON structure. This involved removing complex validation for nested maps and relying on basic existence checks.
+
+*   **Problem:** Build failed due to `MainActivity.kt` having duplicate `showGroupMembersDialog` function definitions and incorrect lambda usage within `onGroupClick`.
+    *   **Solution:** [x] The `MainActivity.kt` file was in an inconsistent state. The problematic sections were systematically cleaned up and re-implemented correctly. This involved:
+        1.  [x] Removing the incorrectly placed `showGroupMembersDialog` function from within `MainScreenContent`.
+        2.  [x] Correcting the `onGroupClick` lambda within `MainScreenContent` to properly call the *outer* `showGroupMembersDialog` function, passing the `group` object and the `onLeaveGroup` lambda.
+        3.  [x] Ensuring the outer `showGroupMembersDialog` function is correctly defined and accepts the `group` and `onLeaveGroup` lambda.
+        4.  [x] Adding any necessary missing imports.
+        5.  [x] Rebuilding and verifying the application.

@@ -164,15 +164,13 @@ dependencies {
     implementation(platform(libs.firebase.bom)) // Updated to latest BOM version
     implementation("com.google.firebase:firebase-analytics-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-database-ktx")
-    implementation("com.google.firebase:firebase-firestore-ktx")
-    implementation("com.google.firebase:firebase-storage-ktx")
+    
     implementation("com.google.firebase:firebase-auth-ktx")
     implementation("com.google.firebase:firebase-installations-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-perf-ktx")
     implementation("com.google.android.gms:play-services-location:21.1.0") // Latest stable version
-    implementation("com.google.android.gms:play-services-maps:18.2.0") // Google Maps
-    implementation("com.google.maps.android:maps-compose:4.3.3") // Maps Compose
+    
     implementation("com.google.android.gms:play-services-ads:22.6.0") // Keep for interstitial and rewarded ads
     
     // Hilt for Dependency Injection - simplified for Ethiopian market

@@ -9,13 +9,11 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.media.RingtoneManager
 import android.os.Build
-import android.util.Log
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.dawitf.akahidegn.MainActivity
 import com.dawitf.akahidegn.R
 import com.dawitf.akahidegn.PreferenceManager
-import com.dawitf.akahidegn.domain.model.NotificationSettings
 import com.dawitf.akahidegn.notifications.NotificationActionReceiver
 import com.dawitf.akahidegn.notifications.model.NotificationData
 import com.dawitf.akahidegn.notifications.model.NotificationPriority
@@ -35,11 +33,11 @@ import javax.inject.Inject
 class AkahidegnFirebaseMessagingService : FirebaseMessagingService() {
     
     @Inject
-    lateinit var notificationManager: NotificationManagerService
+    lateinit var notificationManager: ProductionNotificationManager
     
     @Inject
     lateinit var preferencesManager: NotificationPreferencesManager
-
+    
     companion object {
         const val CHANNEL_ID_DEFAULT = "default_channel"
         const val CHANNEL_ID_CHAT = "chat_channel"
@@ -244,7 +242,7 @@ class AkahidegnFirebaseMessagingService : FirebaseMessagingService() {
                 
                 NotificationChannel(
                     CHANNEL_ID_SYSTEM,
-                    "የ���ርዓት ማሳወቂያዎች",
+                    "የስርዓት ማሳወቂያዎች",
                     NotificationManager.IMPORTANCE_DEFAULT
                 ).apply {
                     description = "የስርዓት አዘጋጆች እና ማሳወቂያዎች"

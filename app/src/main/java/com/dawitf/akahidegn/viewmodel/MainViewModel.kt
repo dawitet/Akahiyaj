@@ -89,6 +89,9 @@ class MainViewModel @Inject constructor(
     private val _errorState = MutableStateFlow<String?>(null)
     val errorState: StateFlow<String?> = _errorState.asStateFlow()
     
+    private val _userLocation = MutableStateFlow<android.location.Location?>(null)
+    val userLocation: StateFlow<android.location.Location?> = _userLocation.asStateFlow()
+    
     private var retryCount = 0
     private val baseRetryDelayMs = 1000L
     
@@ -420,6 +423,10 @@ class MainViewModel @Inject constructor(
      */
     fun clearError() {
         _errorState.value = null
+    }
+
+    fun updateLocation(location: android.location.Location) {
+        _userLocation.value = location
     }
 
     override fun onCleared() {
