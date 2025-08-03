@@ -17,8 +17,7 @@ interface UserProfileRepository {
     suspend fun submitReview(review: UserReview): Result<UserReview>
     suspend fun getUserTripHistory(userId: String): Result<List<TripHistoryItem>>
     suspend fun getUserAnalytics(userId: String): Result<UserAnalytics>
-    suspend fun updateUserPreferences(preferences: UserPreferences): Result<UserPreferences>
-    suspend fun getUserPreferences(userId: String): Result<UserPreferences>
+    
     
     // Flow-based methods for real-time updates
     fun observeUserProfile(userId: String): Flow<UserProfile?>

@@ -5,7 +5,9 @@ import com.dawitf.akahidegn.data.remote.service.impl.GroupServiceImpl
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
+import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -30,10 +32,15 @@ object FirebaseModule {
 
     @Provides
     @Singleton
-    fun provideGroupService(
-        database: FirebaseDatabase,
-        auth: FirebaseAuth
-    ): GroupService {
-        return GroupServiceImpl(database, auth)
+    fun provideFirebaseFirestore(): FirebaseFirestore {
+        return FirebaseFirestore.getInstance()
     }
+
+    @Provides
+    @Singleton
+    fun provideFirebaseStorage(): FirebaseStorage {
+        return FirebaseStorage.getInstance()
+    }
+
+    
 }

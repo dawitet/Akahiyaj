@@ -21,6 +21,7 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
 import androidx.core.view.WindowCompat
+import androidx.compose.material3.ColorScheme
 
 // High contrast color schemes for accessibility
 val HighContrastDarkColorScheme = darkColorScheme(
@@ -124,8 +125,39 @@ private val LightThemeColorScheme = lightColorScheme(
     onError = Color.White
 )
 
-// High contrast color schemes imported from EnhancedTheme
-// Note: These are defined in EnhancedTheme.kt to avoid duplication
+// Define distinct color schemes for each tab
+val HomeColorScheme = lightColorScheme(
+    primary = Color(0xFF4CAF50), // Green
+    onPrimary = Color.White,
+    secondary = Color(0xFF8BC34A),
+    onSecondary = Color.White,
+    background = Color(0xFFF1F8E9),
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black
+)
+
+val ActiveGroupsColorScheme = lightColorScheme(
+    primary = Color(0xFF2196F3), // Blue
+    onPrimary = Color.White,
+    secondary = Color(0xFF90CAF9),
+    onSecondary = Color.White,
+    background = Color(0xFFE3F2FD),
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black
+)
+
+val SettingsColorScheme = lightColorScheme(
+    primary = Color(0xFFFF9800), // Orange
+    onPrimary = Color.White,
+    secondary = Color(0xFFFFCC80),
+    onSecondary = Color.White,
+    background = Color(0xFFFFF3E0),
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black
+)
 
 @Composable
 fun AkahidegnTheme(
@@ -133,6 +165,7 @@ fun AkahidegnTheme(
     dynamicColor: Boolean = false,
     themeMode: com.dawitf.akahidegn.ui.components.ThemeMode = com.dawitf.akahidegn.ui.components.ThemeMode.SYSTEM,
     accessibilitySettings: com.dawitf.akahidegn.util.AccessibilitySettings = com.dawitf.akahidegn.util.AccessibilitySettings(),
+    selectedColorScheme: ColorScheme? = null, // New parameter for selected color scheme
     content: @Composable () -> Unit
 ) {
     // Determine if dark theme should be used based on themeMode
@@ -142,7 +175,7 @@ fun AkahidegnTheme(
         com.dawitf.akahidegn.ui.components.ThemeMode.SYSTEM -> darkTheme
     }
     
-    val colorScheme = when {
+    val systemColorScheme = when {
         accessibilitySettings.enableHighContrast && effectiveDarkTheme -> HighContrastDarkColorScheme
         accessibilitySettings.enableHighContrast && !effectiveDarkTheme -> HighContrastLightColorScheme
         dynamicColor && Build.VERSION.SDK_INT >= Build.VERSION_CODES.S -> {
@@ -152,6 +185,8 @@ fun AkahidegnTheme(
         effectiveDarkTheme -> DarkThemeColorScheme
         else -> LightThemeColorScheme
     }
+
+    val currentColorScheme = selectedColorScheme ?: systemColorScheme // Use selectedColorScheme if provided, else systemColorScheme
 
     val view = LocalView.current
     if (!view.isInEditMode) {
@@ -177,7 +212,7 @@ fun AkahidegnTheme(
         LocalAccessibilitySettings provides accessibilitySettings
     ) {
         MaterialTheme(
-            colorScheme = colorScheme,
+            colorScheme = currentColorScheme, // Use currentColorScheme here
             typography = Typography, // Assumes Typography.kt is set up
             shapes = Shapes,         // Assumes Shapes.kt is set up
             content = content

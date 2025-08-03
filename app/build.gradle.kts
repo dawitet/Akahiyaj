@@ -4,7 +4,7 @@ plugins {
     // Removed kapt plugin - using KSP instead
     alias(libs.plugins.hilt.android)
     alias(libs.plugins.ksp)
-    id("org.jetbrains.kotlin.plugin.compose")
+    alias(libs.plugins.kotlin.compose) // Changed this line
     id("com.google.gms.google-services")
     id("com.google.firebase.crashlytics")
     id("com.google.firebase.firebase-perf")
@@ -116,7 +116,7 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.8"
+        kotlinCompilerExtensionVersion = "1.5.1"
     }
 
     packaging {
@@ -164,8 +164,11 @@ dependencies {
     implementation(platform(libs.firebase.bom)) // Updated to latest BOM version
     implementation("com.google.firebase:firebase-analytics-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-database-ktx")
+    implementation("com.google.firebase:firebase-firestore-ktx")
+    implementation("com.google.firebase:firebase-storage-ktx")
     
     implementation("com.google.firebase:firebase-auth-ktx")
+    implementation("com.google.android.gms:play-services-auth:21.4.0") // Added for Google Sign-In
     implementation("com.google.firebase:firebase-installations-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-perf-ktx")
@@ -181,15 +184,7 @@ dependencies {
     // Removed complex hilt lifecycle viewmodel - using simpler approach
     ksp("androidx.hilt:hilt-compiler:1.1.0")  // Changed from kapt to ksp
 
-    // Paging for performance
-    implementation(libs.androidx.paging.runtime)
-    implementation(libs.androidx.paging.compose)
     
-    // Room for local database with better performance
-    implementation(libs.androidx.room.runtime)
-    implementation(libs.androidx.room.ktx)
-    implementation(libs.androidx.room.paging)
-    ksp(libs.androidx.room.compiler) // Changed from kapt to ksp
 
     // Retrofit for better networking
     implementation(libs.retrofit)
@@ -208,7 +203,6 @@ dependencies {
     implementation("androidx.compose.animation:animation:1.5.4")
     implementation("androidx.compose.animation:animation-graphics:1.5.4")
     implementation("com.google.accompanist:accompanist-placeholder-material:0.32.0")
-    implementation("com.google.accompanist:accompanist-swiperefresh:0.32.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
     implementation("androidx.compose.material:material-icons-core:1.5.4")
     implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4")

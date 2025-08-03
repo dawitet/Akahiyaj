@@ -100,13 +100,7 @@ fun SplashScreen() {
             Spacer(modifier = Modifier.height(48.dp))
             
             // Car image - much bigger and prominently centered
-            Image(
-                painter = painterResource(id = R.drawable.car_rideshare),
-                contentDescription = "Car with passengers",
-                modifier = Modifier
-                    .size(300.dp)
-                    .padding(8.dp)
-            )
+            Image(painter = painterResource(id = R.drawable.ic_launcher_foreground), contentDescription = "App Logo", modifier = Modifier.size(200.dp))
             
             Spacer(modifier = Modifier.height(48.dp))
             

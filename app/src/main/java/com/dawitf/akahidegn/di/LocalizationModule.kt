@@ -5,9 +5,6 @@ import com.dawitf.akahidegn.localization.LocalizationManager
 import com.dawitf.akahidegn.accessibility.AccessibilityManager
 // Removed OfflineManager import - offline functionality simplified
 import com.dawitf.akahidegn.ui.theme.ThemeManager
-import com.dawitf.akahidegn.data.local.dao.EnhancedGroupDao
-import com.dawitf.akahidegn.data.local.dao.SearchDao
-import com.dawitf.akahidegn.data.local.dao.UserPreferencesDao
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn

@@ -70,7 +70,7 @@ fun EnhancedPullToRefresh(
     val nestedScrollConnection = remember {
         object : NestedScrollConnection {
             override fun onPreScroll(available: Offset, source: NestedScrollSource): Offset {
-                if (source == NestedScrollSource.UserInput && available.y < 0 && pullOffset > 0) {
+                if (available.y < 0 && pullOffset > 0) {
                     val consumed = pullOffset.coerceAtMost(-available.y)
                     pullOffset -= consumed
                     return Offset(0f, -consumed)
@@ -83,13 +83,15 @@ fun EnhancedPullToRefresh(
                 available: Offset,
                 source: NestedScrollSource
             ): Offset {
-                if (source == NestedScrollSource.UserInput && available.y > 0) {
+                if (available.y > 0) {
                     val newOffset = (pullOffset + available.y).coerceAtMost(refreshThresholdPx * 1.5f)
                     
                     // Trigger haptic feedback when crossing threshold
                     if (pullOffset < refreshThresholdPx && newOffset >= refreshThresholdPx) {
                         haptic.performHapticFeedback(HapticFeedbackType.LongPress)
                         isTriggered = true
+                    } else if (isTriggered && abs(newOffset) < refreshThresholdPx) {
+                        isTriggered = false
                     }
                     
                     pullOffset = newOffset

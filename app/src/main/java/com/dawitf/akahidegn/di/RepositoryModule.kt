@@ -1,7 +1,7 @@
 package com.dawitf.akahidegn.di
 
-import com.dawitf.akahidegn.data.remote.service.FirebaseGroupService
-import com.dawitf.akahidegn.data.remote.service.impl.FirebaseGroupServiceImpl
+import com.dawitf.akahidegn.data.remote.service.GroupService
+import com.dawitf.akahidegn.data.remote.service.impl.GroupServiceImpl
 import com.dawitf.akahidegn.data.repository.GroupRepositoryImpl
 import com.dawitf.akahidegn.data.repository.UserProfileRepositoryImpl
 import com.dawitf.akahidegn.domain.repository.GroupRepository
@@ -36,7 +36,7 @@ abstract class RepositoryModule {
 
     @Binds
     @Singleton
-    abstract fun bindFirebaseGroupService(
-        firebaseGroupServiceImpl: FirebaseGroupServiceImpl
-    ): FirebaseGroupService
+    abstract fun bindGroupService(
+        groupServiceImpl: GroupServiceImpl
+    ): GroupService
 }

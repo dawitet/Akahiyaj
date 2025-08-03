@@ -43,7 +43,8 @@ fun GroupMembersDialog(
     group: Group,
     members: List<GroupMember>,
     currentUserId: String,
-    onDismiss: () -> Unit
+    onDismiss: () -> Unit,
+    onLeaveGroup: (groupId: String, userId: String) -> Unit
 ) {
     val context = LocalContext.current
     

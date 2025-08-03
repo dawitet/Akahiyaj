@@ -157,3 +157,37 @@ While the app is still under development, the core functionality is shifting to:
         3.  [x] Ensuring the outer `showGroupMembersDialog` function is correctly defined and accepts the `group` and `onLeaveGroup` lambda.
         4.  [x] Adding any necessary missing imports.
         5.  [x] Rebuilding and verifying the application.
+
+## Google Sign-In Implementation (August 2024)
+
+### Next Steps and Considerations:
+
+1.  **`R.string.default_web_client_id`**:
+    *   Ensure you have a string resource named `default_web_client_id` in your `strings.xml` file.
+    *   This value is your OAuth 2.0 client ID for the Android app, obtained from the `google-services.json` file (it's the `client_id` under `client[0].oauth_client[0]` where `client_type` is 3).
+    *   If it's not there, Google Sign-In will fail. Add it like this:
+        `<string name="default_web_client_id" translatable="false">YOUR_WEB_CLIENT_ID</string>`
+        (Replace `YOUR_WEB_CLIENT_ID` with the actual ID).
+
+2.  **`UserRegistrationDialog` Update:**
+    *   The `showUserRegistrationDialog` function in `MainActivity.kt` has been updated to accept an optional `googleName: String? = null` parameter.
+    *   The `UserRegistrationDialog` composable function itself will need to be updated to accept this `initialName` and use it to pre-fill the name field.
+    *   The `onDismiss` behavior in `UserRegistrationDialog` might need refinement (currently re-triggers sign-in if dismissed).
+
+3.  **SHA-1 Certificate Fingerprint:**
+    *   For Google Sign-In to work correctly with Firebase, add the SHA-1 fingerprint of your signing certificate(s) (debug and release) to your Firebase project settings in the Firebase console.
+    *   Get your SHA-1 fingerprint by running the `signingReport` Gradle task: `./gradlew signingReport`.
+
+4.  **Testing:**
+    *   Thoroughly test the new sign-in flow:
+        *   First-time sign-in.
+        *   Sign-out (implement a sign-out button in `SettingsScreen` that calls `auth.signOut()` and `googleSignInClient.signOut()`) and then sign back in.
+        *   App uninstall and reinstall.
+        *   Cases where Google Sign-In might fail (e.g., no internet, user cancels).
+
+5.  **Error Handling & User Experience:**
+    *   Enhance the basic Toast error handling with more user-friendly messages or retry mechanisms.
+    *   Define the user experience if a user signs in with Google but doesn't complete the phone/avatar registration.
+
+6.  **Data Saving Discrepancy:**
+    *   Noticed a discrepancy: `MainActivity.saveUserProfile` currently saves to Firebase *Realtime Database* (path: `/users/{userId}`), while `UserProfileRepositoryImpl` uses *Firestore* (collection: "users"). This should be unified, preferably to use Firestore via the repository for consistency. The Google Sign-In implementation currently maintains the existing `SharedPreferences` and Realtime Database logic in `MainActivity` to minimize immediate changes, but this should be refactored.

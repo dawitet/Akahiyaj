@@ -20,6 +20,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
@@ -29,39 +31,25 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import coil.compose.AsyncImage
+import coil.request.ImageRequest
 import com.dawitf.akahidegn.R
 
 @Composable
 fun UserRegistrationDialog(
-    onComplete: (name: String, phone: String, avatar: String) -> Unit,
+    initialName: String = "",
+    initialPhotoUrl: String? = null, // Added initialPhotoUrl parameter
+    onComplete: (name: String, phone: String) -> Unit, // Avatar no longer passed from here
     onDismiss: () -> Unit
 ) {
-    var name by remember { mutableStateOf("") }
+    var name by remember { mutableStateOf(initialName) }
     var phone by remember { mutableStateOf("") }
-    var selectedAvatar by remember { mutableStateOf("avatar_1") }
     val focusManager = LocalFocusManager.current
-    
-    // Available avatars from drawable resources - only include verified ones
-    val avatars = listOf<Pair<String, Int>>(
-        "avatar_1" to R.drawable.user_avatar_1,
-        "avatar_2" to R.drawable.user_avatar_2,
-        "avatar_3" to R.drawable.user_avatar_3,
-        "avatar_4" to R.drawable.user_avatar_4,
-        "avatar_5" to R.drawable.user_avatar_5,
-        "default" to R.drawable.default_avatar
-    ).filter { (_, resourceId) ->
-        try {
-            // Verify resource exists at compile time
-            resourceId != 0
-        } catch (e: Exception) {
-            false
-        }
-    }
 
     Dialog(
-        onDismissRequest = { /* Cannot dismiss - required registration */ },
+        onDismissRequest = onDismiss,
         properties = DialogProperties(
-            dismissOnBackPress = false,
+            dismissOnBackPress = true,
             dismissOnClickOutside = false
         )
     ) {
@@ -80,7 +68,6 @@ fun UserRegistrationDialog(
                     .padding(24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
-                // Title
                 Text(
                     text = "🎉 እንኳን ወደ አካሂያጅ በደህና መጡ!",
                     style = MaterialTheme.typography.headlineSmall,
@@ -99,33 +86,25 @@ fun UserRegistrationDialog(
                 )
                 
                 Spacer(modifier = Modifier.height(24.dp))
-                
-                // Avatar Selection
-                Text(
-                    text = "👤 የእርስዎን አቫታር ይምረጡ:",
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.SemiBold,
-                    modifier = Modifier.fillMaxWidth()
+
+                // Display Google Photo URL or Fallback
+                AsyncImage(
+                    model = ImageRequest.Builder(LocalContext.current)
+                        .data(initialPhotoUrl)
+                        .crossfade(true)
+                        .build(),
+                    placeholder = painterResource(R.drawable.default_avatar), // Your default avatar
+                    error = painterResource(R.drawable.default_avatar), // Fallback if error or no URL
+                    contentDescription = "User Avatar",
+                    contentScale = ContentScale.Crop,
+                    modifier = Modifier
+                        .size(100.dp)
+                        .clip(CircleShape)
+                        .border(2.dp, MaterialTheme.colorScheme.primary, CircleShape)
                 )
-                
-                Spacer(modifier = Modifier.height(12.dp))
-                
-                LazyRow(
-                    horizontalArrangement = Arrangement.spacedBy(12.dp),
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    items(avatars) { (avatarId, drawableRes) ->
-                        AvatarOption(
-                            drawableRes = drawableRes,
-                            isSelected = selectedAvatar == avatarId,
-                            onClick = { selectedAvatar = avatarId }
-                        )
-                    }
-                }
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Name Input
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
@@ -139,33 +118,16 @@ fun UserRegistrationDialog(
                 
                 Spacer(modifier = Modifier.height(16.dp))
                 
-                // Phone Input
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { newValue ->
-                        // Ethiopian phone number validation - prioritize local format (0912345678)
                         val cleanedValue = newValue.replace(Regex("[^0-9+]"), "")
-                        
                         when {
-                            // Allow Ethiopian local format (starts with 09)
-                            cleanedValue.matches(Regex("^0[0-9]{0,9}$")) -> {
-                                phone = cleanedValue
-                            }
-                            // Convert +251 format to local format
-                            cleanedValue.startsWith("+2519") -> {
-                                phone = "0" + cleanedValue.substring(5)
-                            }
-                            cleanedValue.startsWith("2519") -> {
-                                phone = "0" + cleanedValue.substring(4)
-                            }
-                            // Allow typing + at the start temporarily
-                            cleanedValue == "+" || cleanedValue == "+2" || cleanedValue == "+25" || cleanedValue == "+251" -> {
-                                phone = cleanedValue
-                            }
-                            // For other inputs, only allow if it's a valid progression
-                            cleanedValue.length <= 10 && cleanedValue.all { it.isDigit() || it == '+' } -> {
-                                phone = cleanedValue
-                            }
+                            cleanedValue.matches(Regex("^0[0-9]{0,9}$")) -> phone = cleanedValue
+                            cleanedValue.startsWith("+2519") -> phone = "0" + cleanedValue.substring(5)
+                            cleanedValue.startsWith("2519") -> phone = "0" + cleanedValue.substring(4)
+                            cleanedValue == "+" || cleanedValue == "+2" || cleanedValue == "+25" || cleanedValue == "+251" -> phone = cleanedValue
+                            cleanedValue.length <= 10 && cleanedValue.all { it.isDigit() || it == '+' } -> phone = cleanedValue
                         }
                     },
                     label = { Text("📞 የስልክ ቁጥር") },
@@ -179,7 +141,7 @@ fun UserRegistrationDialog(
                     keyboardActions = KeyboardActions(
                         onDone = { 
                             if (name.isNotBlank() && phone.isNotBlank()) {
-                                onComplete(name.trim(), phone.trim(), selectedAvatar)
+                                onComplete(name.trim(), phone.trim())
                             }
                         }
                     ),
@@ -195,11 +157,10 @@ fun UserRegistrationDialog(
                 
                 Spacer(modifier = Modifier.height(24.dp))
                 
-                // Continue Button
                 Button(
                     onClick = {
                         if (name.isNotBlank() && phone.isNotBlank()) {
-                            onComplete(name.trim(), phone.trim(), selectedAvatar)
+                            onComplete(name.trim(), phone.trim())
                         }
                     },
                     enabled = name.isNotBlank() && phone.isNotBlank(),
@@ -219,39 +180,6 @@ fun UserRegistrationDialog(
     }
 }
 
-@Composable
-private fun AvatarOption(
-    drawableRes: Int,
-    isSelected: Boolean,
-    onClick: () -> Unit
-) {
-    Box(
-        modifier = Modifier
-            .size(64.dp)
-            .clip(CircleShape)
-            .background(
-                color = if (isSelected) 
-                    MaterialTheme.colorScheme.primary.copy(alpha = 0.2f) 
-                else 
-                    MaterialTheme.colorScheme.surfaceVariant
-            )
-            .border(
-                width = if (isSelected) 3.dp else 1.dp,
-                color = if (isSelected) 
-                    MaterialTheme.colorScheme.primary 
-                else 
-                    MaterialTheme.colorScheme.outline,
-                shape = CircleShape
-            )
-            .clickable { onClick() },
-        contentAlignment = Alignment.Center
-    ) {
-        // Simple fallback - use default icon instead of problematic image loading
-        Icon(
-            imageVector = Icons.Default.Person,
-            contentDescription = "Avatar option",
-            modifier = Modifier.size(48.dp),
-            tint = MaterialTheme.colorScheme.onSurfaceVariant
-        )
-    }
-}
+// AvatarOption composable is no longer needed and can be removed if not used elsewhere.
+// @Composable
+// private fun AvatarOption(...) { ... }

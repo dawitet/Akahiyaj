@@ -18,7 +18,6 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import com.dawitf.akahidegn.domain.model.SearchFilters
 
-import com.dawitf.akahidegn.domain.model.TimeRange
 import com.dawitf.akahidegn.domain.model.SortOption
 import java.text.SimpleDateFormat
 import java.util.*
@@ -92,23 +91,7 @@ fun FilterDialog(
                         )
                     }
                     
-                    Spacer(modifier = Modifier.height(16.dp))
                     
-                    
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
-                    
-                    // Time range filter
-                    FilterSection(title = "የመነሻ ጊዜ") {
-                        TimeRangeFilter(
-                            timeRange = currentFilters.timeRange,
-                            onTimeRangeChange = { timeRange ->
-                                currentFilters = currentFilters.copy(timeRange = timeRange)
-                            }
-                        )
-                    }
-                    
-                    Spacer(modifier = Modifier.height(16.dp))
                     
                     // Members filter
                     FilterSection(title = "የቡድን ወሰን") {
@@ -244,19 +227,7 @@ private fun DistanceFilter(
 
 
 
-@Composable
-private fun TimeRangeFilter(
-    timeRange: TimeRange,
-    onTimeRangeChange: (TimeRange) -> Unit
-) {
-    // This is a simplified time range filter
-    // In a real app, you might want to use a proper time picker
-    Text(
-        text = "ጊዜ አማራጭ በቅርቡ ይጨመራል",
-        style = MaterialTheme.typography.bodyMedium,
-        color = MaterialTheme.colorScheme.onSurfaceVariant
-    )
-}
+
 
 @Composable
 private fun MembersFilter(
@@ -304,7 +275,7 @@ private fun SortOptionsFilter(
                 )
                 Spacer(modifier = Modifier.width(8.dp))
                 Text(
-                    text = option.displayNameAm,
+                    text = option.name,
                     style = MaterialTheme.typography.bodyMedium
                 )
             }

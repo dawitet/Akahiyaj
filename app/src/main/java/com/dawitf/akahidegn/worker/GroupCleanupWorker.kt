@@ -29,15 +29,23 @@ class GroupCleanupWorker @AssistedInject constructor(
         Log.d(TAG, "Starting group cleanup task")
         
         return try {
-            when (val cleanupResult = groupRepository.cleanupExpiredGroups()) {
-                is com.dawitf.akahidegn.core.result.Result.Success -> {
-                    val deletedCount = cleanupResult.data
-                    Log.d(TAG, "Successfully cleaned up $deletedCount expired groups")
+            groupRepository.getExpiredGroups(System.currentTimeMillis() - 30 * 60 * 1000).let { result ->
+                return if (result is com.dawitf.akahidegn.core.result.Result.Success<*>) {
+                    val groups = result.data as List<com.dawitf.akahidegn.Group>
+                    groups.forEach { group ->
+                        group.groupId?.let { groupId ->
+                            groupRepository.deleteGroup(groupId)
+                        }
+                    }
+                    Log.d(TAG, "Successfully cleaned up ${groups.size} expired groups")
                     Result.success()
-                }
-                is com.dawitf.akahidegn.core.result.Result.Error -> {
-                    Log.e(TAG, "Failed to cleanup expired groups: ${cleanupResult.error}")
+                } else if (result is com.dawitf.akahidegn.core.result.Result.Error) {
+                    Log.e(TAG, "Failed to cleanup expired groups: ${result.error.message}")
                     Result.retry()
+                } else {
+                    // Should not happen, but handle for exhaustiveness
+                    Log.e(TAG, "Unexpected result type from getExpiredGroups")
+                    Result.failure()
                 }
             }
         } catch (e: Exception) {

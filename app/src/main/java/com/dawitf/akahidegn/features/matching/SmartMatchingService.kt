@@ -73,66 +73,7 @@ class SmartMatchingService @Inject constructor(
         val maxResults: Int = 10
     )
     
-    suspend fun findMatches(request: MatchRequest): Result<List<MatchResult>> {
-        return withContext(Dispatchers.IO) {
-            try {
-                analyticsService.trackCustomEvent("smart_matching_started", mapOf(
-                    "user_id" to request.userProfile.userId,
-                    "flexibility_minutes" to request.flexibilityMinutes,
-                    "max_results" to request.maxResults
-                ))
-                
-                // Get nearby groups
-                val radiusKm = calculateSearchRadius(request.userProfile.preferences.maxWalkingDistanceKm)
-                val nearbyGroupsResult = groupRepository.getNearbyGroups(
-                    request.originLat, 
-                    request.originLng, 
-                    radiusKm
-                ).first()
-                
-                if (nearbyGroupsResult.isFailure) {
-                    val errorMsg = if (nearbyGroupsResult is com.dawitf.akahidegn.core.result.Result.Error) {
-                        nearbyGroupsResult.error.message ?: "Failed to get nearby groups"
-                    } else {
-                        "Failed to get nearby groups"
-                    }
-                    return@withContext kotlin.Result.failure(Exception(errorMsg))
-                }
-                
-                val nearbyGroups = nearbyGroupsResult.getOrNull() ?: emptyList()
-                
-                // Filter and score groups
-                val matches = mutableListOf<MatchResult>()
-                
-                for (group in nearbyGroups) {
-                    if (group.memberCount >= group.maxMembers) continue
-                    
-                    val matchResult = evaluateGroupCompatibility(request, group)
-                    if (matchResult != null && matchResult.compatibilityScore > 0.3) {
-                        matches.add(matchResult)
-                    }
-                }
-                
-                // Sort by compatibility score and return top results
-                val topMatches = matches
-                    .sortedByDescending { it.compatibilityScore }
-                    .take(request.maxResults)
-                
-                analyticsService.trackCustomEvent("smart_matching_completed", mapOf(
-                    "user_id" to request.userProfile.userId,
-                    "total_groups_found" to nearbyGroups.size,
-                    "compatible_matches" to topMatches.size,
-                    "avg_compatibility_score" to topMatches.map { it.compatibilityScore }.average()
-                ))
-                
-                Result.success(topMatches)
-                
-            } catch (e: Exception) {
-                analyticsService.logError(e, "smart_matching_failed")
-                Result.failure(AppError.UnknownError(e.message ?: "Matching failed"))
-            }
-        }
-    }
+    
     
     private suspend fun evaluateGroupCompatibility(
         request: MatchRequest, 

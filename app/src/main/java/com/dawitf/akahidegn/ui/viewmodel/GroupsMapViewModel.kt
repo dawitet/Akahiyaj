@@ -41,39 +41,17 @@ class GroupsMapViewModel @Inject constructor(
                     _isLoading.value = false
                     when (result) {
                         is com.dawitf.akahidegn.core.result.Result.Success -> {
-                            _groups.value = result.data
+                            _groups.value = result.data as List<Group>
                         }
                         is com.dawitf.akahidegn.core.result.Result.Error -> {
-                            _error.value = result.error.toString()
+                            _error.value = result.error.message
                         }
                     }
                 }
         }
     }
 
-    fun loadNearbyGroups(latitude: Double, longitude: Double, radiusKm: Double) {
-        viewModelScope.launch {
-            _isLoading.value = true
-            _error.value = null
-
-            groupRepository.getNearbyGroups(latitude, longitude, radiusKm)
-                .catch { exception ->
-                    _error.value = exception.message ?: "Unknown error occurred"
-                    _isLoading.value = false
-                }
-                .collect { result ->
-                    _isLoading.value = false
-                    when (result) {
-                        is com.dawitf.akahidegn.core.result.Result.Success -> {
-                            _groups.value = result.data
-                        }
-                        is com.dawitf.akahidegn.core.result.Result.Error -> {
-                            _error.value = result.error.toString()
-                        }
-                    }
-                }
-        }
-    }
+    
 
     fun refreshGroups() {
         loadAllGroups()

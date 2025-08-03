@@ -38,8 +38,8 @@ class GroupCleanupDebugHelper(
             try {
                 groupRepository.getAllGroups().collect { result ->
                     when (result) {
-                        is com.dawitf.akahidegn.core.result.Result.Success -> {
-                            val groups = result.data
+                        is com.dawitf.akahidegn.core.result.Result.Success<*> -> {
+                            val groups = result.data as List<com.dawitf.akahidegn.Group>
                             Log.d(TAG, "Debug: Found ${groups.size} groups")
                             groups.forEach { group ->
                                 val ageMinutes = (System.currentTimeMillis() - (group.timestamp ?: 0)) / (60 * 1000)
@@ -47,7 +47,10 @@ class GroupCleanupDebugHelper(
                             }
                         }
                         is com.dawitf.akahidegn.core.result.Result.Error -> {
-                            Log.e(TAG, "Debug: Error retrieving groups: ${result.error}")
+                            Log.e(TAG, "Debug: Error retrieving groups: ${result.error.message}")
+                        }
+                        else -> {
+                            Log.d(TAG, "Debug: Unhandled result type")
                         }
                     }
                 }
@@ -57,27 +60,7 @@ class GroupCleanupDebugHelper(
         }
     }
 
-    /**
-     * Manually triggers cleanup and logs the results for debugging.
-     */
-    fun debugCleanupOperation() {
-        CoroutineScope(Dispatchers.IO).launch {
-            try {
-                Log.d(TAG, "Debug: Starting manual cleanup operation")
-                val result = groupRepository.cleanupExpiredGroups()
-                when (result) {
-                    is com.dawitf.akahidegn.core.result.Result.Success -> {
-                        Log.d(TAG, "Debug: Cleanup successful - ${result.data} groups cleaned")
-                    }
-                    is com.dawitf.akahidegn.core.result.Result.Error -> {
-                        Log.e(TAG, "Debug: Cleanup failed: ${result.error}")
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e(TAG, "Debug: Exception during cleanup operation", e)
-            }
-        }
-    }
+    
 
     /**
      * Schedules the group cleanup service for debugging.

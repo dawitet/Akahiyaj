@@ -5,8 +5,7 @@ import android.util.Log
 import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.paging.PagingData
-import androidx.paging.cachedIn
+
 import com.dawitf.akahidegn.Group
 import com.dawitf.akahidegn.GroupReader
 import com.dawitf.akahidegn.domain.repository.GroupRepository
@@ -43,9 +42,7 @@ class MainViewModel @Inject constructor(
     private val _groups = MutableStateFlow<List<Group>>(emptyList())
     val groups: StateFlow<List<Group>> = _groups.asStateFlow()
 
-    // Paged groups for better performance
-    val pagedGroups = groupRepository.getAllGroupsPaged()
-        .cachedIn(viewModelScope)
+    
 
     private val _isLoadingGroups = MutableStateFlow(false)
     val isLoadingGroups: StateFlow<Boolean> = _isLoadingGroups.asStateFlow()
@@ -123,53 +120,9 @@ class MainViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
-    /**
-     * Add a recent search with context for PreferenceManager
-     */
-    fun addRecentSearch(context: android.content.Context, search: String) {
-        if (search.isBlank() || recentSearchesCache.contains(search)) return
-        
-        viewModelScope.launch(Dispatchers.IO) {
-            // Use PreferenceManager directly here
-            com.dawitf.akahidegn.PreferenceManager.addRecentSearch(context, search)
-            
-            // Update cache and UI
-            recentSearchesCache.clear()
-            recentSearchesCache.addAll(com.dawitf.akahidegn.PreferenceManager.getRecentSearches(context))
-            
-            withContext(Dispatchers.Main) {
-                _recentSearches.value = recentSearchesCache.toList()
-            }
-        }
-    }
+    
 
-    /**
-     * Load recent searches from PreferenceManager
-     */
-    fun loadRecentSearches(context: android.content.Context) {
-        viewModelScope.launch(Dispatchers.IO) {
-            val searches = com.dawitf.akahidegn.PreferenceManager.getRecentSearches(context)
-            recentSearchesCache.clear()
-            recentSearchesCache.addAll(searches)
-            
-            withContext(Dispatchers.Main) {
-                _recentSearches.value = searches
-            }
-        }
-    }
-
-    /**
-     * Update current location and trigger nearby groups search
-     */
-    fun updateLocation(location: Location?) {
-        _currentLocation.value = location
-        // Trigger search when location is available
-        if (location != null && currentFirebaseUserId != null) {
-            viewModelScope.launch {
-                performGroupsSearch(_searchQuery.value.trim().takeIf { it.isNotBlank() })
-            }
-        }
-    }
+    
 
     /**
      * Perform groups search with optimization and smart caching

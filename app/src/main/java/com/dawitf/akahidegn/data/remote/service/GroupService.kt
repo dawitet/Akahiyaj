@@ -11,8 +11,6 @@ interface GroupService {
     
     suspend fun getGroupById(groupId: String): Result<Group>
     
-    
-    
     suspend fun createGroup(group: Group): Result<Group>
     
     suspend fun updateGroup(group: Group): Result<Group>
@@ -25,12 +23,4 @@ interface GroupService {
     
     // Cleanup methods
     suspend fun getExpiredGroups(thresholdTimestamp: Long): Result<List<Group>>
-    
-    suspend fun deleteExpiredGroups(groupIds: List<String>): Result<Unit>
-
-    suspend fun getCreatedGroupsCount(userId: String): Result<Int>
-
-    suspend fun getJoinedGroupsCount(userId: String): Result<Int>
-
-    suspend fun updateGroupStatus(groupId: String, status: String): Result<Unit>
 }

@@ -160,52 +160,14 @@ class GroupServiceImpl @Inject constructor(
         }
     }
 
-    override suspend fun deleteExpiredGroups(groupIds: List<String>): Result<Unit> {
-        return try {
-            val updates = mutableMapOf<String, Any?>()
-            groupIds.forEach { groupId ->
-                updates["/$groupId"] = null
-            }
-            groupsRef.updateChildren(updates).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(AppError.UnknownError(e.message ?: "Unknown error occurred"))
-        }
-    }
-
-    override suspend fun getCreatedGroupsCount(userId: String): Result<Int> {
-        return try {
-            val snapshot = groupsRef.orderByChild("creatorId").equalTo(userId).get().await()
-            Result.success(snapshot.childrenCount.toInt())
-        } catch (e: Exception) {
-            Result.failure(AppError.UnknownError(e.message ?: "Failed to get created groups count"))
-        }
-    }
-
-    override suspend fun getJoinedGroupsCount(userId: String): Result<Int> {
-        return try {
-            val snapshot = groupsRef.orderByChild("members/$userId").equalTo(true).get().await()
-            Result.success(snapshot.childrenCount.toInt())
-        } catch (e: Exception) {
-            Result.failure(AppError.UnknownError(e.message ?: "Failed to get joined groups count"))
-        }
-    }
-
-    override suspend fun updateGroupStatus(groupId: String, status: String): Result<Unit> {
-        return try {
-            groupsRef.child(groupId).child("status").setValue(status).await()
-            Result.success(Unit)
-        } catch (e: Exception) {
-            Result.failure(AppError.UnknownError(e.message ?: "Failed to update group status"))
-        }
-    }
+    
 
     private suspend fun sendNotificationToGroupMembers(groupId: String, notification: Map<String, String>) {
         try {
             val groupSnapshot = groupsRef.child(groupId).get().await()
             val group = groupSnapshot.getValue(Group::class.java)
             if (group != null) {
-                val tokens = group.memberDetails.map { it.value.fcmToken }.filterNotNull()
+                val tokens = group.memberDetails.map { it.value.phone }.filterNotNull()
                 val data = notification + mapOf("groupId" to groupId)
                 // In a real app, you would use a server to send notifications to a list of tokens.
                 // For this example, we'll just log the tokens and data.

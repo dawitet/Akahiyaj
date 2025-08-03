@@ -3,9 +3,6 @@ package com.dawitf.akahidegn.data.repository
 import android.net.Uri
 import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.core.result.Result
-import com.dawitf.akahidegn.data.local.dao.UserPreferencesDao
-import com.dawitf.akahidegn.data.mapper.toEntity
-
 import com.dawitf.akahidegn.domain.model.UserProfile
 import com.dawitf.akahidegn.domain.model.UserReview
 import com.dawitf.akahidegn.domain.model.TripHistoryItem
@@ -15,7 +12,6 @@ import com.dawitf.akahidegn.domain.model.NotificationSettings
 import com.dawitf.akahidegn.domain.repository.UserProfileRepository
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.firestore.FirebaseFirestore
-import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
@@ -31,8 +27,7 @@ import com.dawitf.akahidegn.data.repository.model.UserProfileUpdate
 class UserProfileRepositoryImpl @Inject constructor(
     private val firestore: FirebaseFirestore,
     private val auth: FirebaseAuth,
-    private val storage: FirebaseStorage,
-    private val userPreferencesDao: UserPreferencesDao
+    private val storage: FirebaseStorage
 ) : UserProfileRepository {
 
     private val usersCollection = firestore.collection("users")
@@ -247,49 +242,7 @@ class UserProfileRepositoryImpl @Inject constructor(
         }
     }
 
-    override suspend fun updateUserPreferences(preferences: UserPreferences): Result<UserPreferences> {
-        return try {
-            val currentUser = auth.currentUser
-                ?: return Result.Error(AppError.AuthenticationError.NotAuthenticated)
-            
-            val updates = mapOf(
-                "preferences" to preferences,
-                "lastActiveDate" to System.currentTimeMillis()
-            )
-            
-            usersCollection.document(currentUser.uid).update(updates).await()
-            
-            Result.success(preferences)
-        } catch (e: Exception) {
-            Result.error(AppError.UnknownError(e.message ?: "Failed to update user preferences"))
-        }
-    }
-
-    override suspend fun getUserPreferences(userId: String): Result<UserPreferences> {
-        return try {
-            val document = usersCollection.document(userId).get().await()
-            if (document.exists()) {
-                @Suppress("UNCHECKED_CAST")
-                val preferences = document.get("preferences") as? Map<String, Any>
-                preferences?.let {
-                    // Convert map to UserPreferences object
-                    val userPreferences = UserPreferences(
-                        preferredLanguage = it["preferredLanguage"] as? String ?: "system",
-                        notificationSettings = NotificationSettings(), // Would need to map from nested object
-                        searchRadius = it["searchRadius"] as? Double ?: 25.0,
-                        autoAcceptRadius = it["autoAcceptRadius"] as? Double ?: 5.0,
-                        maxPassengers = it["maxPassengers"] as? Int ?: 4,
-                        vehicleInfo = null // Would need to map from nested object
-                    )
-                    Result.success(userPreferences)
-                } ?: Result.error(AppError.ValidationError.NotFound("Preferences not found"))
-            } else {
-                Result.error(AppError.ValidationError.NotFound("User not found"))
-            }
-        } catch (e: Exception) {
-            Result.error(AppError.UnknownError(e.message ?: "Failed to get user preferences"))
-        }
-    }
+    
 
     override fun observeUserProfile(userId: String): Flow<UserProfile?> = callbackFlow {
         val listener = usersCollection.document(userId)
