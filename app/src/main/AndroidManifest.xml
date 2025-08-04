@@ -9,6 +9,9 @@
     <uses-permission android:name="android.permission.VIBRATE" /> <!-- Added for vibration feedback -->
     <uses-permission android:name="android.permission.CALL_PHONE" /> <!-- Added for phone dialer integration -->
 
+    <!-- Explicitly declare telephony feature as not required -->
+    <uses-feature android:name="android.hardware.telephony" android:required="false" />
+
     <!-- Samsung-specific permissions for better compatibility -->
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.WAKE_LOCK" />
@@ -70,8 +73,8 @@
         <!-- Remove the meta-data above and uncomment this if you want to disable ads -->
         <!--
         <meta-data
-            android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="" />
+            android:name=\'com.google.android.gms.ads.APPLICATION_ID\'
+            android:value=\'\' />
         -->
 
         <!-- Fix manifest merger conflict between AdMob and Google Analytics -->

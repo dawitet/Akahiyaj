@@ -44,7 +44,6 @@
 
 # Keep data classes used with Firebase
 -keep class com.dawitf.akahidegn.data.** { *; }
--keep class com.dawitf.akahidegn.ChatMessage { *; }
 -keep class com.dawitf.akahidegn.Group { *; }
 
 # Hilt rules
@@ -77,10 +76,6 @@
 -keep class com.google.android.gms.ads.** { *; }
 -dontwarn com.google.android.gms.ads.**
 
-# Room database
--keep class androidx.room.** { *; }
--dontwarn androidx.room.**
-
 # WorkManager
 -keep class androidx.work.** { *; }
 -dontwarn androidx.work.**
@@ -92,10 +87,6 @@
 -keep public class * extends android.content.BroadcastReceiver
 -keep public class * extends android.content.ContentProvider
 -dontwarn okhttp3.**
-
-# Room database rules
--keep class androidx.room.** { *; }
--keep class * extends androidx.room.RoomDatabase { *; }
 
 # Memory optimization for R8
 -dontusemixedcaseclassnames

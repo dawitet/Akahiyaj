@@ -13,6 +13,7 @@ data class MemberInfo(
     var avatar: String = "avatar_1",
     var joinedAt: Long = System.currentTimeMillis()
 ) {
+    // No-argument constructor for Firebase deserialization
     constructor() : this("", "", "avatar_1", System.currentTimeMillis())
 }
 
@@ -21,19 +22,23 @@ data class MemberInfo(
 data class Group(
     @get:Exclude var groupId: String? = null,
     var creatorId: String? = null,
-    var creatorName: String? = null, // Added creator name field
-    var creatorCloudflareId: String? = null,
-    var destinationName: String? = null,
-    var originalDestination: String? = null, // Store original destination without time/creator info
+    var creatorName: String? = null,
+    var creatorCloudflareId: String? = null, // Keep if used, otherwise consider removing
+    var destinationName: String? = null, // This is the user input, e.g., "Bole"
+    var originalDestination: String? = null, // This can be the same as destinationName or a more specific version
+    var from: String? = null, // Added: Represents the pickup location as a string
+    var to: String? = null, // Added: Represents the destination, should align with 'originalDestination'
+    var status: String? = null, // Added: e.g., "active", "full", "cancelled"
     var pickupLat: Double? = null,
     var pickupLng: Double? = null,
     var timestamp: Long? = null,
-    var maxMembers: Int = 4,
+    var maxMembers: Int = 4, // Default value
     var members: HashMap<String, Boolean> = HashMap(),
-    var memberDetails: HashMap<String, MemberInfo> = HashMap(), // Store member details including phone
+    var memberDetails: HashMap<String, MemberInfo> = HashMap(),
     var memberCount: Int = 0,
-    var imageUrl: String? = null // Added missing imageUrl field
+    var imageUrl: String? = null // Keep if used
 ) {
+    // No-argument constructor for Firebase deserialization
     constructor() : this(
         groupId = null,
         creatorId = null,
@@ -41,9 +46,12 @@ data class Group(
         creatorCloudflareId = null,
         destinationName = null,
         originalDestination = null,
+        from = null,
+        to = null,
+        status = null,
         pickupLat = null,
         pickupLng = null,
-        timestamp = null,
+        timestamp = System.currentTimeMillis(), // Sensible default
         maxMembers = 4,
         members = HashMap<String, Boolean>(),
         memberDetails = HashMap<String, MemberInfo>(),
@@ -51,52 +59,43 @@ data class Group(
         imageUrl = null
     )
 
-    @Exclude
-    fun toMap(): Map<String, Any?> {
-        // Initialize a map with only the fields allowed by the security rules
-        val map = HashMap<String, Any?>()
-        
-        // Debug the Group object values with extra verbosity for rule debugging
-        Log.d("GROUP_DEBUG", "Converting Group to Map: id=${groupId}, creator=${creatorId}, destination=${destinationName}")
-        
-        // SECURITY RULES REQUIRED FIELDS - these must match exactly what worked in CLI tests
-        // These fields are required by the .validate rule
-        map["id"] = groupId ?: ""  // Must match the $groupId in the path
-        map["from"] = "Current Location"  // Must be non-empty string
-        map["to"] = destinationName ?: ""  // Must be non-empty string
-        map["departureTime"] = timestamp?.toString() ?: System.currentTimeMillis().toString()  // Must be non-empty string
-        map["availableSeats"] = (maxMembers - memberCount).coerceIn(1, 8)  // Must be between 1 and 8
-        
-        map["createdAt"] = timestamp ?: System.currentTimeMillis()  // Must be <= now
-        map["timestamp"] = timestamp ?: System.currentTimeMillis()  // For backward compatibility and expiry checks
-        map["createdBy"] = creatorId ?: ""  // Must match auth.uid
-        
-        // SIMPLIFIED MEMBERS STRUCTURE - this works with our updated rules
-        map["members"] = members.filter { it.value }.keys.associateWith { true }
-        
-        // Store member details separately for phone access
-        map["memberDetails"] = memberDetails.mapValues { (_, memberInfo) ->
-            mapOf(
-                "name" to memberInfo.name,
-                "phone" to memberInfo.phone,
-                "avatar" to memberInfo.avatar,
-                "joinedAt" to memberInfo.joinedAt
-            )
-        }
-        
-        // Additional fields - these are allowed by our rules
-        map["pickupLat"] = pickupLat ?: 0.0
-        map["pickupLng"] = pickupLng ?: 0.0
-        map["maxMembers"] = maxMembers
-        map["memberCount"] = memberCount
-        map["imageUrl"] = imageUrl ?: ""
-        map["creatorName"] = creatorName ?: ""
-        map["originalDestination"] = originalDestination ?: destinationName ?: ""
-        
-        // Log validation fields to help diagnose rule failures
-        Log.d("FIREBASE_DEBUG", "Security validation fields: id=${map["id"]}, createdBy=${map["createdBy"]}")
-        Log.d("FIREBASE_DEBUG", "Complete map being written to Firebase: $map")
-        
-        return map
-    }
+    // The custom toMap() function is problematic for direct Firebase writes
+    // if it doesn't perfectly match the fields Firebase expects from the data class
+    // AND what your security rules .validate.
+    // It's often better to let Firebase serialize the data class directly.
+    // If you remove or comment out this toMap(), Firebase will serialize the fields of the Group data class itself.
+    // Ensure all fields in the data class are either nullable or have default values.
+
+//    @Exclude
+//    fun toMap(): Map<String, Any?> {
+//        // This toMap() function is creating a structure DIFFERENT from your Group data class fields
+//        // and also different from your Firebase security rules' .validate structure.
+//        // This is a major source of the problem.
+//        // For now, let's keep it to see if MainActivity's direct object setValue works,
+//        // but ideally, this should be removed or completely refactored if custom mapping is essential.
+//        val map = HashMap<String, Any?>()
+//        Log.d("GROUP_DEBUG", "toMap() called. Consider removing if direct object serialization is used.")
+//
+//        // Fields as they are in the Group data class (should match security rules)
+//        map["groupId"] = groupId
+//        map["creatorId"] = creatorId
+//        map["creatorName"] = creatorName
+//        map["destinationName"] = destinationName // User-friendly name with time/creator
+//        map["originalDestination"] = originalDestination // The "to" field for rules
+//        map["from"] = from // The "from" field for rules
+//        map["to"] = originalDestination // Aligning with rules, 'originalDestination' is the 'to'
+//        map["status"] = status
+//        map["pickupLat"] = pickupLat
+//        map["pickupLng"] = pickupLng
+//        map["timestamp"] = timestamp
+//        map["maxMembers"] = maxMembers
+//        map["members"] = members // Firebase can handle Map<String, Boolean>
+//        map["memberDetails"] = memberDetails // Firebase can handle Map<String, MemberInfo>
+//        map["memberCount"] = memberCount
+//        map["imageUrl"] = imageUrl
+//        // creatorCloudflareId is not in the rules, omitting for now unless needed
+//
+//        Log.d("FIREBASE_WRITE", "Map generated by toMap() for Firebase: $map")
+//        return map
+//    }
 }

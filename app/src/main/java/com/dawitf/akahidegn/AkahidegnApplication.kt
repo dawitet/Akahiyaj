@@ -10,6 +10,10 @@ import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
 import com.google.android.gms.ads.MobileAds
+import com.google.firebase.FirebaseApp
+import com.google.firebase.appcheck.FirebaseAppCheck
+import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
+import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
@@ -31,6 +35,12 @@ class AkahidegnApplication : Application(), Configuration.Provider {
         super.onCreate()
         
         try {
+            // Initialize Firebase App first (important for other Firebase services)
+            FirebaseApp.initializeApp(this)
+
+            // Initialize Firebase App Check
+            initializeFirebaseAppCheck()
+
             // Log device information for debugging
             TestDeviceHelper.logDeviceInfo()
 
@@ -53,6 +63,26 @@ class AkahidegnApplication : Application(), Configuration.Provider {
         } catch (e: Exception) {
             Log.e("AkahidegnApp", "Error during application initialization", e)
             // Don't crash the app, continue with basic functionality
+        }
+    }
+
+    private fun initializeFirebaseAppCheck() {
+        try {
+            val firebaseAppCheck = FirebaseAppCheck.getInstance()
+            if (BuildConfig.DEBUG) {
+                Log.d("APP_INIT", "Initializing App Check with DEBUG provider")
+                firebaseAppCheck.installAppCheckProviderFactory(
+                    DebugAppCheckProviderFactory.getInstance()
+                )
+            } else {
+                Log.d("APP_INIT", "Initializing App Check with PLAY INTEGRITY provider")
+                firebaseAppCheck.installAppCheckProviderFactory(
+                    PlayIntegrityAppCheckProviderFactory.getInstance()
+                )
+            }
+            Log.d("APP_INIT", "Firebase App Check initialization attempted")
+        } catch (e: Exception) {
+            Log.e("APP_INIT", "Firebase App Check initialization failed: ${e.message}")
         }
     }
     

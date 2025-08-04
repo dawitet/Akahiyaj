@@ -168,23 +168,31 @@ dependencies {
     implementation("com.google.firebase:firebase-storage-ktx")
     
     implementation("com.google.firebase:firebase-auth-ktx")
-    implementation("com.google.android.gms:play-services-auth:21.4.0") // Added for Google Sign-In
+    implementation("com.google.android.gms:play-services-auth:21.4.0") // Keep for now, might be replaceable by credential manager
     implementation("com.google.firebase:firebase-installations-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-perf-ktx")
     implementation("com.google.android.gms:play-services-location:21.1.0") // Latest stable version
     
     implementation("com.google.android.gms:play-services-ads:22.6.0") // Keep for interstitial and rewarded ads
+
+    // Credential Manager SDK dependencies
+    implementation("androidx.credentials:credentials:1.3.0")
+    implementation("androidx.credentials:credentials-play-services-auth:1.3.0")
+    implementation("com.google.android.libraries.identity.googleid:googleid:1.1.1")
     
     // Hilt for Dependency Injection - simplified for Ethiopian market
     implementation(libs.hilt.android)
     ksp(libs.hilt.compiler)  // Changed from kapt to ksp
-    implementation(libs.androidx.hilt.work)
+    implementation(libs.androidx.hilt.work) // This was duplicated, kept one
     implementation(libs.hilt.navigation.compose)
     // Removed complex hilt lifecycle viewmodel - using simpler approach
     ksp("androidx.hilt:hilt-compiler:1.1.0")  // Changed from kapt to ksp
 
-    
+    // App Check dependencies
+    implementation("com.google.firebase:firebase-appcheck-playintegrity")
+    implementation("com.google.firebase:firebase-appcheck-debug") // For debug builds (use only in debug variant if possible)
+
 
     // Retrofit for better networking
     implementation(libs.retrofit)
@@ -196,8 +204,8 @@ dependencies {
     
     // WorkManager for background tasks
     implementation(libs.androidx.work.runtime)
-    implementation(libs.androidx.hilt.work)
-    // ksp(libs.hilt.compiler) // Use ksp instead of kapt
+    // implementation(libs.androidx.hilt.work) // Already included above
+    // ksp(libs.hilt.compiler) // Already included above
 
     // Advanced UI/UX Dependencies
     implementation("androidx.compose.animation:animation:1.5.4")
