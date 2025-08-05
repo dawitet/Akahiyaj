@@ -2,10 +2,8 @@ package com.dawitf.akahidegn.viewmodel
 
 import android.location.Location
 import android.util.Log
-import androidx.compose.runtime.mutableStateListOf
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-
 import com.dawitf.akahidegn.Group
 import com.dawitf.akahidegn.GroupReader
 import com.dawitf.akahidegn.domain.repository.GroupRepository
@@ -42,8 +40,6 @@ class MainViewModel @Inject constructor(
     private val _groups = MutableStateFlow<List<Group>>(emptyList())
     val groups: StateFlow<List<Group>> = _groups.asStateFlow()
 
-    
-
     private val _isLoadingGroups = MutableStateFlow(false)
     val isLoadingGroups: StateFlow<Boolean> = _isLoadingGroups.asStateFlow()
 
@@ -53,6 +49,7 @@ class MainViewModel @Inject constructor(
     private val _recentSearches = MutableStateFlow<List<String>>(emptyList())
     val recentSearches: StateFlow<List<String>> = _recentSearches.asStateFlow()
 
+    // _currentLocation is updated by setUserLocationFlow from MainActivity
     private val _currentLocation = MutableStateFlow<Location?>(null)
     val currentLocation: StateFlow<Location?> = _currentLocation.asStateFlow()
 
@@ -85,16 +82,35 @@ class MainViewModel @Inject constructor(
     // Enhanced error handling and resilience
     private val _errorState = MutableStateFlow<String?>(null)
     val errorState: StateFlow<String?> = _errorState.asStateFlow()
-    
-    private val _userLocation = MutableStateFlow<android.location.Location?>(null)
-    val userLocation: StateFlow<android.location.Location?> = _userLocation.asStateFlow()
-    
+        
     private var retryCount = 0
     private val baseRetryDelayMs = 1000L
     
     init {
         setupSearchQueryDebouncing()
         setupMemoryCleanup()
+    }
+
+    fun setUserLocationFlow(locationFlow: StateFlow<Location?>) {
+        viewModelScope.launch {
+            // *** FIX 2: REMOVE THE REDUNDANT .distinctUntilChanged() ***
+            locationFlow.collect { newLocation ->
+                val oldLocation = _currentLocation.value
+                _currentLocation.value = newLocation
+                Log.d("MainViewModel", "User location updated in ViewModel: $newLocation")
+                // and no active text search is happening.
+                if (_searchQuery.value.isBlank()) {
+                    val distanceChange = oldLocation?.distanceTo(newLocation ?: Location("")) ?: Float.MAX_VALUE
+                    // Refresh if new location is known, or if it became unknown,
+                    // or if it moved by more than searchRadiusMeters/2 (heuristic)
+                    if (newLocation != null || oldLocation != null || distanceChange > searchRadiusMeters / 2) {
+                         Log.d("MainViewModel", "Location changed, refreshing groups for non-search scenario.")
+                         performGroupsSearch(null) // Pass null to get all groups, filtering will happen
+                    }
+                }
+                 // If a search query is active, the debounced search will pick up the new location.
+            }
+        }
     }
     
     /**
@@ -120,30 +136,37 @@ class MainViewModel @Inject constructor(
         _searchQuery.value = query
     }
 
-    
-
-    
-
     /**
      * Perform groups search with optimization and smart caching
      */
     private suspend fun performGroupsSearch(destinationFilter: String?) {
         Log.d("MainViewModel", "performGroupsSearch called. Filter: $destinationFilter, User ID: $currentFirebaseUserId")
+        if (!::activeGroupsRef.isInitialized || currentFirebaseUserId == null) {
+            Log.w("MainViewModel", "Firebase not initialized, skipping search.")
+            _isLoadingGroups.value = false // Ensure loading state is reset
+            _groups.value = emptyList() // Clear groups if not initialized
+            return
+        }
+
         if (_isLoadingGroups.value) {
             Log.d("MainViewModel", "Search already in progress, skipping")
             return
         }
 
-        // Check if we have cached results for this search
         val userLoc = _currentLocation.value
         val cacheKey = "${destinationFilter ?: "all"}_${userLoc?.let { "${it.latitude}_${it.longitude}" } ?: "no_location"}"
         val lastSearchTime = lastSearchTimestamp[cacheKey] ?: 0
         val currentTime = System.currentTimeMillis()
         
         // Use cached results if recent enough (within 2 minutes)
-        if (currentTime - lastSearchTime < 2 * 60 * 1000L && _groups.value.isNotEmpty()) {
+        // AND if the current groups list is not empty (implying a successful previous fetch for this state)
+        // If destinationFilter is null (swipe refresh or location change for "all nearby"), we might want to bypass cache more aggressively
+        // or ensure cache is invalidated properly. The current refreshGroups() clears groupsCache.
+        if (destinationFilter != null && currentTime - lastSearchTime < 120 * 1000L && _groups.value.isNotEmpty()) {
             Log.d("MainViewModel", "Using cached search results for: $cacheKey")
-            return
+            // Potentially re-apply filter if userLocation changed but filter text is same
+            // For simplicity, current refreshGroups clears cache, forcing fresh data.
+            return 
         }
 
         _isLoadingGroups.value = true
@@ -151,7 +174,6 @@ class MainViewModel @Inject constructor(
 
         try {
             withContext(backgroundDispatcher) {
-                // Query by createdAt (used in toMap) instead of timestamp
                 activeGroupsRef.orderByChild("createdAt")
                     .limitToLast(100)
                     .addListenerForSingleValueEvent(object : ValueEventListener {
@@ -165,12 +187,14 @@ class MainViewModel @Inject constructor(
                         override fun onCancelled(error: DatabaseError) {
                             Log.e("MainViewModel", "Groups search failed: ${error.message}")
                             _isLoadingGroups.value = false
+                            _errorState.value = "Failed to load groups: ${error.message}"
                         }
                     })
             }
         } catch (e: Exception) {
             Log.e("MainViewModel", "Error during groups search", e)
             _isLoadingGroups.value = false
+            _errorState.value = "An error occurred while searching for groups."
         }
     }
 
@@ -179,40 +203,35 @@ class MainViewModel @Inject constructor(
      */
     private suspend fun processGroupsData(snapshot: DataSnapshot, destinationFilter: String?, cacheKey: String) {
         val newGroupsList = mutableListOf<Group>()
-        val userLocation = _currentLocation.value
-        Log.d("MainViewModel", "Processing groups data. Snapshot children: ${snapshot.childrenCount}")
+        val userLocationForFilter = _currentLocation.value // Use the latest location
+        Log.d("MainViewModel", "Processing groups data. Snapshot children: ${snapshot.childrenCount}, UserLocation for filter: $userLocationForFilter")
 
         for (groupSnapshot in snapshot.children) {
             val group = GroupReader.fromSnapshot(groupSnapshot)
             if (group != null) {
-                // GroupId is already set by GroupReader
-                
-                // Use cache if available and group hasn't changed
                 val cachedGroup = groupsCache[group.groupId]
-                if (cachedGroup != null && cachedGroup.timestamp == group.timestamp) {
-                    if (passesFilters(cachedGroup, destinationFilter, userLocation)) {
+                if (cachedGroup != null && cachedGroup.timestamp == group.timestamp && destinationFilter != null) { // Only use cache for specific text searches
+                    if (passesFilters(cachedGroup, destinationFilter, userLocationForFilter)) {
                         newGroupsList.add(cachedGroup)
                     }
                 } else {
-                    // Process new or updated group
-                    if (passesFilters(group, destinationFilter, userLocation)) {
+                    if (passesFilters(group, destinationFilter, userLocationForFilter)) {
                         newGroupsList.add(group)
-                        groupsCache[group.groupId!!] = group
+                        if (group.groupId != null) { // Ensure groupId is not null before caching
+                           groupsCache[group.groupId!!] = group
+                        }
                     }
                 }
             }
         }
-
-        // Sort and update UI on main thread
-        val sortedList = newGroupsList.sortedByDescending { it.timestamp }
         
-        // Update cache timestamp for this search
+        val sortedList = newGroupsList.sortedByDescending { it.timestamp }
         lastSearchTimestamp[cacheKey] = System.currentTimeMillis()
         
         withContext(Dispatchers.Main) {
             _groups.value = sortedList
             _isLoadingGroups.value = false
-            Log.d("MainViewModel", "Updated groups list with ${sortedList.size} groups within 500m")
+            Log.d("MainViewModel", "Updated groups list with ${sortedList.size} groups that pass filters.")
         }
     }
 
@@ -220,38 +239,50 @@ class MainViewModel @Inject constructor(
      * Check if group passes filters - Location (500m) + expiry (30 minutes) + destination search
      */
     private fun passesFilters(group: Group, destinationFilter: String?, userLocation: Location?): Boolean {
-        // Location filter - 500 meter radius
-        if (userLocation != null && group.pickupLat != null && group.pickupLng != null) {
-            val distance = calculateDistance(
-                userLocation.latitude, userLocation.longitude,
-                group.pickupLat!!, group.pickupLng!!
-            )
-            if (distance > searchRadiusMeters) {
-                Log.d("MainViewModel", "Group '${group.originalDestination}' filtered out - ${distance.toInt()}m away")
-                return false
-            }
-        } else if (userLocation == null) {
-            // No user location available - don't show any groups
+        // Active status check (if your Group model has a status field)
+        // if (group.status != "active") return false 
+
+        val thirtyMinutesAgo = System.currentTimeMillis() - (30 * 60 * 1000L)
+        val timestamp = group.timestamp
+        if (timestamp != null && timestamp <= thirtyMinutesAgo) {
             return false
         }
 
-        // Destination filter
+        // Location filter - 500 meter radius
+        // This filter is only applied if there is NO destinationFilter.
+        // If there IS a destinationFilter, we show all matching groups regardless of distance.
+        // For the main screen (no search text), destinationFilter will be null.
+        if (destinationFilter == null) { // Only apply distance filter if no specific destination is searched
+            if (userLocation == null) {
+                 Log.d("MainViewModel", "Group '${group.originalDestination}' filtered out - user location unknown for proximity check.")
+                return false // No user location, so no group is "nearby"
+            }
+            if (group.pickupLat != null && group.pickupLng != null) {
+                val distance = calculateDistance(
+                    userLocation.latitude, userLocation.longitude,
+                    group.pickupLat!!, group.pickupLng!!
+                )
+                if (distance > searchRadiusMeters) {
+                    // Log.d("MainViewModel", "Group '${group.originalDestination}' filtered out by distance - ${distance.toInt()}m away")
+                    return false
+                }
+            } else {
+                // Log.d("MainViewModel", "Group '${group.originalDestination}' filtered out - group has no location for proximity check.")
+                return false // Group has no location, cannot be considered "nearby"
+            }
+        }
+
+
+        // Destination text filter (applies if destinationFilter is not null)
         destinationFilter?.let { filter ->
             val searchableDestination = group.originalDestination ?: group.destinationName
             if (searchableDestination?.contains(filter, ignoreCase = true) != true) {
+                // Log.d("MainViewModel", "Group '${group.originalDestination}' filtered out by text filter: '$filter'")
                 return false
             }
         }
-
-        // Only check if group is not expired (30 minutes)
-        val thirtyMinutesAgo = System.currentTimeMillis() - (30 * 60 * 1000L)
-        Log.d("MainViewModel", "Filtering group '${group.originalDestination}'. Group Timestamp: ${group.timestamp}, Thirty Minutes Ago: $thirtyMinutesAgo")
-        if (group.timestamp != null && group.timestamp!! <= thirtyMinutesAgo) {
-            Log.d("MainViewModel", "Group '${group.originalDestination}' filtered out - expired")
-            return false
-        }
-
-        Log.d("MainViewModel", "Group '${group.originalDestination}' included - active and nearby")
+        
+        // Log.d("MainViewModel", "Group '${group.originalDestination}' included. Filter: $destinationFilter, UserLoc: ${userLocation != null}")
         return true
     }
 
@@ -260,24 +291,29 @@ class MainViewModel @Inject constructor(
      * Fast and sufficient for short distances like 500m
      */
     private fun calculateDistance(lat1: Double, lng1: Double, lat2: Double, lng2: Double): Double {
-        val earthRadius = 6371000.0 // Earth radius in meters
-        val dLat = Math.toRadians(lat2 - lat1)
-        val dLng = Math.toRadians(lng2 - lng1)
+        // Using Android Location's built-in distanceTo for accuracy and simplicity
+        val startPoint = Location("start")
+        startPoint.latitude = lat1
+        startPoint.longitude = lng1
+
+        val endPoint = Location("end")
+        endPoint.latitude = lat2
+        endPoint.longitude = lng2
         
-        // Convert to meters using simple approximation for short distances
-        val deltaX = dLng * earthRadius * Math.cos(Math.toRadians((lat1 + lat2) / 2))
-        val deltaY = dLat * earthRadius
-        
-        return Math.sqrt(deltaX * deltaX + deltaY * deltaY)
+        return startPoint.distanceTo(endPoint).toDouble() // distanceTo returns float in meters
     }
 
     /**
-     * Force refresh groups (for pull-to-refresh scenarios)
+     * Force refresh groups (for pull-to-refresh scenarios or initial load without search text)
      */
     fun refreshGroups() {
-        groupsCache.clear() // Clear cache to force fresh data
+        Log.d("MainViewModel", "refreshGroups called, clearing cache and performing search with current query: '${_searchQuery.value}' or null if blank")
+        groupsCache.clear() 
+        val currentQuery = _searchQuery.value.trim().takeIf { it.isNotBlank() }
         viewModelScope.launch {
-            performGroupsSearch(_searchQuery.value.trim().takeIf { it.isNotBlank() })
+            // If currentQuery is null (blank), this will fetch all groups and filter by location.
+            // If currentQuery is not null, it will search by text, and location filtering logic in passesFilters might be conditional.
+            performGroupsSearch(currentQuery)
         }
     }
 
@@ -296,6 +332,10 @@ class MainViewModel @Inject constructor(
         this.activeGroupsRef = activeGroupsRef
         this.currentFirebaseUserId = firebaseUserId
         Log.d("MainViewModel", "Firebase initialized with user ID: $firebaseUserId")
+        // Trigger initial load if not already loading and location is available or becomes available
+        if (_currentLocation.value != null && _groups.value.isEmpty() && !_isLoadingGroups.value) {
+            refreshGroups()
+        }
     }
 
     /**
@@ -316,19 +356,17 @@ class MainViewModel @Inject constructor(
     private suspend fun cleanupMemory() = withContext(computationDispatcher) {
         val currentTime = System.currentTimeMillis()
         
-        // Remove expired search timestamps
         lastSearchTimestamp.entries.removeAll { (_, timestamp) ->
             currentTime - timestamp > CACHE_EXPIRY_MS
         }
         
-        // Limit groups cache size
         if (groupsCache.size > MAX_GROUPS_CACHE_SIZE) {
             val entriesToRemove = groupsCache.size - MAX_GROUPS_CACHE_SIZE
-            val oldestEntries = groupsCache.entries.take(entriesToRemove)
-            oldestEntries.forEach { groupsCache.remove(it.key) }
+            // Evict oldest entries based on insertion order (less ideal than LRU but simpler here)
+            val keysToRemove = groupsCache.keys.take(entriesToRemove)
+            keysToRemove.forEach { groupsCache.remove(it) }
         }
         
-        // Limit recent searches
         if (recentSearchesCache.size > MAX_RECENT_SEARCHES_SIZE) {
             val limitedSearches = recentSearchesCache.takeLast(MAX_RECENT_SEARCHES_SIZE)
             recentSearchesCache.clear()
@@ -358,13 +396,11 @@ class MainViewModel @Inject constructor(
                 Log.w("MainViewModel", "$operationName failed on attempt ${attempt + 1}: ${e.message}")
                 
                 if (attempt == maxRetries - 1) {
-                    // Last attempt failed
                     _errorState.value = "Failed to $operationName after $maxRetries attempts"
                     return@withContext Result.failure(e)
                 }
                 
-                // Exponential backoff: wait longer between retries
-                val delayMs = baseRetryDelayMs * (1 shl attempt) // 1s, 2s, 4s
+                val delayMs = baseRetryDelayMs * (1 shl attempt) 
                 kotlinx.coroutines.delay(delayMs)
             }
         }
@@ -378,12 +414,11 @@ class MainViewModel @Inject constructor(
         _errorState.value = null
     }
 
-    fun updateLocation(location: android.location.Location) {
-        _userLocation.value = location
-    }
+    // Removed updateLocation function, will use setUserLocationFlow instead
 
     override fun onCleared() {
         super.onCleared()
-        groupsCache.clear()
+        groupsCache.clear() // Clear cache when ViewModel is destroyed
+        Log.d("MainViewModel", "MainViewModel cleared.")
     }
 }

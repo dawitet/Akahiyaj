@@ -11,8 +11,6 @@ import android.util.Log
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-// Removed: import androidx.activity.result.ActivityResultLauncher
-// Removed: import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -70,26 +68,23 @@ import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import android.app.AlertDialog
 import android.widget.EditText
 import com.dawitf.akahidegn.domain.model.SearchFilters
-// Removed: import com.google.android.gms.auth.api.signin.GoogleSignIn
-// Removed: import com.google.android.gms.auth.api.signin.GoogleSignInAccount
-// Removed: import com.google.android.gms.auth.api.signin.GoogleSignInClient
-// Removed: import com.google.android.gms.auth.api.signin.GoogleSignInOptions
-// Removed: import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.AndroidEntryPoint
 
-// Credential Manager Imports
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
 import androidx.credentials.GetCredentialRequest
 import androidx.credentials.GetCredentialResponse
-import androidx.credentials.exceptions.GetCredentialException // Catch this base class
-import androidx.credentials.exceptions.NoCredentialException // Specific exception for no credentials
+import androidx.credentials.exceptions.GetCredentialException
+import androidx.credentials.exceptions.NoCredentialException
 import com.google.android.libraries.identity.googleid.GetGoogleIdOption
 import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import androidx.credentials.ClearCredentialStateRequest
 import androidx.credentials.exceptions.ClearCredentialException
 import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 
 
 @AndroidEntryPoint
@@ -99,42 +94,35 @@ class MainActivity : ComponentActivity() {
     private lateinit var database: FirebaseDatabase
     private lateinit var groupsRef: DatabaseReference
     private lateinit var auth: FirebaseAuth
-    // private lateinit var googleSignInClient: GoogleSignInClient // Removed
-    // private lateinit var googleSignInLauncher: ActivityResultLauncher<android.content.Intent> // Removed
+    private lateinit var credentialManager: CredentialManager
 
-    private lateinit var credentialManager: CredentialManager // Added
-
-    private val currentGroups = mutableListOf<Group>()
+    private val currentGroups = mutableListOf<Group>() // Consider if this is still needed or use ViewModel's state
     private var selectedGroupForDialog by mutableStateOf<Group?>(null)
 
     private var rewardedAd: RewardedAd? = null
     private var interstitialAd: InterstitialAd? = null
 
-    private var userLocation: Location? = null
+    private val _userLocationFlow = MutableStateFlow<Location?>(null)
+    val userLocationFlow: StateFlow<Location?> = _userLocationFlow.asStateFlow()
+
     private lateinit var locationManager: LocationManager
-    private var lastLocationUpdate = 0L
+    private var lastLocationUpdateTimestamp = 0L // Renamed for clarity
+
     private val locationListener = object : LocationListener {
         override fun onLocationChanged(location: Location) {
-            userLocation = location
+            _userLocationFlow.value = location // Emit to StateFlow, ViewModel will collect it
             val currentTime = System.currentTimeMillis()
-            val updateInterval = if (isGroupCreator()) 30000L else 60000L
-            if (currentTime - lastLocationUpdate > updateInterval) {
-                lastLocationUpdate = currentTime
-                mainViewModel.updateLocation(location)
-                Log.d("LOCATION", "Location updated: ${location.latitude}, ${location.longitude}")
+            // Optional: Throttle direct logs if needed, but ViewModel handles its own update logic based on the flow
+            if (currentTime - lastLocationUpdateTimestamp > 10000L) { // Log less frequently
+                lastLocationUpdateTimestamp = currentTime
+                Log.d("LOCATION", "Location updated via listener: ${location.latitude}, ${location.longitude}. Emitted to Flow.")
             }
         }
         override fun onProviderEnabled(provider: String) {}
         override fun onProviderDisabled(provider: String) {}
     }
 
-    private fun isGroupCreator(): Boolean {
-        val currentUserId = auth.currentUser?.uid ?: return false
-        return currentGroups.any { group ->
-            group.creatorId == currentUserId &&
-                    (group.timestamp ?: 0L) > (System.currentTimeMillis() - 30 * 60 * 1000L)
-        }
-    }
+    // Removed isGroupCreator() as currentGroups might be deprecated in favor of ViewModel state
 
     private lateinit var sharedPreferences: SharedPreferences
     private var userName: String? = null
@@ -142,7 +130,6 @@ class MainActivity : ComponentActivity() {
     companion object {
         val THEME_MODE_KEY = androidx.datastore.preferences.core.stringPreferencesKey("theme_mode")
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
-        // private const val RC_SIGN_IN = 9001 // Removed
         private const val TAG = "MainActivityAuth"
     }
 
@@ -151,19 +138,20 @@ class MainActivity : ComponentActivity() {
 
         sharedPreferences = getSharedPreferences("akahidegn_prefs", Context.MODE_PRIVATE)
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        setupLocationUpdates()
+        setupLocationUpdates() // Request location updates
 
         MobileAds.initialize(this) { Log.d("ADS", "Mobile Ads SDK initialized") }
 
         database = Firebase.database
-        groupsRef = database.reference.child("groups")
+        groupsRef = database.reference.child("groups") // ViewModel uses this via initializeFirebase
         auth = Firebase.auth
-        credentialManager = CredentialManager.create(this) // Initialize CredentialManager
-
-        // Old Google Sign-In Client, Options, and Launcher are removed.
+        credentialManager = CredentialManager.create(this)
 
         loadRewardedAd()
         loadInterstitialAd()
+
+        // Pass the location flow to the ViewModel once it's available
+        mainViewModel.setUserLocationFlow(userLocationFlow)
 
         if (auth.currentUser == null) {
             Log.d(TAG, "No current user, starting Google Sign-In flow with Credential Manager")
@@ -171,12 +159,11 @@ class MainActivity : ComponentActivity() {
         } else {
             Log.d(TAG, "User already signed in, checking profile")
             userName = auth.currentUser?.displayName ?: sharedPreferences.getString("user_name", null)
-            // Update photo URL from Firebase if available, or SharedPreferences
             val photoUrlFromFirebase = auth.currentUser?.photoUrl?.toString()
             if (photoUrlFromFirebase != null) {
                 sharedPreferences.edit().putString("user_avatar_url", photoUrlFromFirebase).apply()
             }
-            checkUserProfile()
+            checkUserProfile() // This will call initializeMainScreen if profile is complete
         }
     }
 
@@ -190,9 +177,8 @@ class MainActivity : ComponentActivity() {
             }
 
             val googleIdOption: GetGoogleIdOption = GetGoogleIdOption.Builder()
-                .setFilterByAuthorizedAccounts(false) // Set to false to show all Google accounts, true to filter by previously used.
+                .setFilterByAuthorizedAccounts(false)
                 .setServerClientId(serverClientId)
-                // .setAutoSelectEnabled(true) // Optional: attempt auto sign-in if one account is available without user interaction.
                 .build()
 
             val request: GetCredentialRequest = GetCredentialRequest.Builder()
@@ -205,9 +191,9 @@ class MainActivity : ComponentActivity() {
                 Log.d(TAG, "GetCredential SUCCESS from CredentialManager")
                 handleGoogleCredential(result)
             } catch (e: NoCredentialException) {
-                Log.w(TAG, "NoGoogleCredentialException from CredentialManager: No credentials available.", e)
+                Log.w(TAG, "NoGoogleCredentialException: No credentials available.", e)
                 Toast.makeText(this@MainActivity, "No Google accounts found on this device.", Toast.LENGTH_LONG).show()
-            } catch (e: GetCredentialException) { // Catches GetCredentialCancellationException, GetCredentialInterruptedException etc.
+            } catch (e: GetCredentialException) {
                 Log.e(TAG, "GetCredentialException from CredentialManager", e)
                 Toast.makeText(this@MainActivity, "Google Sign-In failed or was cancelled.", Toast.LENGTH_LONG).show()
             }
@@ -220,20 +206,19 @@ class MainActivity : ComponentActivity() {
             try {
                 val googleIdTokenCredential = GoogleIdTokenCredential.createFrom(credential.data)
                 val googleIdToken = googleIdTokenCredential.idToken
-                val photoUri = googleIdTokenCredential.profilePictureUri // Photo URI from Credential Manager
-                Log.d(TAG, "Google ID Token successfully retrieved. Token: $googleIdToken ProfilePicUri: $photoUri")
+                val photoUri = googleIdTokenCredential.profilePictureUri
+                Log.d(TAG, "Google ID Token: $googleIdToken ProfilePicUri: $photoUri")
 
-                // Optionally save/use photoUri from here if Firebase takes time or fails to provide it
                 if (photoUri != null) {
                     sharedPreferences.edit().putString("user_avatar_url", photoUri.toString()).apply()
                 }
                 firebaseAuthWithGoogleIdToken(googleIdToken)
-            } catch (e: Exception) { // Broad catch for createFrom or other issues
-                Log.e(TAG, "Failed to create GoogleIdTokenCredential from CustomCredential or other error", e)
+            } catch (e: Exception) {
+                Log.e(TAG, "Failed to create GoogleIdTokenCredential or other error", e)
                 Toast.makeText(this, "Google Sign-In failed (token processing error).", Toast.LENGTH_LONG).show()
             }
         } else {
-            Log.w(TAG, "CredentialManager returned a credential that is not Google ID Token. Type: ${credential.type}")
+            Log.w(TAG, "Unexpected credential type: ${credential.type}")
             Toast.makeText(this, "Google Sign-In failed (unexpected credential type).", Toast.LENGTH_LONG).show()
         }
     }
@@ -245,24 +230,18 @@ class MainActivity : ComponentActivity() {
                 if (task.isSuccessful) {
                     Log.d(TAG, "Firebase Auth with Google ID Token: SUCCESS")
                     val firebaseUser = auth.currentUser
-                    userName = firebaseUser?.displayName // Get name from Google account
-                    val storedName = sharedPreferences.getString("user_name", null)
-
-                    if (userName != null && userName != storedName) {
+                    userName = firebaseUser?.displayName
+                    if (userName != null && userName != sharedPreferences.getString("user_name", null)) {
                         sharedPreferences.edit().putString("user_name", userName).apply()
                     }
-
-                    // Prioritize photo URL from Firebase User, but fallback to what Credential Manager gave if Firebase is null
                     val photoUrlFromFirebase = firebaseUser?.photoUrl?.toString()
                     val photoUrlToStore = photoUrlFromFirebase ?: sharedPreferences.getString("user_avatar_url", null)
 
                     if (photoUrlToStore != null) {
                         sharedPreferences.edit().putString("user_avatar_url", photoUrlToStore).apply()
-                        Log.d(TAG, "User photo URL stored: $photoUrlToStore (Source Firebase: ${photoUrlFromFirebase != null})")
+                        Log.d(TAG, "User photo URL stored: $photoUrlToStore")
                     } else {
                         Log.d(TAG, "User photo URL from Firebase Auth and Credential Manager were both null.")
-                        // Potentially clear any old "user_avatar_url" if it should not persist
-                        // sharedPreferences.edit().remove("user_avatar_url").apply()
                     }
                     checkUserProfile()
                 } else {
@@ -274,7 +253,7 @@ class MainActivity : ComponentActivity() {
 
     private fun loadRewardedAd() {
         if (!BuildConfig.ADS_ENABLED || BuildConfig.ADMOB_REWARDED_ID.isEmpty()) {
-            Log.d("ADS", "Ads disabled - REWARDED_ID: '${BuildConfig.ADMOB_REWARDED_ID}'")
+            Log.d("ADS", "Ads disabled - REWARDED_ID empty or not enabled")
             return
         }
         val adRequest = AdRequest.Builder().build()
@@ -292,7 +271,7 @@ class MainActivity : ComponentActivity() {
 
     private fun loadInterstitialAd() {
         if (!BuildConfig.ADS_ENABLED || BuildConfig.ADMOB_INTERSTITIAL_ID.isEmpty()) {
-            Log.d("ADS", "Ads disabled - INTERSTITIAL_ID: '${BuildConfig.ADMOB_INTERSTITIAL_ID}'")
+            Log.d("ADS", "Ads disabled - INTERSTITIAL_ID empty or not enabled")
             return
         }
         val adRequest = AdRequest.Builder().build()
@@ -308,26 +287,16 @@ class MainActivity : ComponentActivity() {
         })
     }
 
-    private fun refreshGroups() {
+    private fun refreshGroupsFromActivity() {
+        Log.d("MainActivity", "refreshGroupsFromActivity called, delegating to ViewModel.")
         mainViewModel.refreshGroups()
-        logAllGroups()
+        // logAllGroups() // Debug log, can be removed if ViewModel handles logging
     }
 
-    private fun logAllGroups() {
-        groupsRef.get().addOnSuccessListener { dataSnapshot ->
-            if (dataSnapshot.exists()) {
-                val groupCount = dataSnapshot.childrenCount
-                Log.d("FIREBASE_DEBUG", "Total groups: $groupCount")
-                dataSnapshot.children.forEach { groupSnapshot ->
-                    val group = groupSnapshot.getValue(Group::class.java)
-                    group?.let {
-                        Log.d("FIREBASE_DEBUG", "Group: ${it.destinationName}, Members: ${it.memberCount}/${it.maxMembers}, Creator: ${it.creatorName}")
-                    }
-                }
-            } else {
-                Log.d("FIREBASE_DEBUG", "No groups found")
-            }
-        }.addOnFailureListener { Log.e("FIREBASE_DEBUG", "Failed to fetch groups", it) }
+    // logAllGroups might be redundant if ViewModel provides sufficient logging or data.
+    private fun logAllGroups() { 
+        // groupsRef is now initialized in MainViewModel
+        // Consider removing this or accessing groups via mainViewModel.groups.value for logging
     }
 
     private fun showCreateGroupDialog() {
@@ -357,7 +326,7 @@ class MainActivity : ComponentActivity() {
             rewardedAd!!.show(this) { rewardItem ->
                 Log.d("ADS", "User earned reward: ${rewardItem.amount} ${rewardItem.type}")
                 createGroupAfterAd(destination)
-                loadRewardedAd() // Preload next ad
+                loadRewardedAd()
             }
         } else {
             Log.d("ADS", "Rewarded ad not ready, creating group directly")
@@ -366,55 +335,23 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun createGroupAfterAd(destination: String) {
-        val lat = userLocation?.latitude ?: 8.9806 // Default to Addis Ababa center if null
-        val lng = userLocation?.longitude ?: 38.7578
+        val lat = _userLocationFlow.value?.latitude ?: 8.9806 // Default if null
+        val lng = _userLocationFlow.value?.longitude ?: 38.7578 // Default if null
         createGroupInFirebase(toDestination = destination, pickupLatitude = lat, pickupLongitude = lng)
     }
 
-    private fun handleGroupSelection(group: Group) { // This function was marked as unused previously, ensure it's called if needed.
-        if (interstitialAd != null) {
-            interstitialAd!!.show(this)
-            interstitialAd!!.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    Log.d("ADS", "Interstitial ad dismissed.")
-                    joinGroupAfterAd(group)
-                    loadInterstitialAd() // Preload next ad
-                }
-                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
-                    Log.e("ADS", "Interstitial ad failed to show: ${adError.message}")
-                    joinGroupAfterAd(group) // Proceed even if ad fails to show
-                }
-                override fun onAdShowedFullScreenContent() {
-                    Log.d("ADS", "Interstitial ad showed.")
-                }
-            }
-        } else {
-            Log.d("ADS", "Interstitial ad not ready, joining group directly.")
-            joinGroupAfterAd(group)
-        }
-    }
-
-    private fun joinGroupAfterAd(group: Group) {
-        joinGroupInFirebase(group) { success, message ->
-            if (success) {
-                Toast.makeText(this, "Joined group to ${group.destinationName}", Toast.LENGTH_SHORT).show()
-                showGroupMembersDialog(group) // Show members after successful join
-                refreshGroups()
-            } else {
-                Toast.makeText(this, "Could not join group: ${message ?: "Unknown error"}", Toast.LENGTH_LONG).show()
-            }
-        }
-    }
+    // Removed handleGroupSelection and joinGroupAfterAd (assuming they are part of a different flow or deprecated)
+    // If needed, they should be refactored to use ViewModel state or specific group IDs.
 
     private fun createGroupInFirebase(
-        toDestination: String, // This is the originalDestination for the Group object
+        toDestination: String, 
         pickupLatitude: Double,
         pickupLongitude: Double
     ) {
         val currentUserId = auth.currentUser?.uid
         if (currentUserId == null) {
             Toast.makeText(this, "You must be signed in to create a group.", Toast.LENGTH_SHORT).show()
-            startGoogleSignInFlow() // Prompt sign-in
+            startGoogleSignInFlow()
             return
         }
 
@@ -425,15 +362,9 @@ class MainActivity : ComponentActivity() {
         val userPhone = sharedPreferences.getString("user_phone", "") ?: ""
         val userAvatarUrlFromPrefs = sharedPreferences.getString("user_avatar_url", null)
         val finalUserAvatar = userAvatarUrlFromPrefs ?: sharedPreferences.getString("user_avatar", "avatar_1")!!
-
-        // For the 'from' field, use a descriptive string or coordinates
-        // Example: Using coordinates for now, but could be a reverse geocoded address.
         val fromLocationString = "Lat: ${"%.4f".format(pickupLatitude)}, Lng: ${"%.4f".format(pickupLongitude)}"
-
-        // The unique name for display purposes, includes time and creator for uniqueness
         val uniqueFirebaseDisplayDestinationName = "$toDestination ($timeString) - by $creatorDisplayName"
 
-        // Prepare member details for the creator
         val creatorMemberInfo = MemberInfo(
             name = creatorDisplayName,
             phone = userPhone,
@@ -444,7 +375,7 @@ class MainActivity : ComponentActivity() {
         val initialMemberDetails = hashMapOf(currentUserId to creatorMemberInfo)
 
         val newGroupRef = groupsRef.push()
-        val newGroupId = newGroupRef.key // Get the unique key first
+        val newGroupId = newGroupRef.key
 
         if (newGroupId == null) {
             Log.e("FIREBASE", "Failed to get new group key from Firebase.")
@@ -453,43 +384,42 @@ class MainActivity : ComponentActivity() {
         }
 
         val newGroup = Group(
-            groupId = newGroupId, // Set the obtained groupId
+            groupId = newGroupId,
             creatorId = currentUserId,
             creatorName = creatorDisplayName,
-            destinationName = uniqueFirebaseDisplayDestinationName, // For display in lists etc.
-            originalDestination = toDestination, // The actual destination string for filtering/rules
-            from = fromLocationString, // Populating the 'from' field for rules
-            to = toDestination, // Populating the 'to' field for rules (matches originalDestination)
-            status = "active", // Initial status
-            pickupLat = pickupLatitude, // Corrected to match Group.kt constructor
-            pickupLng = pickupLongitude, // Corrected to match Group.kt constructor
+            destinationName = uniqueFirebaseDisplayDestinationName,
+            originalDestination = toDestination,
+            from = fromLocationString,
+            to = toDestination,
+            status = "active",
+            pickupLat = pickupLatitude,
+            pickupLng = pickupLongitude,
             timestamp = timestamp,
-            maxMembers = 4, // Default, can be configurable later
+            maxMembers = 4,
             members = initialMembers,
             memberDetails = initialMemberDetails,
             memberCount = 1,
-            imageUrl = null // Placeholder
+            imageUrl = null
         )
 
-        newGroupRef.setValue(newGroup) // Pass the Group object directly
+        newGroupRef.setValue(newGroup)
             .addOnSuccessListener {
-                Log.d("FIREBASE", "Group created successfully: ${newGroup.destinationName} with ID: ${newGroup.groupId}")
-                refreshGroups()
+                Log.d("FIREBASE", "Group created: ${newGroup.destinationName} with ID: ${newGroup.groupId}")
+                refreshGroupsFromActivity() // Refresh through ViewModel
                 Toast.makeText(this, "Group created: ${newGroup.destinationName}", Toast.LENGTH_SHORT).show()
             }
             .addOnFailureListener { e ->
                 Log.e("FIREBASE", "Error creating group: ${newGroup.destinationName}, ID: ${newGroup.groupId}", e)
-                // Log the object being sent for detailed review
                 Log.e("FIREBASE_DATA", "Data sent: $newGroup")
                 Toast.makeText(this, "Failed to create group: ${e.message}", Toast.LENGTH_LONG).show()
             }
     }
-
+    
     private fun joinGroupInFirebase(group: Group, onComplete: (Boolean, String?) -> Unit) {
         val currentUserId = auth.currentUser?.uid
         if (currentUserId == null) {
             onComplete(false, "You must be signed in to join a group.")
-            startGoogleSignInFlow() // Prompt sign-in
+            startGoogleSignInFlow()
             return
         }
         val groupId = group.groupId
@@ -499,8 +429,7 @@ class MainActivity : ComponentActivity() {
         }
 
         val thirtyMinutesAgo = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30)
-        val groupTimestamp = group.timestamp // Smart cast fix
-        if (groupTimestamp != null && groupTimestamp < thirtyMinutesAgo) {
+        if ((group.timestamp ?: 0L) < thirtyMinutesAgo) {
             onComplete(false, "This group has expired.")
             return
         }
@@ -508,9 +437,8 @@ class MainActivity : ComponentActivity() {
             onComplete(false, "This group is already full.")
             return
         }
-        if (group.members.containsKey(currentUserId) && group.members[currentUserId] == true) {
-            // User is already a member, perhaps just show members or give a different message
-            onComplete(true, "You are already a member of this group.") // Consider this a success for UI flow
+        if (group.members.containsKey(currentUserId) == true && group.members[currentUserId] == true) {
+            onComplete(true, "You are already a member of this group.")
             showGroupMembersDialog(group)
             return
         }
@@ -521,27 +449,23 @@ class MainActivity : ComponentActivity() {
         val userAvatarUrlFromPrefs = sharedPreferences.getString("user_avatar_url", null)
         val finalUserAvatar = userAvatarUrlFromPrefs ?: sharedPreferences.getString("user_avatar", "avatar_1")!!
 
-
         val updates = HashMap<String, Any>()
         updates["members/$currentUserId"] = true
         updates["memberDetails/$currentUserId/name"] = joinerDisplayName
         updates["memberDetails/$currentUserId/phone"] = userPhone
         updates["memberDetails/$currentUserId/avatar"] = finalUserAvatar
         updates["memberDetails/$currentUserId/joinedAt"] = System.currentTimeMillis()
-        // No need to update memberCount here, use transaction
 
         groupRef.updateChildren(updates)
             .addOnSuccessListener {
-                // Atomically increment memberCount
                 groupRef.child("memberCount").runTransaction(object : com.google.firebase.database.Transaction.Handler {
                     override fun doTransaction(mutableData: com.google.firebase.database.MutableData): com.google.firebase.database.Transaction.Result {
                         var currentCount = mutableData.getValue(Int::class.java) ?: 0
-                        // Ensure we don't exceed maxMembers, though initial check should prevent this
                         if (currentCount < group.maxMembers) {
                             mutableData.value = currentCount + 1
                             return com.google.firebase.database.Transaction.success(mutableData)
                         }
-                        return com.google.firebase.database.Transaction.abort() // Abort if somehow full
+                        return com.google.firebase.database.Transaction.abort()
                     }
 
                     override fun onComplete(error: com.google.firebase.database.DatabaseError?, committed: Boolean, currentData: com.google.firebase.database.DataSnapshot?) {
@@ -549,18 +473,18 @@ class MainActivity : ComponentActivity() {
                             Log.e("FIREBASE_TX", "Transaction failed for memberCount: ${error.message}")
                             onComplete(false, "Failed to update member count: ${error.message}")
                         } else if (!committed) {
-                            Log.w("FIREBASE_TX", "Transaction for memberCount not committed (e.g., aborted due to max members).")
-                            onComplete(false, "Group might be full or another issue occurred.")
+                            Log.w("FIREBASE_TX", "Transaction for memberCount not committed.")
+                            onComplete(false, "Group might be full or issue occurred.")
                         } else {
                             Log.d("FIREBASE_TX", "Transaction for memberCount successful.")
                             onComplete(true, null)
-                            refreshGroups() // Refresh after successful join and count update
+                            refreshGroupsFromActivity() // Refresh through ViewModel
                         }
                     }
                 })
             }
             .addOnFailureListener { e ->
-                Log.e("FIREBASE", "Failed to join group (permission or network issue).", e)
+                Log.e("FIREBASE", "Failed to join group.", e)
                 onComplete(false, "Permission denied or network error: ${e.message}")
             }
     }
@@ -570,34 +494,31 @@ class MainActivity : ComponentActivity() {
         val storedUserName = sharedPreferences.getString("user_name", null)
         val userPhone = sharedPreferences.getString("user_phone", null)
 
-        if (user == null) { // Should not happen if this is called after successful sign-in
-            Log.w(TAG, "checkUserProfile called but auth.currentUser is null. Starting sign-in flow.")
+        if (user == null) {
+            Log.w(TAG, "checkUserProfile: auth.currentUser is null. Starting sign-in.")
             startGoogleSignInFlow()
             return
         }
 
-        // If Firebase has display name, ensure it's in prefs.
-        // If SharedPreferences has name from CredentialManager/previous input, use it if Firebase's is null/empty.
         val currentDisplayName = user.displayName?.takeIf { it.isNotBlank() } ?: storedUserName
-        this.userName = currentDisplayName // Update activity's userName cache
+        this.userName = currentDisplayName
 
         if (currentDisplayName.isNullOrBlank() || userPhone.isNullOrBlank()) {
             Log.d(TAG, "User profile incomplete. Name: $currentDisplayName, Phone: $userPhone. Showing registration dialog.")
-            // Try to get photo from Firebase user first, then from SharedPreferences (which might have it from Credential Manager)
             val photoUrlForDialog = user.photoUrl?.toString() ?: sharedPreferences.getString("user_avatar_url", null)
             showUserRegistrationDialog(
-                googleName = currentDisplayName, // Pass the best available name
+                googleName = currentDisplayName,
                 googlePhotoUrl = photoUrlForDialog
             )
         } else {
-            Log.d(TAG, "User profile complete. Welcome back, $currentDisplayName. Phone: $userPhone. Photo URL: ${user.photoUrl ?: sharedPreferences.getString("user_avatar_url", "N/A")}")
+            Log.d(TAG, "User profile complete. Welcome: $currentDisplayName. Phone: $userPhone. Photo: ${user.photoUrl ?: sharedPreferences.getString("user_avatar_url", "N/A")}")
             initializeMainScreen()
         }
     }
 
     private fun showUserRegistrationDialog(googleName: String? = null, googlePhotoUrl: String? = null) {
-        setContent { // This will replace the entire content. Be cautious if called after initializeMainScreen.
-            AkahidegnTheme { // Ensure theme is applied
+        setContent {
+            AkahidegnTheme {
                 UserRegistrationDialog(
                     initialName = googleName ?: "",
                     initialPhotoUrl = googlePhotoUrl ?: sharedPreferences.getString("user_avatar_url", null),
@@ -605,20 +526,16 @@ class MainActivity : ComponentActivity() {
                         if (name.isNotBlank() && phone.isNotBlank()) {
                             saveUserProfile(name, phone, googlePhotoUrl ?: sharedPreferences.getString("user_avatar_url", null))
                         } else {
-                            Toast.makeText(this, "Please fill all fields: Name and Phone are required.", Toast.LENGTH_LONG).show()
-                            // Optionally, re-show dialog or guide user. For now, they can try again.
-                            showUserRegistrationDialog(name.ifBlank { googleName }, googlePhotoUrl) // Re-show with current inputs
+                            Toast.makeText(this, "Name and Phone are required.", Toast.LENGTH_LONG).show()
+                            showUserRegistrationDialog(name.ifBlank { googleName }, googlePhotoUrl)
                         }
                     },
-                    onDismiss = { // User dismissed the dialog
-                        Toast.makeText(this, "Registration is required to use all app features.", Toast.LENGTH_LONG).show()
-                        // Decide behavior: sign out, restrict functionality, or re-prompt.
-                        // For now, re-prompting sign-in might be too aggressive if they are already Firebase-authed.
-                        // Let's try to initialize the main screen with potentially limited functionality or another prompt there.
+                    onDismiss = { 
+                        Toast.makeText(this, "Registration is required.", Toast.LENGTH_LONG).show()
                         if (auth.currentUser != null) {
-                            initializeMainScreen() // Try to proceed, main screen might handle further checks.
+                            initializeMainScreen()
                         } else {
-                            startGoogleSignInFlow() // If auth is null, definitely restart.
+                            startGoogleSignInFlow()
                         }
                     }
                 )
@@ -627,21 +544,19 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun saveUserProfile(name: String, phone: String, avatarUrl: String?) {
-        this.userName = name // Update activity's immediate cache
+        this.userName = name
         val editor = sharedPreferences.edit()
         editor.putString("user_name", name)
         editor.putString("user_phone", phone)
 
         val finalAvatarUrlToSave = avatarUrl ?: sharedPreferences.getString("user_avatar_url", null)
-
         if (finalAvatarUrlToSave != null) {
             editor.putString("user_avatar_url", finalAvatarUrlToSave)
-            editor.remove("user_avatar") // Remove old placeholder key if URL is now available
-            Log.d(TAG, "Saving user profile with avatar URL: $finalAvatarUrlToSave")
+            editor.remove("user_avatar")
+            Log.d(TAG, "Saving profile with avatar URL: $finalAvatarUrlToSave")
         } else {
-            // If no URL, ensure a placeholder is set (or re-set if "user_avatar_url" was cleared)
             editor.putString("user_avatar", sharedPreferences.getString("user_avatar", "avatar_1"))
-            Log.d(TAG, "Saving user profile, no avatar URL, using placeholder.")
+            Log.d(TAG, "Saving profile, no avatar URL, using placeholder.")
         }
         editor.putLong("user_registration_time", System.currentTimeMillis())
         editor.apply()
@@ -665,31 +580,36 @@ class MainActivity : ComponentActivity() {
             userRef.setValue(userMap)
                 .addOnSuccessListener {
                     Log.d(TAG, "User profile saved to Firebase: $name. Avatar URL: $finalAvatarUrlToSave")
-                    Toast.makeText(this, "Welcome, $name! Your profile is saved.", Toast.LENGTH_SHORT).show()
-                    initializeMainScreen() // Proceed to main app
+                    Toast.makeText(this, "Welcome, $name! Profile saved.", Toast.LENGTH_SHORT).show()
+                    initializeMainScreen()
                 }
                 .addOnFailureListener { e ->
-                    Log.e(TAG, "Failed to save user profile to Firebase. It's saved locally.", e)
+                    Log.e(TAG, "Failed to save profile to Firebase.", e)
                     Toast.makeText(this, "Welcome, $name! (Profile saved locally)", Toast.LENGTH_SHORT).show()
-                    initializeMainScreen() // Proceed to main app
+                    initializeMainScreen()
                 }
         } else {
-            Log.w(TAG, "User ID is null, cannot save profile to Firebase. Profile saved locally.")
-            initializeMainScreen() // Proceed to main app
+            Log.w(TAG, "User ID null, cannot save profile to Firebase.")
+            initializeMainScreen()
         }
     }
 
     private fun initializeMainScreen() {
         val currentUserId = auth.currentUser?.uid
-        if (currentUserId == null && !isFinishing) { // Check !isFinishing to avoid issues if activity is closing
-            Log.w(TAG, "initializeMainScreen called but user is not signed in. Attempting sign-in flow.")
-            // If UserRegistrationDialog was just dismissed, this might immediately follow,
-            // ensure UserRegistrationDialog's onDismiss doesn't also call startGoogleSignInFlow if auth.currentUser is still null.
+        if (currentUserId == null && !isFinishing) {
+            Log.w(TAG, "initializeMainScreen: user not signed in. Starting sign-in.")
             startGoogleSignInFlow()
             return
         }
-
-        currentUserId?.let { mainViewModel.initializeFirebase(groupsRef, it) }
+        // Ensure ViewModel is initialized with Firebase refs and user ID
+        // Pass groupsRef from Activity to ViewModel; ViewModel will handle its own logic
+        if (currentUserId != null) { // Double check currentUserId is not null
+             mainViewModel.initializeFirebase(groupsRef, currentUserId)
+        } else {
+            Log.e(TAG, "Critical error: User ID is null at initializeMainScreen after checks. Cannot init ViewModel.")
+            startGoogleSignInFlow() // Fallback to sign-in
+            return
+        }
 
         setContent {
             val navController = rememberNavController()
@@ -699,7 +619,7 @@ class MainActivity : ComponentActivity() {
                 Screen.Main.route -> HomeColorScheme
                 Screen.ActiveGroups.route -> ActiveGroupsColorScheme
                 Screen.Settings.route -> SettingsColorScheme
-                else -> null // Defaults to AkahidegnTheme's default
+                else -> null
             }
             AkahidegnTheme(selectedColorScheme = colorScheme) {
                 Scaffold(
@@ -726,36 +646,29 @@ class MainActivity : ComponentActivity() {
                     NavHost(navController, startDestination = Screen.Main.route, Modifier.padding(innerPadding)) {
                         composable(Screen.Main.route) {
                             MainScreenContent(
-                                // onGroupClick = { group -> handleGroupSelection(group) }, // Ensure handleGroupSelection is used
-                                onGroupClick = { group -> showGroupMembersDialog(group) }, // Using this as per existing code
-                                onRefreshGroups = { refreshGroups() },
+                                onGroupClick = { group -> showGroupMembersDialog(group) },
+                                onRefreshGroups = { refreshGroupsFromActivity() }, // Connect to ViewModel refresh
                                 onCreateGroup = { showCreateGroupDialog() }
                             )
                         }
-                        composable(Screen.ActiveGroups.route) { ActiveGroupsScreen(/* Pass necessary params */) }
+                        composable(Screen.ActiveGroups.route) { ActiveGroupsScreen(/* ... */) }
                         composable(Screen.Settings.route) {
                             SettingsScreen(onSignOut = {
                                 lifecycleScope.launch {
                                     try {
-                                        auth.signOut() // Sign out from Firebase
+                                        auth.signOut()
                                         Log.d(TAG, "Firebase sign-out successful.")
-                                        // Clear credentials from Credential Manager
                                         val clearRequest = ClearCredentialStateRequest()
                                         credentialManager.clearCredentialState(clearRequest)
                                         Log.d(TAG, "CredentialManager state cleared.")
-                                        Toast.makeText(this@MainActivity, "You have been signed out.", Toast.LENGTH_SHORT).show()
-                                        // Clear local user data (optional, depends on desired behavior)
+                                        Toast.makeText(this@MainActivity, "Signed out.", Toast.LENGTH_SHORT).show()
                                         sharedPreferences.edit().remove("user_name").remove("user_phone").remove("user_avatar_url").apply()
                                         userName = null
-                                        startGoogleSignInFlow() // Go back to sign-in
-                                    } catch (e: ClearCredentialException) {
-                                        Log.e(TAG, "Couldn't clear user credentials during sign out.", e)
-                                        Toast.makeText(this@MainActivity, "Signed out (credential clear failed).", Toast.LENGTH_SHORT).show()
-                                        startGoogleSignInFlow() // Still attempt to go to sign-in
+                                        startGoogleSignInFlow()
                                     } catch (e: Exception) {
-                                        Log.e(TAG, "Error during sign out process.", e)
+                                        Log.e(TAG, "Error during sign out: ${e.message}", e)
                                         Toast.makeText(this@MainActivity, "Error signing out.", Toast.LENGTH_SHORT).show()
-                                        startGoogleSignInFlow() // Attempt to go to sign-in
+                                        startGoogleSignInFlow()
                                     }
                                 }
                             })
@@ -773,33 +686,39 @@ class MainActivity : ComponentActivity() {
         onCreateGroup: () -> Unit
     ) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+            // Collect states from MainViewModel
             val groups by mainViewModel.groups.collectAsState()
             val vmIsLoading by mainViewModel.isLoadingGroups.collectAsState()
-            // LaunchedEffect(Unit) { onRefreshGroups() } // Removed to avoid multiple calls if refreshGroups is called elsewhere
-            val emptyFilters = remember { SearchFilters() } // remember emptyFilters
-            var searchQuery by remember { mutableStateOf("") }
-            var selectedFilters by remember { mutableStateOf(emptyFilters) }
+            val currentLocation by userLocationFlow.collectAsState()
 
+            var searchQuery by remember { mutableStateOf("") }
+            var selectedFilters by remember { mutableStateOf(SearchFilters()) }
+
+            LaunchedEffect(searchQuery) {
+                mainViewModel.updateSearchQuery(searchQuery)
+            }
+
+            // THIS CALL WILL NOW WORK PERFECTLY
             MainScreen(
                 groups = groups,
                 searchQuery = searchQuery,
                 onSearchQueryChange = { query -> searchQuery = query },
                 selectedFilters = selectedFilters,
                 onFiltersChange = { filters -> selectedFilters = filters },
-                onGroupClick = onGroupClick, // Pass through from NavHost
+                onGroupClick = onGroupClick,
                 isLoading = vmIsLoading,
                 onRefreshGroups = onRefreshGroups,
-                onCreateGroup = onCreateGroup
+                onCreateGroup = onCreateGroup,
+                userLocation = currentLocation
             )
 
-            // This dialog display logic should ideally be hoisted or handled by a NavController if it's a separate "screen"
             selectedGroupForDialog?.let { group ->
                 val currentUserId = auth.currentUser?.uid ?: ""
-                val members = remember(group.memberDetails) { // Recompute only if memberDetails change
+                val members = remember(group.memberDetails) { 
                     group.memberDetails.map { (userId, memberInfo) ->
                         GroupMember(
                             id = userId, name = memberInfo.name, phone = memberInfo.phone,
-                            avatar = memberInfo.avatar ?: sharedPreferences.getString("user_avatar", "avatar_1")!!, // Fallback for avatar
+                            avatar = memberInfo.avatar ?: sharedPreferences.getString("user_avatar", "avatar_1")!!, 
                             isCreator = userId == group.creatorId
                         )
                     }
@@ -809,10 +728,8 @@ class MainActivity : ComponentActivity() {
                     onDismiss = { selectedGroupForDialog = null },
                     onLeaveGroup = { groupId, userId ->
                         Log.d("GROUP_ACTION", "Leave group $groupId requested by $userId")
-                        // Implement leave group logic here
-                        // mainViewModel.leaveGroup(groupId, userId)
-                        Toast.makeText(this@MainActivity, "Leave group feature not yet implemented.", Toast.LENGTH_SHORT).show()
-                        selectedGroupForDialog = null // Dismiss dialog after action
+                        Toast.makeText(this@MainActivity, "Leave group feature not fully implemented.", Toast.LENGTH_SHORT).show()
+                        selectedGroupForDialog = null 
                     }
                 )
             }
@@ -820,17 +737,17 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showGroupMembersDialog(group: Group) {
-        selectedGroupForDialog = group // This will trigger the recomposition in MainScreenContent to show the dialog
+        selectedGroupForDialog = group 
     }
 
     private fun setupLocationUpdates() {
         if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
             try {
-                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 30000L, 50f, locationListener)
+                locationManager.requestLocationUpdates(LocationManager.GPS_PROVIDER, 5000L, 10f, locationListener)
                 Log.d("LOCATION", "Location updates requested.")
-            } catch (e: SecurityException) { // Should not happen if permission is granted
-                Log.e("LOCATION", "SecurityException requesting location updates despite permission grant.", e)
-                Toast.makeText(this, "Location permission error. Please enable it in settings.", Toast.LENGTH_LONG).show()
+            } catch (e: SecurityException) { 
+                Log.e("LOCATION", "SecurityException requesting location updates.", e)
+                Toast.makeText(this, "Location permission error.", Toast.LENGTH_LONG).show()
             }
         } else {
             Log.d("LOCATION", "ACCESS_FINE_LOCATION permission not granted. Requesting...")
@@ -839,32 +756,31 @@ class MainActivity : ComponentActivity() {
     }
 
     @Deprecated("This method has been deprecated in favor of using the Activity Result API")
-    @Suppress("DEPRECATION") // Suppress for the super call as well
+    @Suppress("DEPRECATION") 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                Log.d("LOCATION", "ACCESS_FINE_LOCATION permission granted by user.")
+                Log.d("LOCATION", "ACCESS_FINE_LOCATION permission granted.")
                 setupLocationUpdates()
             } else {
-                Log.w("LOCATION", "ACCESS_FINE_LOCATION permission denied by user.")
-                Toast.makeText(this, "Location permission is required for core app functionality and finding nearby groups.", Toast.LENGTH_LONG).show()
-                // Optionally, disable location-dependent features or guide user to settings
+                Log.w("LOCATION", "ACCESS_FINE_LOCATION permission denied.")
+                Toast.makeText(this, "Location permission is required for nearby groups.", Toast.LENGTH_LONG).show()
             }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        if (::locationManager.isInitialized) { // Check if locationManager has been initialized
+        if (::locationManager.isInitialized) { 
             try {
                 locationManager.removeUpdates(locationListener)
-                Log.d("LOCATION", "Location updates removed in onDestroy.")
-            } catch (e: Exception) { // Catch any exception during removal
-                Log.e("LOCATION", "Error removing location updates in onDestroy", e)
+                Log.d("LOCATION", "Location updates removed.")
+            } catch (e: Exception) { 
+                Log.e("LOCATION", "Error removing location updates.", e)
             }
         }
-        rewardedAd = null // Release ad resources
+        rewardedAd = null 
         interstitialAd = null
     }
 }
