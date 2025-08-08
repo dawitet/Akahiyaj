@@ -37,16 +37,18 @@ import androidx.compose.material3.Text
 import com.dawitf.akahidegn.ui.theme.HomeColorScheme
 import com.dawitf.akahidegn.ui.theme.ActiveGroupsColorScheme
 import com.dawitf.akahidegn.ui.theme.SettingsColorScheme
-import androidx.navigation.compose.NavHost
-import androidx.navigation.compose.composable
-import androidx.navigation.compose.rememberNavController
 import com.dawitf.akahidegn.ui.screens.ActiveGroupsScreen
 import com.dawitf.akahidegn.ui.screens.SettingsScreen
 import com.dawitf.akahidegn.ui.screens.MainScreen
 import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
 import com.dawitf.akahidegn.viewmodel.MainViewModel
+import com.dawitf.akahidegn.ui.components.UserRegistrationDialog
+import com.dawitf.akahidegn.ui.components.GroupMembersDialog
+import com.dawitf.akahidegn.ui.components.GroupMember
+import com.dawitf.akahidegn.domain.model.SearchFilters
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
+import com.google.firebase.auth.GoogleAuthProvider
 import com.google.firebase.database.DatabaseReference
 import com.google.firebase.database.FirebaseDatabase
 import com.google.firebase.database.ktx.database
@@ -55,9 +57,6 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
-import com.dawitf.akahidegn.ui.components.UserRegistrationDialog
-import com.dawitf.akahidegn.ui.components.GroupMembersDialog
-import com.dawitf.akahidegn.ui.components.GroupMember
 import com.google.android.gms.ads.AdRequest
 import com.google.android.gms.ads.LoadAdError
 import com.google.android.gms.ads.MobileAds
@@ -67,9 +66,8 @@ import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
 import android.app.AlertDialog
 import android.widget.EditText
-import com.dawitf.akahidegn.domain.model.SearchFilters
-import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
 
 import androidx.credentials.CredentialManager
 import androidx.credentials.CustomCredential
@@ -85,11 +83,20 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import com.dawitf.akahidegn.core.error.ErrorHandler
+import com.dawitf.akahidegn.activityhistory.ActivityHistoryRepository
+import com.dawitf.akahidegn.domain.model.TripHistoryItem
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.NavController
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
+    @Inject lateinit var errorHandler: ErrorHandler
+    @Inject lateinit var activityHistoryRepository: ActivityHistoryRepository
 
     private lateinit var database: FirebaseDatabase
     private lateinit var groupsRef: DatabaseReference
@@ -104,6 +111,9 @@ class MainActivity : ComponentActivity() {
 
     private val _userLocationFlow = MutableStateFlow<Location?>(null)
     val userLocationFlow: StateFlow<Location?> = _userLocationFlow.asStateFlow()
+
+    // Debug automation flags
+    private var autoTestGroupCreated = false
 
     private lateinit var locationManager: LocationManager
     private var lastLocationUpdateTimestamp = 0L // Renamed for clarity
@@ -135,8 +145,13 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        sharedPreferences = getSharedPreferences("akahidegn_prefs", Context.MODE_PRIVATE)
+        // Example of using errorHandler for a guarded call
+        try {
+            sharedPreferences = getSharedPreferences("akahhidegn_prefs", Context.MODE_PRIVATE)
+        } catch (t: Throwable) {
+            errorHandler.log(t, "prefs_init")
+            Toast.makeText(this, errorHandler.toUserMessage(t), Toast.LENGTH_LONG).show()
+        }
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         setupLocationUpdates() // Request location updates
 
@@ -156,6 +171,40 @@ class MainActivity : ComponentActivity() {
         if (auth.currentUser == null) {
             Log.d(TAG, "No current user, starting Google Sign-In flow with Credential Manager")
             startGoogleSignInFlow()
+            // DEBUG FALLBACK: If running a debug build on an emulator without any Google accounts,
+            // automatically sign in anonymously after a short delay so we can proceed with smoke tests.
+            if (BuildConfig.DEBUG) {
+                lifecycleScope.launch {
+                    kotlinx.coroutines.delay(3500)
+                    if (auth.currentUser == null) {
+                        Log.w(TAG, "DEBUG FALLBACK: No user after Credential flow delay, attempting anonymous sign-in for smoke test")
+                        auth.signInAnonymously()
+                            .addOnSuccessListener {
+                                Log.d(TAG, "DEBUG FALLBACK: Anonymous sign-in success -> checking profile")
+                                // In debug we auto-complete a minimal profile so UI can load for smoke test
+                                if (BuildConfig.DEBUG) {
+                                    val existingName = sharedPreferences.getString("user_name", null)
+                                    val existingPhone = sharedPreferences.getString("user_phone", null)
+                                    if (existingName.isNullOrBlank() || existingPhone.isNullOrBlank()) {
+                                        Log.d(TAG, "DEBUG FALLBACK: Injecting dummy profile for anonymous user")
+                                        saveUserProfile(
+                                            name = existingName ?: "Debug User",
+                                            phone = existingPhone ?: "0000000000",
+                                            avatarUrl = sharedPreferences.getString("user_avatar_url", null)
+                                        )
+                                    } else {
+                                        checkUserProfile()
+                                    }
+                                } else {
+                                    checkUserProfile()
+                                }
+                            }
+                            .addOnFailureListener { e ->
+                                Log.e(TAG, "DEBUG FALLBACK: Anonymous sign-in failed", e)
+                            }
+                    }
+                }
+            }
         } else {
             Log.d(TAG, "User already signed in, checking profile")
             userName = auth.currentUser?.displayName ?: sharedPreferences.getString("user_name", null)
@@ -348,6 +397,7 @@ class MainActivity : ComponentActivity() {
         pickupLatitude: Double,
         pickupLongitude: Double
     ) {
+    Log.d("SMOKE_TEST", "createGroupInFirebase called dest=$toDestination lat=$pickupLatitude lng=$pickupLongitude user=${auth.currentUser?.uid}")
         val currentUserId = auth.currentUser?.uid
         if (currentUserId == null) {
             Toast.makeText(this, "You must be signed in to create a group.", Toast.LENGTH_SHORT).show()
@@ -407,6 +457,21 @@ class MainActivity : ComponentActivity() {
                 Log.d("FIREBASE", "Group created: ${newGroup.destinationName} with ID: ${newGroup.groupId}")
                 refreshGroupsFromActivity() // Refresh through ViewModel
                 Toast.makeText(this, "Group created: ${newGroup.destinationName}", Toast.LENGTH_SHORT).show()
+
+                lifecycleScope.launch {
+                    runCatching {
+                        activityHistoryRepository.add(
+                            TripHistoryItem(
+                                tripId = newGroupId,
+                                groupId = newGroupId,
+                                destinationName = newGroup.destinationName ?: toDestination,
+                                memberCount = 1,
+                                role = "CREATOR",
+                                status = "ACTIVE"
+                            )
+                        )
+                    }.onFailure { e -> Log.e("HISTORY", "Failed to record created group", e) }
+                }
             }
             .addOnFailureListener { e ->
                 Log.e("FIREBASE", "Error creating group: ${newGroup.destinationName}, ID: ${newGroup.groupId}", e)
@@ -479,6 +544,20 @@ class MainActivity : ComponentActivity() {
                             Log.d("FIREBASE_TX", "Transaction for memberCount successful.")
                             onComplete(true, null)
                             refreshGroupsFromActivity() // Refresh through ViewModel
+                            lifecycleScope.launch {
+                                runCatching {
+                                    activityHistoryRepository.add(
+                                        TripHistoryItem(
+                                            tripId = groupId,
+                                            groupId = groupId,
+                                            destinationName = group.destinationName ?: group.to.orEmpty(),
+                                            memberCount = (group.memberCount + 1),
+                                            role = "MEMBER",
+                                            status = "ACTIVE"
+                                        )
+                                    )
+                                }.onFailure { e -> Log.e("HISTORY", "Failed to record joined group", e) }
+                            }
                         }
                     }
                 })
@@ -628,7 +707,7 @@ class MainActivity : ComponentActivity() {
                             val items = listOf(Screen.Main, Screen.ActiveGroups, Screen.Settings)
                             items.forEach { screen ->
                                 NavigationBarItem(
-                                    icon = { Icon(screen.icon, contentDescription = screen.title) },
+                                    icon = { screen.icon?.let { Icon(imageVector = it, contentDescription = screen.title) } },
                                     label = { Text(screen.title) },
                                     selected = currentRoute == screen.route || currentRoute?.startsWith(screen.route) == true,
                                     onClick = {
@@ -646,8 +725,9 @@ class MainActivity : ComponentActivity() {
                     NavHost(navController, startDestination = Screen.Main.route, Modifier.padding(innerPadding)) {
                         composable(Screen.Main.route) {
                             MainScreenContent(
+                                navController = navController,
                                 onGroupClick = { group -> showGroupMembersDialog(group) },
-                                onRefreshGroups = { refreshGroupsFromActivity() }, // Connect to ViewModel refresh
+                                onRefreshGroups = { refreshGroupsFromActivity() },
                                 onCreateGroup = { showCreateGroupDialog() }
                             )
                         }
@@ -673,14 +753,77 @@ class MainActivity : ComponentActivity() {
                                 }
                             })
                         }
+                        composable(Screen.Profile.route) { backStack ->
+                            val userId = backStack.arguments?.getString("userId") ?: return@composable
+                            com.dawitf.akahidegn.ui.screens.profile.ProfileScreen(
+                                userId = userId,
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+                        composable(Screen.ActivityHistory.route) {
+                            com.dawitf.akahidegn.ui.activity.ActivityHistoryScreen(
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
                     }
                 }
+            }
+        }
+
+        // DEBUG AUTO-SMOKE: create a temporary test group a few seconds after UI loads (debug builds only)
+        if (BuildConfig.DEBUG && !autoTestGroupCreated) {
+            Log.d("SMOKE_TEST", "Scheduling auto group creation for smoke test")
+            lifecycleScope.launch {
+                try {
+                    // Small delay to allow first frame & initial refresh
+                    kotlinx.coroutines.delay(2500)
+                    val user = auth.currentUser
+                    if (user != null && !autoTestGroupCreated) {
+                        val lat = _userLocationFlow.value?.latitude ?: 8.9806
+                        val lng = _userLocationFlow.value?.longitude ?: 38.7578
+                        Log.d("SMOKE_TEST", "Creating AutoTest group now (user=${user.uid})")
+                        autoTestGroupCreated = true
+                        createGroupInFirebase(
+                            toDestination = "AutoTest",
+                            pickupLatitude = lat,
+                            pickupLongitude = lng
+                        )
+                    } else if (user == null) {
+                        Log.d("SMOKE_TEST", "User still null at auto-create time; will retry in 3s")
+                        retryAutoCreateGroup()
+                    }
+                } catch (t: Throwable) {
+                    Log.e("SMOKE_TEST", "Auto-create debug group scheduling failed", t)
+                }
+            }
+        }
+    }
+
+    private fun retryAutoCreateGroup(attempt: Int = 1) {
+        if (!BuildConfig.DEBUG || autoTestGroupCreated || attempt > 3) return
+        lifecycleScope.launch {
+            kotlinx.coroutines.delay(3000)
+            val user = auth.currentUser
+            if (user != null && !autoTestGroupCreated) {
+                val lat = _userLocationFlow.value?.latitude ?: 8.9806
+                val lng = _userLocationFlow.value?.longitude ?: 38.7578
+                Log.d("SMOKE_TEST", "Retry #$attempt succeeding; creating AutoTest group (user=${user.uid})")
+                autoTestGroupCreated = true
+                createGroupInFirebase(
+                    toDestination = "AutoTest",
+                    pickupLatitude = lat,
+                    pickupLongitude = lng
+                )
+            } else if (user == null) {
+                Log.d("SMOKE_TEST", "Retry #$attempt: user still null; scheduling another retry")
+                retryAutoCreateGroup(attempt + 1)
             }
         }
     }
 
     @Composable
     private fun MainScreenContent(
+        navController: NavController,
         onGroupClick: (Group) -> Unit,
         onRefreshGroups: () -> Unit,
         onCreateGroup: () -> Unit
@@ -709,7 +852,12 @@ class MainActivity : ComponentActivity() {
                 isLoading = vmIsLoading,
                 onRefreshGroups = onRefreshGroups,
                 onCreateGroup = onCreateGroup,
-                userLocation = currentLocation
+                userLocation = currentLocation,
+                onOpenProfile = {
+                    val uid = auth.currentUser?.uid ?: return@MainScreen
+                    navController.navigate(Screen.Profile.createRoute(uid))
+                },
+                onOpenHistory = { navController.navigate(Screen.ActivityHistory.route) }
             )
 
             selectedGroupForDialog?.let { group ->
@@ -782,5 +930,10 @@ class MainActivity : ComponentActivity() {
         }
         rewardedAd = null 
         interstitialAd = null
+    }
+
+    private fun handleAuthError(t: Throwable) {
+        errorHandler.log(t, "auth_flow")
+        Toast.makeText(this, errorHandler.toUserMessage(t), Toast.LENGTH_SHORT).show()
     }
 }

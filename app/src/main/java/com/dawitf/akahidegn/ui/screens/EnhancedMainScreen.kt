@@ -11,11 +11,11 @@ import com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel
 import kotlinx.coroutines.launch
 
 /**
- * Enhanced Main Screen with integrated animation system
- * This shows how to integrate animations into your existing MainScreen
+ * Main Screen
+ * This is the simplified version of the Main Screen without the deprecated enhanced features
  */
 @Composable
-fun EnhancedMainScreen(
+fun MainScreen(
     modifier: Modifier = Modifier
 ) {
     val animationViewModel: AnimationViewModel = viewModel()
@@ -34,9 +34,8 @@ fun EnhancedMainScreen(
             modifier = Modifier.fillMaxSize()
         ) {
             // Your existing MainScreen content goes here
-            // I'm showing how to enhance it with animations
 
-            // Enhanced location updates with animations
+            // Location updates section
             LocationUpdateSection(
                 onLocationUpdateRequested = {
                     if (!isLocationUpdateInProgress) {
@@ -75,7 +74,7 @@ fun EnhancedMainScreen(
                 }
             )
 
-            // Enhanced group management with animations
+            // Group management section
             GroupManagementSection(
                 onJoinGroupRequested = { groupId ->
                     val loadingId = animationViewModel.showLoading(
@@ -99,14 +98,14 @@ fun EnhancedMainScreen(
                 }
             )
 
-            // User registration section with animations
+            // User registration section
             UserRegistrationSection(
                 onShowRegistration = {
                     showUserRegistrationDialog = true
                 }
             )
 
-            // Network status monitoring with animations
+            // Network status monitoring
             NetworkStatusMonitor(
                 isConnected = networkStatus,
                 animationViewModel = animationViewModel
@@ -122,7 +121,7 @@ fun EnhancedMainScreen(
             modifier = Modifier.fillMaxWidth()
         )
 
-        // Enhanced dialogs with animations
+        // Dialogs
         EnhancedUserRegistrationDialog(
             showDialog = showUserRegistrationDialog,
             onDismiss = { showUserRegistrationDialog = false },

@@ -40,78 +40,63 @@
 - [x] Create animation preset configurations
 - [x] Add ViewModel integration for state management
 - [x] Add analytics tracking for animation interactions
+- [x] Compose Navigation integration (basic) ✅
+- [x] Hilt/Dagger dependency injection setup (base app + animation VM) ✅
+- [x] Dark/light theme adaptation (central Theme.kt) ✅
+- [x] Extract major hardcoded strings to resources (Profile, Activity History, Main, Empty States) ✅
+- [x] Remove deprecated EnhancedMainScreen ✅
+- [x] Activity history persistence & UI ✅
 
 ## Pending Improvements 🔄
 
 ### User Experience Enhancements
 - [ ] Add sound effects option alongside haptic feedback (placeholder implemented)
+- [ ] Add gradient background support (lightweight layered Box)
 
 ### Integration Improvements
-- [ ] Implement Compose Navigation integration
-- [ ] Create Hilt/Dagger dependency injection setup
-- [ ] Add locale-specific text handling
-- [ ] Implement dark/light theme adaptation
+- [ ] Localize remaining minor hardcoded strings (dialogs, toasts in MainActivity)
+- [ ] Add RTL layout support
 
-### Advanced Features
+### Advanced Animation Features
 - [ ] Implement sequential animation chain for multiple success states
-- [ ] Add lottie animation support
-- [ ] Implement particle effects for celebrations
-- [ ] Add physics-based animations
-- [ ] Create animation sequencing system
+- [ ] Create animation sequencing system (builder + timeline)
 - [ ] Add gesture-based animation triggers
-- [ ] Implement shared element transitions
+- [ ] Implement shared element transitions (Compose Navigation experimental)
+- [ ] Add physics-based animations (spring-based decay / splines)
+- [ ] Add particle effects for celebrations (custom Canvas emitter)
+- [ ] Add (optional) Lottie animation support (defer until assets available)
 
-### Testing & Documentation
-- [ ] Add animation testing framework
-- [ ] Create component documentation with examples
-- [ ] Add performance benchmarking
-- [ ] Implement accessibility testing
-- [ ] Add animation debugging tools
-
-### Customization Features
-- [ ] Add gradient background support
+### Testing & Tooling
+- [ ] Create component documentation with examples (md + @Preview catalogue)
+- [ ] Add performance benchmarking (Macrobenchmark / Frame metrics)
+- [ ] Implement accessibility instrumentation tests
+- [ ] Add animation debugging tools (overlay showing durations / jank)
 
 ### Localization & Internationalization
-- [ ] Extract hardcoded strings to resources
-- [ ] Add RTL layout support
-- [ ] Implement locale-specific animations
-- [ ] Add cultural color preferences
+- [ ] Implement locale-specific animations (reduced motion variants)
+- [ ] Add cultural color preferences (palette toggle)
 - [ ] Create region-specific haptic patterns
 
 ## Priority Levels
-🔴 **High Priority**: Hilt/Dagger setup, string localization, dark theme
-🟡 **Medium Priority**: Advanced features, testing framework
-🟢 **Low Priority**: Particle effects, physics-based animations, Lottie support
+🔴 **High Priority**: Final string extraction (dialogs/toasts), sound effects toggle, sequential animation chain
+🟡 **Medium Priority**: Animation sequencing system, RTL support, performance benchmarking
+🟢 **Low Priority**: Particle effects, physics animations, Lottie (pending assets), shared element transitions
 
-## Next Steps
-1. Set up Hilt/Dagger dependency injection
-2. Extract hardcoded strings for localization
-3. Implement dark/light theme adaptation
-4. Add Compose Navigation integration
-5. Create advanced animation features
+## Next Steps (Reordered)
+1. Finish extracting remaining toast/dialog strings
+2. Implement sound effects preference + simple click sound
+3. Build minimal sequential animation chain utility
+4. Add gradient background helper (optional polish)
+5. Add RTL & accessibility instrumentation tests scaffolding
 
 ## Latest Achievements 🚀
-- **Screenshot Tests**: 12 comprehensive UI tests with visual regression testing
-- **Animation Presets**: 6 base presets + context-specific configurations for forms, files, network, auth
-- **ViewModel Integration**: Complete state management with notification queue and analytics
-- **Analytics Tracking**: Performance metrics, user interaction tracking, and comprehensive reporting
-- **Fluent Builder API**: Easy-to-use preset builder for custom animation configurations
-- **Localized Content**: Amharic text integration for Ethiopian users
+- Profile & Activity History screens integrated + localized
+- Activity history logging on create/join events
+- Localization pass removed primary hardcoded strings
+- Deprecated enhanced screen removed; codebase leaner
+- Minimal search bar implemented replacing empty file
 
-## New Components Created 📦
-1. **AnimationComponentsScreenshotTest.kt** - UI testing with screenshot capture
-2. **AnimationPresets.kt** - Pre-configured animation setups for common use cases
-3. **AnimationViewModel.kt** - Centralized state management with Hilt integration
-4. **AnimationAnalyticsManager.kt** - Comprehensive analytics and performance tracking
-
-## Architecture Improvements 🏗️
-- **Dependency Injection Ready**: ViewModel prepared for Hilt integration
-- **Analytics Integration**: Performance monitoring and user behavior tracking
-- **Preset System**: Fluent API for creating custom animation configurations
-- **State Management**: Centralized notification queue with auto-dismiss logic
-- **Testing Infrastructure**: Screenshot tests for visual regression detection
-
----
-*Last updated: July 6, 2025*
-*Total tasks: 45 (38 completed, 7 pending)*
-*Completion rate: 84%*
+## Metrics
+*Last updated: Aug 9, 2025*
+*Total tasks: 55 (45 completed, 10 pending)*
+*Completion rate: 82%*

@@ -1,4 +1,3 @@
-
 # Akahidegn App Analysis (Exhaustive)
 
 This document provides a detailed analysis of the Akahidegn app, including its structure, dependencies, backend, frontend, and development/automation scripts. It also identifies inconsistencies, warnings, and unused files.
@@ -129,82 +128,38 @@ This is the root package for the app's source code.
 
 ### 3.6. `com.dawitf.akahidegn.data`
 
--   **`datastore/DataStoreExtensions.kt`**: This file contains an extension property for accessing DataStore from a `Context`.
--   **`error/AppError.kt`**: This file is a duplicate of the `AppError.kt` file in the `core` package.
--   **`local/AppDatabase.kt`**: This file is empty.
--   **`mapper/EnhancedGroupMapper.kt`**: This file is not used.
--   **`mapper/GroupMapper.kt`**: This file is not used.
--   **`remote/service/GroupService.kt`**: This file defines the interface for the group service.
--   **`remote/service/impl/FirestoreGeoGroupService.kt`**: This file contains an implementation of the group service that uses Firestore's geo-query capabilities.
--   **`remote/service/impl/GroupServiceImpl.kt`**: This file contains an implementation of the group service that uses the Firebase Realtime Database.
--   **`repository/EnhancedGroupRepositoryImpl_Fixed.kt`**: This file is not used.
--   **`repository/EnhancedGroupRepositoryImpl.kt`**: This file is not used.
--   **`repository/GroupRepositoryImpl.kt`**: This file contains an implementation of the group repository.
--   **`repository/UserProfileRepositoryImpl.kt`**: This file contains an implementation of the user profile repository.
--   **`repository/exceptions/UserProfileExceptions.kt`**: This file defines exceptions related to user profiles.
--   **`repository/model/UserProfileUpdate.kt`**: This file defines a data class for updating user profiles.
+-   **`datastore/DataStoreExtensions.kt`**: Extension property for accessing DataStore.
+-   **`remote/service/GroupService.kt`**: Interface for the group service.
+-   **`remote/service/impl/FirestoreGeoGroupService.kt`**: Firestore geo-query implementation (if retained).
+-   **`remote/service/impl/GroupServiceImpl.kt`**: Realtime Database implementation of group service (active).
+-   **`repository/GroupRepositoryImpl.kt`**: Active group repository implementation.
+-   **`repository/UserProfileRepositoryImpl.kt`**: User profile repository implementation.
+-   **`repository/exceptions/UserProfileExceptions.kt`**: Exceptions related to user profiles.
+-   **`repository/model/UserProfileUpdate.kt`**: Data class for updating user profiles.
 
 ### 3.7. `com.dawitf.akahidegn.debug`
 
--   **`AdTestActivity.kt`**: This file contains an activity for testing AdMob integration.
--   **`DebugRefreshButton.kt`**: This file is empty.
--   **`EmulatorTestActivity.kt`**: This file is empty.
--   **`GroupCleanupDebugHelper.kt`**: This file contains a debug helper for the group cleanup functionality.
--   **`GroupRefreshTestScreen.kt`**: This file is empty.
+-   **`AdTestActivity.kt`**: AdMob test activity.
+-   **`GroupCleanupDebugHelper.kt`**: Helper for group cleanup diagnostics.
+-   (Removed unused empty debug UI placeholders.)
 
 ### 3.8. `com.dawitf.akahidegn.di`
 
--   **`AnalyticsModule.kt`**: This file provides the analytics-related dependencies.
--   **`ErrorHandlingModule.kt`**: This file is empty.
--   **`FirebaseModule.kt`**: This file provides the Firebase-related dependencies.
--   **`LocalizationModule.kt`**: This file is empty.
--   **`NetworkModule.kt`**: This file provides the network-related dependencies.
--   **`PerformanceModule.kt`**: This file provides the performance-related dependencies.
--   **`ProductionModule.kt`**: This file provides the production-related dependencies.
--   **`ProfileModule.kt`**: This file provides the profile-related dependencies.
--   **`RepositoryKey.kt`**: This file defines a map key for repositories.
--   **`RepositoryModule.kt`**: This file provides the repository-related dependencies.
--   **`SocialModule.kt`**: This file provides the social-related dependencies.
--   **`ViewModelKey.kt`**: This file defines a map key for ViewModels.
--   **`ViewModelModule.kt`**: This file provides the ViewModel-related dependencies.
--   **`WorkManagerModule.kt`**: This file provides the WorkManager-related dependencies.
-
-### 3.9. `com.dawitf.akahidegn.domain`
-
--   **`model`**: This package contains the app's data models.
--   **`repository`**: This package contains the app's repository interfaces.
+-   **`AnalyticsModule.kt`**: Provides analytics dependencies.
+-   **`ErrorHandlingModule.kt`**: (Placeholder; logic centralized in `ErrorHandler`).
+-   **`FirebaseModule.kt`**: Provides Firebase dependencies.
+-   **`LocalizationModule.kt`**: Provides localization, accessibility, theme managers.
+-   **`NetworkModule.kt`**, **`PerformanceModule.kt`**, **`ProductionModule.kt`**, **`ProfileModule.kt`**, **`RepositoryModule.kt`**, **`SocialModule.kt`**, **`ViewModelKey.kt`**, **`ViewModelModule.kt`**, **`WorkManagerModule.kt`**: Active DI setup.
 
 ### 3.10. `com.dawitf.akahidegn.features`
 
--   **`bookmark/BookmarkManager.kt`**: This file contains the `BookmarkManager` class, which is responsible for managing bookmarks.
--   **`matching/SmartMatchingService.kt`**: This file contains the `SmartMatchingService` class, which is responsible for matching users with groups.
--   **`profile/CarbonComparison.kt`**: This file is empty.
--   **`profile/UserPreferences.kt`**: This file defines data classes for user preferences.
--   **`profile/UserProfileService.kt`**: This file defines the interface for the user profile service.
--   **`profile/impl/UserProfileServiceImpl.kt`**: This file contains an implementation of the user profile service.
--   **`routing/RouteService.kt`**: This file contains the `RouteService` class, which is responsible for calculating routes.
--   **`social/RideBuddyService.kt`**: This file defines the interface for the ride buddy service.
--   **`social/impl/RideBuddyServiceImpl.kt`**: This file contains an implementation of the ride buddy service.
+-   **`bookmark/BookmarkManager.kt`**: Bookmark management.
+-   **`matching/SmartMatchingService.kt`**: Group/user matching service.
+-   **`profile/UserPreferences.kt`**, **`profile/UserProfileService.kt`**, **`profile/impl/UserProfileServiceImpl.kt`**: User profile domain.
+-   **`routing/RouteService.kt`**: Route calculations.
+-   **`social/RideBuddyService.kt`**, **`social/impl/RideBuddyServiceImpl.kt`**: Social / ride buddy interactions.
 
-### 3.11. `com.dawitf.akahidegn.localization`
-
--   **`LocalizationManager.kt`**: This file contains the `LocalizationManager` class, which is responsible for managing the app's localization.
-
-### 3.12. `com.dawitf.akahidegn.location`
-
--   **`LocationProvider.kt`**: This file contains the `LocationProvider` object, which provides access to the user's location.
-
-### 3.13. `com.dawitf.akahidegn.notifications`
-
--   **`model/NotificationModels.kt`**: This file defines the data models for notifications.
--   **`NotificationActionReceiver.kt`**: This file contains a broadcast receiver for handling notification actions.
--   **`service/AkahidegnFirebaseMessagingService.kt`**: This file contains the Firebase Messaging service.
--   **`service/NotificationManagerService.kt`**: This file contains the `NotificationManagerService` class, which is responsible for managing notifications.
--   **`service/NotificationPreferencesManager.kt`**: This file contains the `NotificationPreferencesManager` class, which is responsible for managing notification preferences.
-
-### 3.14. `com.dawitf.akahidegn.offline`
-
--   **`OfflineManager.kt`**: This file is empty.
+(Removed deleted: CarbonComparison, OfflineManager, duplicate AppError, empty enhanced repositories, AppDatabase stub, empty debug & util placeholders.)
 
 ### 3.15. `com.dawitf.akahidegn.performance`
 
@@ -266,3 +221,19 @@ This is the root package for the app's source code.
 
 -   **`GroupCleanupWorker.kt`**: This file contains the `GroupCleanupWorker` class, which is a WorkManager worker that periodically cleans up expired groups.
 -   **`HiltWorkerFactory.kt`**: This file contains the `HiltWorkerFactory` class, which is responsible for creating instances of Hilt workers.
+
+## 4. Cleanup Summary
+
+Removed obsolete files: CarbonComparison.kt, OfflineManager.kt, data/error/AppError.kt, EnhancedGroupRepositoryImpl*.kt, AppDatabase.kt, empty debug UI stubs, FirebaseDebugger.kt, FirebaseDiagnostic.kt, SecurityRulesHelper.kt, EnhancedMainScreen.kt (deprecated), legacy enhanced search/map/theme/profile/history disabled artifacts.
+
+Added: ProfileScreen, ProfileViewModel, ActivityHistoryRepository, ActivityHistoryViewModel, ActivityHistoryScreen with DataStore persistence; localization pass for Profile, Activity History, Main, Empty States, search components.
+
+Integrated: Activity history logging on group create/join (MainActivity hooks); minimal EnhancedSearchBar implementation; string resources for clear button & empty groups message.
+
+## 5. Next Integration Targets
+
+- Finalize extraction of remaining toasts/dialog literals (MainActivity group creation/join messages)
+- Add sound effects preference + implementation
+- Build sequential animation chain utility (ties into existing AnimationViewModel)
+- Optional gradient background helper
+- RTL layout support & accessibility instrumentation tests

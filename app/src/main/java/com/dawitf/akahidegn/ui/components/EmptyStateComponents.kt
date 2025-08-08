@@ -10,16 +10,18 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.dawitf.akahidegn.R
 
 @Composable
 fun EmptyStateComponent(
     icon: ImageVector = Icons.Filled.DirectionsCar,
-    title: String = "No Groups Available",
-    subtitle: String = "Create a new group or pull down to refresh",
-    actionText: String? = "Create Group",
+    title: String = stringResource(id = R.string.empty_groups_message),
+    subtitle: String = stringResource(id = R.string.nearby_groups_placeholder),
+    actionText: String? = stringResource(id = R.string.create_group_button),
     onActionClick: (() -> Unit)? = null
 ) {
     Column(
@@ -90,9 +92,9 @@ fun SearchEmptyState(
 ) {
     EmptyStateComponent(
         icon = Icons.Filled.Search,
-        title = "No Results Found",
-        subtitle = "No groups found for \"$searchQuery\". Try different keywords or create a new group.",
-        actionText = "Clear Search",
+        title = stringResource(id = R.string.no_groups_found),
+        subtitle = stringResource(id = R.string.no_groups_found_placeholder),
+        actionText = stringResource(id = R.string.clear_filters),
         onActionClick = onClearSearch
     )
 }

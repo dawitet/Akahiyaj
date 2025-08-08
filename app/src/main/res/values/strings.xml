@@ -261,6 +261,8 @@
     
     <!-- Icons and drawables -->
     <string name="close">ዝጋ</string> <!-- Close -->
+    <string name="clear_button">ጽዳ</string> <!-- Clear -->
+    <string name="empty_groups_message">ምንም ቡድን የለም። ለማዘመን ወደታች ይግፉ ወይም አዲስ ፍጠሩ!</string> <!-- No groups available. Swipe down to refresh or create one! -->
     
     <!-- ...existing strings... -->
 </resources>

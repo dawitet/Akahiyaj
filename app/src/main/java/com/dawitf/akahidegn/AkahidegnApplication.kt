@@ -104,9 +104,11 @@ class AkahidegnApplication : Application(), Configuration.Provider {
     
     private fun initializeFirebaseDatabase() {
         try {
-            FirebaseDatabase.getInstance("https://akahiyaj-79376-default-rtdb.europe-west1.firebasedatabase.app").setPersistenceEnabled(true)
-            FirebaseDatabase.getInstance().setLogLevel(com.google.firebase.database.Logger.Level.DEBUG)
-            Log.d("APP_INIT", "Firebase Database persistence enabled and debug logging set")
+            // Correct project URL (previously had a typo 'akahiyaj' vs 'akahidegn')
+            val correctDbUrl = "https://akahidegn-79376-default-rtdb.europe-west1.firebasedatabase.app"
+            FirebaseDatabase.getInstance(correctDbUrl).setPersistenceEnabled(true)
+            FirebaseDatabase.getInstance(correctDbUrl).setLogLevel(com.google.firebase.database.Logger.Level.DEBUG)
+            Log.d("APP_INIT", "Firebase Database initialized with URL=$correctDbUrl (persistence + DEBUG logging)")
         } catch (e: Exception) {
             Log.w("APP_INIT", "Firebase persistence setup failed or already enabled: ${e.message}")
         }

@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import com.dawitf.akahidegn.ui.profile.ProfileFeatureViewModel
 import com.dawitf.akahidegn.ui.social.RideBuddyViewModel
 import com.dawitf.akahidegn.ui.social.SocialViewModel
-import com.dawitf.akahidegn.viewmodel.EnhancedSearchViewModel
 import com.dawitf.akahidegn.viewmodel.MainViewModel
 import com.dawitf.akahidegn.viewmodel.SettingsViewModel
 
@@ -42,11 +41,4 @@ abstract class ViewModelModule {
     @IntoMap
     @ViewModelKey(SocialViewModel::class)
     abstract fun bindSocialViewModel(viewModel: SocialViewModel): ViewModel
-
-    @Binds
-    @IntoMap
-    @ViewModelKey(EnhancedSearchViewModel::class)
-    abstract fun bindEnhancedSearchViewModel(viewModel: EnhancedSearchViewModel): ViewModel
-
-    
-} 
+}
