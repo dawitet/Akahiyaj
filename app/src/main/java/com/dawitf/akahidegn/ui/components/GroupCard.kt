@@ -19,6 +19,7 @@ import androidx.compose.ui.unit.dp
 import com.dawitf.akahidegn.Group
 import android.location.Location
 import kotlin.math.*
+import com.dawitf.akahidegn.ui.animation.shared.SharedElement
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +48,9 @@ fun GroupCard(
         } else null
     }
 
+    // Use groupId as a stable shared element key
+    val sharedKey = remember(group.groupId) { "groupCard-${group.groupId ?: group.destinationName}" }
+
     Card(
         modifier = modifier
             .fillMaxWidth()
@@ -65,6 +69,7 @@ fun GroupCard(
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
+        SharedElement(key = sharedKey, screenKey = "list") { sharedMod ->
         Column(
             modifier = Modifier
                 .fillMaxWidth()
@@ -191,9 +196,10 @@ fun GroupCard(
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
-                }
             }
-        }
+            }
+    }
+    }
     }
 }
 

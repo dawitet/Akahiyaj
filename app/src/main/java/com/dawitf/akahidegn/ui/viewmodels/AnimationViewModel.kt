@@ -8,6 +8,9 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
+import com.dawitf.akahidegn.ui.animation.buildAnimationSequence
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * ViewModel for managing animation states and notification queue
@@ -32,6 +35,10 @@ class AnimationViewModel : ViewModel() {
     val analyticsEvents: StateFlow<List<AnimationAnalyticsEvent>> = _analyticsEvents.asStateFlow()
 
     private val animationController = AnimationController()
+
+    // One-shot celebration trigger (timestamp-based)
+    private val _celebrationEvent = MutableStateFlow<Long?>(null)
+    val celebrationEvent: StateFlow<Long?> = _celebrationEvent.asStateFlow()
 
     /**
      * Show a success notification
@@ -196,6 +203,70 @@ class AnimationViewModel : ViewModel() {
      * Get animation controller
      */
     fun getAnimationController(): AnimationController = animationController
+
+    /**
+     * Run a small sequence of suspend steps sequentially from the ViewModel scope.
+     * Useful to orchestrate UI hints/toasts/haptics in order without exposing delays to the UI.
+     */
+    fun runSequence(vararg steps: suspend () -> Unit) {
+        viewModelScope.launch {
+            steps.forEach { step -> step() }
+        }
+    }
+
+    /**
+     * Preset: Sequence shown after a successful group creation.
+     */
+    fun runGroupCreateSequence(message: String) {
+        viewModelScope.launch {
+            buildAnimationSequence {
+                // Optionally show a tiny loading pulse before the success
+                step { /* no-op placeholder, could show loading */ }
+                delayMs(120)
+                step { showQuickSuccess(message) }
+                delayMs(80)
+                step { triggerCelebration() }
+            }.run()
+        }
+    }
+
+    /** Trigger a celebration/confetti event. */
+    fun triggerCelebration() {
+        _celebrationEvent.value = System.currentTimeMillis()
+    }
+
+    /** Preset: Sequence after joining a group. */
+    fun runGroupJoinSequence(destinationName: String) {
+        viewModelScope.launch {
+            buildAnimationSequence {
+                step("join:loading") { /* optional tiny pulse */ }
+                delayMs(80)
+                step("join:success") { showQuickSuccess("ቡድን ተቀላቅለዋል • $destinationName") }
+            }.run()
+        }
+    }
+
+    /** Preset: Sequence after leaving a group. */
+    fun runGroupLeaveSequence(destinationName: String) {
+        viewModelScope.launch {
+            buildAnimationSequence {
+                step("leave:loading") { /* optional */ }
+                delayMs(60)
+                step("leave:success") { showQuickSuccess("ቡድን ተውዋል • $destinationName") }
+            }.run()
+        }
+    }
+
+    /** Preset: Sequence after disbanding a group (creator). */
+    fun runGroupDisbandSequence(destinationName: String) {
+        viewModelScope.launch {
+            buildAnimationSequence {
+                step("disband:loading") { /* optional */ }
+                delayMs(100)
+                step("disband:success") { showQuickSuccess("ቡድን ተፈርሷል • $destinationName") }
+            }.run()
+        }
+    }
 
     // Private helper methods
 

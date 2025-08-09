@@ -29,6 +29,7 @@ import com.dawitf.akahidegn.Group
 import com.dawitf.akahidegn.R
 import android.content.Intent
 import android.net.Uri
+import com.dawitf.akahidegn.ui.animation.shared.SharedElement
 
 data class GroupMember(
     val id: String,
@@ -95,13 +96,16 @@ fun GroupMembersDialog(
                     }
                 }
                 
-                // Group destination
-                Text(
-                    text = "Destination: ${group.destinationName}",
-                    style = MaterialTheme.typography.titleMedium,
-                    color = MaterialTheme.colorScheme.primary,
-                    modifier = Modifier.padding(vertical = 8.dp)
-                )
+                // Group destination with shared element from the list card
+                val sharedKey = remember(group.groupId) { "groupCard-${group.groupId ?: group.destinationName}" }
+                SharedElement(key = sharedKey, screenKey = "dialog") { _ ->
+                    Text(
+                        text = "Destination: ${group.destinationName}",
+                        style = MaterialTheme.typography.titleMedium,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+                }
                 
                 HorizontalDivider(
                     modifier = Modifier.padding(vertical = 8.dp),

@@ -19,6 +19,188 @@
 				"$gradle"
 			],
 			"isBackground": false
+		},
+		{
+			"label": "Assemble Debug after localization + settings",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Assemble Debug",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				":app:assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Assemble Debug",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				":app:assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Build Standalone Debug APK",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Build Standalone Debug APK",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"isBackground": false,
+			"group": "build"
+		},
+		{
+			"label": "Assemble app and benchmark (debug/benchmark)",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"clean",
+				"app:assembleDebug",
+				"benchmark:assembleBenchmark"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Assemble debug app only",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"clean",
+				"app:assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Assemble debug app again",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				":app:assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Gradle clean and assemble app debug",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				"clean",
+				":app:assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"group": "build"
+		},
+		{
+			"label": "Assemble debug app after fixes",
+			"type": "shell",
+			"command": "./gradlew",
+			"args": [
+				":app:assembleDebug",
+				"--configure-on-demand",
+				"--max-workers=4",
+				"-x",
+				"lint",
+				"-x",
+				"test"
+			],
+			"isBackground": false,
+			"problemMatcher": [
+				"$gradle"
+			],
+			"group": "build"
 		}
 	]
 }

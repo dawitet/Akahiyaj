@@ -123,9 +123,65 @@
     <string name="dialog_create_group_title_new">አዲስ ግሩፕ ፍጠር</string> <!-- Create New Group -->
     <string name="destination_input_label_new">መድረሻ ያስገቡ</string> <!-- Enter Destination -->
     <string name="dialog_button_create_group">ግሩፕ ፍጠር</string> <!-- Create Group -->
+    <string name="dialog_create_group_message">የመሳፈሪያ ቡድን ይፍጠሩ እና ከሌሎች ሰዎች ጋር ተጋሩ!</string>
     <string name="toast_please_enter_destination">እባክዎ መድረሻዎን ያስገቡ።</string> <!-- Please enter your destination. -->
     <string name="toast_invalid_max_members_range">የአባላት ብዛት በ%1$s እና %2$s መካከል መሆን አለበት።</string>
     <string name="toast_auth_failed_firebase_reason">የማንነት ማረጋገጫ አልተሳካም: %1$s</string>
+
+    <!-- Sign-in and Auth related toasts -->
+    <string name="toast_sign_in_config_error">የመግባት ማዋቀር ስህተት ተከስቷል።</string>
+    <string name="toast_no_google_accounts">በዚህ መሣሪያ ላይ የGoogle መለያ አልተገኘም።</string>
+    <string name="toast_sign_in_failed_or_cancelled">የGoogle መግባት አልተሳካም ወይም ተሰርዟል።</string>
+    <string name="toast_sign_in_token_error">የGoogle መግባት አልተሳካም (የቶክን ስህተት)።</string>
+    <string name="toast_sign_in_unexpected_credential">የGoogle መግባት አልተሳካም (ያልተጠበቀ መለያ አይነት)።</string>
+    <string name="toast_user_must_sign_in_create">ቡድን ለመፍጠር መመዝገብ ወይም መግባት ያስፈልጋል።</string>
+    <string name="toast_failed_get_group_id">ቡድን መፍጠር አልተሳካም፤ የቡድን መለያ አልተገኘም።</string>
+    <string name="toast_signed_out">ወጥተዋል።</string>
+    <string name="toast_sign_out_error">መውጣት አልተሳካም።</string>
+    <string name="toast_name_and_phone_required">ስም እና ስልክ አስፈላጊ ናቸው።</string>
+    <string name="toast_registration_required">መመዝገብ ያስፈልጋል።</string>
+    <string name="toast_welcome_profile_saved">እንኳን ደህና መጣችሁ %1$s! መገለጫ ተቀምጧል።</string>
+    <string name="toast_welcome_profile_saved_locally">እንኳን ደህና መጣችሁ %1$s! (መገለጫ በአካባቢ ተቀምጧል)</string>
+    <string name="toast_leave_group_not_implemented">የቡድን መልቀቅ ተግባር ሙሉ አልተሟላም።</string>
+    <string name="toast_location_permission_error">የአካባቢ ፍቃድ ስህተት።</string>
+    <string name="toast_location_permission_required_nearby">በአቅራቢያ ቡድኖችን ለማየት የአካባቢ ፍቃድ ያስፈልጋል።</string>
+    <string name="toast_group_expired">ይህ ቡድን ጊዜው አልፏል።</string>
+    <string name="toast_error_group_id_missing">የቡድን መለያ የለም።</string>
+    <string name="toast_failed_update_member_count">የአባላት ቁጥር ማዘመን አልተሳካም: %1$s</string>
+    <string name="toast_group_maybe_full_or_issue">ቡድኑ ምናልባት ሙሉ ነው ወይም ችግኝ አለ።</string>
+    <string name="toast_permission_denied_or_network_error">ፍቃድ ውድቅ ወይም የኔትወርክ ስህተት: %1$s</string>
+
+    <!-- Settings labels -->
+    <string name="settings_title">ቅንብሮች</string>
+    <string name="settings_description">የመተግበሪያውን ቅንብሮች እዚህ ማስተካከል ይችላሉ።</string>
+    <string name="settings_notifications_enabled">ማሳወቂያዎች</string>
+    <string name="settings_sound_effects">ድምጽ ተፅዕኖ</string>
+    <string name="settings_vibration">መንቀሳቀስ</string>
+    <string name="settings_sign_out">ውጣ</string>
+
+    <!-- Add missing default keys to avoid resource warnings -->
+    <string name="notifications">ማሳወቂያዎች</string>
+    <string name="notification_settings">የማሳወቂያ ቅንብሮች</string>
+    <string name="enable_notifications">ማሳወቂያዎችን አንቃ</string>
+    <string name="sound_enabled">ድምፅ ንቁ</string>
+    <string name="vibration_enabled">ንዝረት ንቁ</string>
+    <string name="settings">ቅንብሮች</string>
+    <string name="app_settings">የመተግበሪያ ቅንብሮች</string>
+    <string name="account_settings">የመለያ ቅንብሮች</string>
+    <string name="privacy_settings">የግላዊነት ቅንብሮች</string>
+    <string name="language">ቋንቋ</string>
+    <string name="theme">ገጽታ</string>
+    <string name="dark_mode">ጨለማ ሁነታ</string>
+    <string name="light_mode">ብሩህ ሁነታ</string>
+    <string name="system_theme">የስርዓት ገጽታ</string>
+    
+    <!-- Provide default for localized-only key to avoid missing-default warnings -->
+    <string name="auto_join_enabled">Auto-join enabled</string>
+    <string name="location_sharing_enabled">የአካባቢ መጋራት ንቁ</string>
+    <string name="minutes_unit">ደቂቃ</string>
+    <string name="hours_unit">ሰዓት</string>
+    <string name="birr_currency">ብር</string>
+    <string name="no_internet_connection">የበይነመረብ ግንኙነት የለም</string>
 
     
     
@@ -226,7 +282,6 @@
     <string name="marketing_notifications">የገበያ ማሳወቂያዎች</string>
     
     <!-- Additional Settings -->
-    <string name="auto_join_enabled">ራሳዊ መቀላቀል ተብ ዓል</string>
     <string name="voice_guidance">የድምፅ መመሪያ</string>
     
     <!-- Status Messages -->
@@ -262,6 +317,10 @@
     <!-- Icons and drawables -->
     <string name="close">ዝጋ</string> <!-- Close -->
     <string name="clear_button">ጽዳ</string> <!-- Clear -->
+    <!-- Neutral English defaults for keys primarily localized in Amharic to reduce missing-default warnings -->
+    <string name="group_members_label">Group Members</string>
+    <string name="group_creator_badge">Group Creator</string>
+    <string name="destination_label">Destination</string>
     <string name="empty_groups_message">ምንም ቡድን የለም። ለማዘመን ወደታች ይግፉ ወይም አዲስ ፍጠሩ!</string> <!-- No groups available. Swipe down to refresh or create one! -->
     
     <!-- ...existing strings... -->

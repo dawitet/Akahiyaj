@@ -1,5 +1,26 @@
 # Akahidegn App Analysis (Exhaustive)
 
+## Update summary — Aug 9, 2025
+
+- Modules: settings now include `:app` and `:benchmark` (Macrobenchmark test module).
+- Recent changes:
+	- AnimationSequencer wired into AnimationViewModel for group-create celebration.
+	- ConfettiEmitter (Canvas particle overlay) added and overlaid in MainActivity; triggered via a state key.
+	- PhysicsAnimations updated to return `SpringSpec<Float>`; fixed Compose spring type inference errors.
+	- Resource stability: added default `auto_join_enabled` in `values/strings.xml` and removed the localized duplicate.
+	- Manifest: added `<profileable android:shell="true" />` to allow Macrobenchmark profiling.
+	- Macrobenchmark harness: `benchmark` module with self-instrumenting; `StartupBenchmark` measures cold startup; `connectedDebugAndroidTest` runs on emulator.
+- Build & run:
+	- App assembles after fixes; installed and launched via adb.
+	- Macrobenchmark connected test executes successfully.
+- Next steps:
+	- Expand AnimationSequencer to join/leave/disband flows; keep steps named and measurable.
+	- Establish Macrobenchmark baselines (JSON) and wire into CI.
+	- Define policy for locale-only strings vs. defaults to reduce warnings.
+	- Make ad-gate deterministic in debug for E2E tests.
+- Known warnings:
+	- Some “removing resource … without required default value” logs remain for locale-only strings; non-blocking but can be silenced with neutral defaults.
+
 This document provides a detailed analysis of the Akahidegn app, including its structure, dependencies, backend, frontend, and development/automation scripts. It also identifies inconsistencies, warnings, and unused files.
 
 ## 1. Project-Level Files
@@ -228,12 +249,17 @@ Removed obsolete files: CarbonComparison.kt, OfflineManager.kt, data/error/AppEr
 
 Added: ProfileScreen, ProfileViewModel, ActivityHistoryRepository, ActivityHistoryViewModel, ActivityHistoryScreen with DataStore persistence; localization pass for Profile, Activity History, Main, Empty States, search components.
 
-Integrated: Activity history logging on group create/join (MainActivity hooks); minimal EnhancedSearchBar implementation; string resources for clear button & empty groups message.
+Integrated: Activity history logging on group create/join (MainActivity hooks); minimal EnhancedSearchBar implementation; string resources for clear button & empty groups message; success sound/vibration + quick success UI; create-group dialog/Toasts localized.
 
 ## 5. Next Integration Targets
 
-- Finalize extraction of remaining toasts/dialog literals (MainActivity group creation/join messages)
-- Add sound effects preference + implementation
-- Build sequential animation chain utility (ties into existing AnimationViewModel)
-- Optional gradient background helper
-- RTL layout support & accessibility instrumentation tests
+- Wire animation sequence builder into `AnimationViewModel` for common flows
+
+
+## 6. New Animation Utilities
+
+- `SequentialAnimation.kt`: Minimal runner for chaining suspend steps
+- `AnimationSequencer.kt`: DSL builder + timeline for naming steps and inserting waits
+- `GestureAnimation.kt`: Modifier helpers to trigger animations from taps/long-press
+- `PhysicsAnimations.kt`: Predefined spring specs (soft/snappy/bouncy)
+

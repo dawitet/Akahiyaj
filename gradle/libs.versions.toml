@@ -1,14 +1,14 @@
 [versions]
 agp = "8.11.1"
-kotlin = "2.0.0"
-ksp = "2.0.0-1.0.21"
+kotlin = "2.0.21"
+ksp = "2.0.21-1.0.25"
 core-ktx = "1.13.1"
 junit = "4.13.2"
 junit-version = "1.1.5"
 espresso-core = "3.5.1"
 lifecycle-runtime = "2.8.0"
 activity-compose = "1.9.0"
-compose-bom = "2024.05.00"
+compose-bom = "2024.10.00"
 firebase-messaging = "23.4.1"
 core-splashscreen = "1.0.1"
 hilt = "2.51.1"
@@ -66,4 +66,4 @@ android-application = { id = "com.android.application", version.ref = "agp" }
 kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
 hilt-android = { id = "com.google.dagger.hilt.android", version.ref = "hilt" }
 ksp = { id = "com.google.devtools.ksp", version.ref = "ksp" }
-kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version = "2.0.0" }
+kotlin-compose = { id = "org.jetbrains.kotlin.plugin.compose", version.ref = "kotlin" }

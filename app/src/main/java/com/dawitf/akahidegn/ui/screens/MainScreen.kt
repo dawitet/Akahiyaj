@@ -2,6 +2,9 @@ package com.dawitf.akahidegn.ui.screens
 
 import android.location.Location
 import androidx.compose.foundation.layout.*
+import androidx.compose.material.pullrefresh.PullRefreshIndicator
+import androidx.compose.material.pullrefresh.pullRefresh
+import androidx.compose.material.pullrefresh.rememberPullRefreshState
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
@@ -10,10 +13,10 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
+import androidx.compose.material.ExperimentalMaterialApi
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dawitf.akahidegn.Group
@@ -21,11 +24,9 @@ import com.dawitf.akahidegn.ui.components.GroupCard
 import com.dawitf.akahidegn.domain.model.SearchFilters
 import com.dawitf.akahidegn.ui.components.EnhancedSearchBar
 import com.dawitf.akahidegn.ui.components.NoSearchResults
-import androidx.compose.material3.pulltorefresh.PullToRefreshContainer
-import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import com.dawitf.akahidegn.R
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
 @Composable
 fun MainScreen(
     groups: List<Group>,
@@ -41,17 +42,17 @@ fun MainScreen(
     onOpenProfile: () -> Unit,
     onOpenHistory: () -> Unit
 ) {
-    val pullToRefreshState = rememberPullToRefreshState()
-    if (pullToRefreshState.isRefreshing) {
-        LaunchedEffect(true) {
+    var refreshing by remember { mutableStateOf(false) }
+    val pullToRefreshState = rememberPullRefreshState(
+        refreshing = refreshing,
+        onRefresh = {
+            refreshing = true
             onRefreshGroups()
         }
-    }
+    )
 
     LaunchedEffect(isLoading) {
-        if (!isLoading) {
-            pullToRefreshState.endRefresh()
-        }
+        if (!isLoading) refreshing = false
     }
 
     Scaffold(
@@ -74,7 +75,7 @@ fun MainScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(paddingValues)
-                .nestedScroll(pullToRefreshState.nestedScrollConnection) // Attach the nested scroll
+                .pullRefresh(pullToRefreshState)
         ) {
             Column(
                 modifier = Modifier.fillMaxSize()
@@ -117,8 +118,9 @@ fun MainScreen(
                 }
             }
 
-            // The PullToRefreshContainer is now an overlay aligned to the top center
-            PullToRefreshContainer(
+            // The PullRefreshIndicator is an overlay aligned to the top center
+            PullRefreshIndicator(
+                refreshing = refreshing,
                 state = pullToRefreshState,
                 modifier = Modifier.align(Alignment.TopCenter)
             )

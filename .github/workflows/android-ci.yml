@@ -1,0 +1,60 @@
+name: Android CI
+
+on:
+  pull_request:
+  push:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Cache Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Build Debug APK (no lint/tests)
+        run: ./gradlew :app:assembleDebug -x lint -x test --stacktrace
+
+      - name: Run unit tests
+        run: ./gradlew testDebugUnitTest --stacktrace
+
+      - name: Run UI tests on emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            adb logcat -c || true
+            ./gradlew :app:connectedDebugAndroidTest --stacktrace
+
+      - name: Run Macrobenchmark and collect log
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          profile: pixel_6
+          script: |
+            ./gradlew :benchmark:connectedDebugAndroidTest --info --stacktrace | tee benchmark/build/benchmark.log
+
+      - name: Verify macrobenchmark against baseline thresholds
+        run: bash scripts/verify_macrobenchmark.sh
+
+      - name: Upload benchmark artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: macrobenchmark-artifacts
+          path: |
+            benchmark/build/benchmark.log
+            benchmark/build/outputs/**

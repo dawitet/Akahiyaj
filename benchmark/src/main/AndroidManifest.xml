@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Required permissions for Macrobenchmark to control the target app -->
+    <uses-permission android:name="android.permission.DUMP" />
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+    <uses-permission android:name="android.permission.READ_LOGS" />
+    <application
+        android:label="benchmark">
+        <uses-library
+            android:name="androidx.test.runner"
+            android:required="false" />
+    </application>
+</manifest>

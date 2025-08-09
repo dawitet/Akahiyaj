@@ -96,6 +96,7 @@ android {
         freeCompilerArgs += listOf(
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
             "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+            "-opt-in=androidx.compose.animation.ExperimentalSharedTransitionApi",
             "-Xjvm-default=all"
         )
         // JVM arguments should be set separately for kapt
@@ -116,7 +117,9 @@ android {
     }
 
     composeOptions {
-        kotlinCompilerExtensionVersion = "1.5.1"
+        // Compose Compiler aligned with Kotlin 2.0 via plugin; explicit override not needed with modern AGP
+        // If needed, set to a 1.6.x compatible with Kotlin 2.0 (e.g., 1.6.11)
+    kotlinCompilerExtensionVersion = "1.7.4"
     }
 
     packaging {
@@ -138,13 +141,16 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx) // Now using version catalog
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation(libs.androidx.activity.compose)
-    implementation("androidx.compose.material3:material3:1.2.0") // For pull-to-refresh functionality
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
     implementation(libs.androidx.material3)
-    implementation("androidx.compose.material:material-icons-extended") // For additional Material Icons
+    implementation("androidx.compose.material:material") // for pullRefresh APIs
+    // Use foundation pullrefresh (works with Compose BOM)
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material:material-icons-extended") // managed by BOM
+
     implementation(libs.firebase.messaging.ktx)
     implementation(libs.androidx.hilt.work) // Ensure this is from your libs or specify version
     testImplementation(libs.junit)
@@ -209,13 +215,14 @@ dependencies {
     // ksp(libs.hilt.compiler) // Already included above
 
     // Advanced UI/UX Dependencies
-    implementation("androidx.compose.animation:animation:1.5.4")
-    implementation("androidx.compose.animation:animation-graphics:1.5.4")
+    implementation("androidx.compose.animation:animation")
+    implementation("androidx.compose.animation:animation-graphics")
     implementation("com.google.accompanist:accompanist-placeholder-material:0.32.0")
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
-    implementation("androidx.compose.material:material-icons-core:1.5.4")
-    implementation("androidx.compose.ui:ui-text-google-fonts:1.5.4")
-    implementation("androidx.activity:activity-compose:1.8.2")
+    implementation("androidx.compose.material:material-icons-core")
+    implementation("androidx.compose.ui:ui-text-google-fonts")
+    // Keep activity-compose aligned via version catalog
+    implementation(libs.androidx.activity.compose)
     implementation("androidx.compose.material3:material3-window-size-class:1.1.2")
 
     // Add dependencies for WorkManager testing

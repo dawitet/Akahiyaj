@@ -35,6 +35,10 @@
         android:usesCleartextTraffic="true"
         tools:targetApi="34">
 
+        <!-- Allow macrobenchmark to profile release builds on device -->
+        <profileable
+            android:shell="true" />
+
         <!-- Splash Activity - LAUNCHER -->
         <activity
             android:name=".SplashActivity"

@@ -39,6 +39,7 @@ import com.dawitf.akahidegn.ui.theme.ActiveGroupsColorScheme
 import com.dawitf.akahidegn.ui.theme.SettingsColorScheme
 import com.dawitf.akahidegn.ui.screens.ActiveGroupsScreen
 import com.dawitf.akahidegn.ui.screens.SettingsScreen
+import com.dawitf.akahidegn.notifications.service.NotificationManagerService
 import com.dawitf.akahidegn.ui.screens.MainScreen
 import com.dawitf.akahidegn.ui.theme.AkahidegnTheme
 import com.dawitf.akahidegn.viewmodel.MainViewModel
@@ -90,13 +91,19 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.NavController
+import com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel
+import com.dawitf.akahidegn.ui.viewmodels.showQuickSuccess
+import com.dawitf.akahidegn.ui.animation.ConfettiEmitter
+import com.dawitf.akahidegn.ui.animation.shared.SharedElementsRoot
 
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     private val mainViewModel: MainViewModel by viewModels()
+    private val animationViewModel: AnimationViewModel by viewModels()
     @Inject lateinit var errorHandler: ErrorHandler
     @Inject lateinit var activityHistoryRepository: ActivityHistoryRepository
+    @Inject lateinit var notificationManagerService: NotificationManagerService
 
     private lateinit var database: FirebaseDatabase
     private lateinit var groupsRef: DatabaseReference
@@ -221,7 +228,7 @@ class MainActivity : ComponentActivity() {
             val serverClientId = getString(R.string.default_web_client_id)
             if (serverClientId.isEmpty()) {
                 Log.e(TAG, "R.string.default_web_client_id is empty. Cannot start Google Sign-In.")
-                Toast.makeText(this@MainActivity, "Sign-in configuration error.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, getString(R.string.toast_sign_in_config_error), Toast.LENGTH_LONG).show()
                 return@launch
             }
 
@@ -241,10 +248,10 @@ class MainActivity : ComponentActivity() {
                 handleGoogleCredential(result)
             } catch (e: NoCredentialException) {
                 Log.w(TAG, "NoGoogleCredentialException: No credentials available.", e)
-                Toast.makeText(this@MainActivity, "No Google accounts found on this device.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, getString(R.string.toast_no_google_accounts), Toast.LENGTH_LONG).show()
             } catch (e: GetCredentialException) {
                 Log.e(TAG, "GetCredentialException from CredentialManager", e)
-                Toast.makeText(this@MainActivity, "Google Sign-In failed or was cancelled.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this@MainActivity, getString(R.string.toast_sign_in_failed_or_cancelled), Toast.LENGTH_LONG).show()
             }
         }
     }
@@ -264,11 +271,11 @@ class MainActivity : ComponentActivity() {
                 firebaseAuthWithGoogleIdToken(googleIdToken)
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to create GoogleIdTokenCredential or other error", e)
-                Toast.makeText(this, "Google Sign-In failed (token processing error).", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.toast_sign_in_token_error), Toast.LENGTH_LONG).show()
             }
         } else {
             Log.w(TAG, "Unexpected credential type: ${credential.type}")
-            Toast.makeText(this, "Google Sign-In failed (unexpected credential type).", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, getString(R.string.toast_sign_in_unexpected_credential), Toast.LENGTH_LONG).show()
         }
     }
 
@@ -295,7 +302,14 @@ class MainActivity : ComponentActivity() {
                     checkUserProfile()
                 } else {
                     Log.w(TAG, "Firebase Auth with Google ID Token: FAILURE", task.exception)
-                    Toast.makeText(this, "Firebase Authentication Failed. ${task.exception?.message}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(
+                        this,
+                        getString(
+                            R.string.toast_auth_failed_firebase_reason,
+                            task.exception?.message ?: ""
+                        ),
+                        Toast.LENGTH_LONG
+                    ).show()
                 }
             }
     }
@@ -350,23 +364,23 @@ class MainActivity : ComponentActivity() {
 
     private fun showCreateGroupDialog() {
         val editText = EditText(this).apply {
-            hint = "ወደየት ነው የምትሄደው? (ምሳሌ: ቦሌ፣ መገናኛ፣ ፒያሳ)"
+            hint = getString(R.string.destination_input_label_new)
             setPadding(60, 40, 60, 40)
             textSize = 16f
         }
         AlertDialog.Builder(this)
-            .setTitle("🚗 አዲስ ቡድን ፍጠር")
-            .setMessage("የመሳፈሪያ ቡድን ይፍጠሩ እና ከሌሎች ሰዎች ጋር ተጋሩ!")
+            .setTitle(getString(R.string.dialog_create_group_title_new))
+            .setMessage(getString(R.string.dialog_create_group_message))
             .setView(editText)
-            .setPositiveButton("✨ ቡድን ፍጠር") { _, _ ->
+            .setPositiveButton(getString(R.string.dialog_button_create_group)) { _, _ ->
                 val destination = editText.text.toString().trim()
                 if (destination.isNotEmpty()) {
                     showRewardedAdForGroupCreation(destination)
                 } else {
-                    Toast.makeText(this, "እባክዎ መድረሻ ያስገቡ", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.toast_please_enter_destination), Toast.LENGTH_SHORT).show()
                 }
             }
-            .setNegativeButton("❌ ሰርዝ", null)
+            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
             .show()
     }
 
@@ -400,7 +414,7 @@ class MainActivity : ComponentActivity() {
     Log.d("SMOKE_TEST", "createGroupInFirebase called dest=$toDestination lat=$pickupLatitude lng=$pickupLongitude user=${auth.currentUser?.uid}")
         val currentUserId = auth.currentUser?.uid
         if (currentUserId == null) {
-            Toast.makeText(this, "You must be signed in to create a group.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.toast_user_must_sign_in_create), Toast.LENGTH_SHORT).show()
             startGoogleSignInFlow()
             return
         }
@@ -429,7 +443,7 @@ class MainActivity : ComponentActivity() {
 
         if (newGroupId == null) {
             Log.e("FIREBASE", "Failed to get new group key from Firebase.")
-            Toast.makeText(this, "Failed to create group: Could not get group ID.", Toast.LENGTH_SHORT).show()
+            Toast.makeText(this, getString(R.string.toast_failed_get_group_id), Toast.LENGTH_SHORT).show()
             return
         }
 
@@ -456,7 +470,16 @@ class MainActivity : ComponentActivity() {
             .addOnSuccessListener {
                 Log.d("FIREBASE", "Group created: ${newGroup.destinationName} with ID: ${newGroup.groupId}")
                 refreshGroupsFromActivity() // Refresh through ViewModel
-                Toast.makeText(this, "Group created: ${newGroup.destinationName}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, getString(R.string.toast_group_created, newGroup.destinationName
+                    ?: ""), Toast.LENGTH_SHORT).show()
+                // Success feedback
+                runCatching { notificationManagerService.playSuccessSound() }
+                runCatching { notificationManagerService.playSuccessVibration() }
+                // Also show a quick success UI animation (Amharic-first string)
+                runCatching {
+                    val msg = getString(R.string.toast_group_created, newGroup.destinationName ?: "")
+                    animationViewModel.showQuickSuccess(msg)
+                }
 
                 lifecycleScope.launch {
                     runCatching {
@@ -476,30 +499,30 @@ class MainActivity : ComponentActivity() {
             .addOnFailureListener { e ->
                 Log.e("FIREBASE", "Error creating group: ${newGroup.destinationName}, ID: ${newGroup.groupId}", e)
                 Log.e("FIREBASE_DATA", "Data sent: $newGroup")
-                Toast.makeText(this, "Failed to create group: ${e.message}", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.toast_failed_to_create_group, e.message ?: ""), Toast.LENGTH_LONG).show()
             }
     }
     
     private fun joinGroupInFirebase(group: Group, onComplete: (Boolean, String?) -> Unit) {
         val currentUserId = auth.currentUser?.uid
         if (currentUserId == null) {
-            onComplete(false, "You must be signed in to join a group.")
+            onComplete(false, getString(R.string.toast_user_not_authenticated))
             startGoogleSignInFlow()
             return
         }
         val groupId = group.groupId
         if (groupId == null) {
-            onComplete(false, "Group ID is missing.")
+            onComplete(false, getString(R.string.toast_error_group_id_missing))
             return
         }
 
         val thirtyMinutesAgo = System.currentTimeMillis() - TimeUnit.MINUTES.toMillis(30)
         if ((group.timestamp ?: 0L) < thirtyMinutesAgo) {
-            onComplete(false, "This group has expired.")
+            onComplete(false, getString(R.string.toast_group_expired))
             return
         }
         if (group.memberCount >= group.maxMembers) {
-            onComplete(false, "This group is already full.")
+            onComplete(false, getString(R.string.toast_group_is_full))
             return
         }
         if (group.members.containsKey(currentUserId) == true && group.members[currentUserId] == true) {
@@ -536,14 +559,19 @@ class MainActivity : ComponentActivity() {
                     override fun onComplete(error: com.google.firebase.database.DatabaseError?, committed: Boolean, currentData: com.google.firebase.database.DataSnapshot?) {
                         if (error != null) {
                             Log.e("FIREBASE_TX", "Transaction failed for memberCount: ${error.message}")
-                            onComplete(false, "Failed to update member count: ${error.message}")
+                            onComplete(false, getString(R.string.toast_failed_update_member_count, error.message ?: ""))
                         } else if (!committed) {
                             Log.w("FIREBASE_TX", "Transaction for memberCount not committed.")
-                            onComplete(false, "Group might be full or issue occurred.")
+                            onComplete(false, getString(R.string.toast_group_maybe_full_or_issue))
                         } else {
                             Log.d("FIREBASE_TX", "Transaction for memberCount successful.")
                             onComplete(true, null)
                             refreshGroupsFromActivity() // Refresh through ViewModel
+                            // Play a small join success sequence
+                            runCatching {
+                                val name = group.destinationName ?: group.to.orEmpty()
+                                animationViewModel.runGroupJoinSequence(name)
+                            }
                             lifecycleScope.launch {
                                 runCatching {
                                     activityHistoryRepository.add(
@@ -564,7 +592,7 @@ class MainActivity : ComponentActivity() {
             }
             .addOnFailureListener { e ->
                 Log.e("FIREBASE", "Failed to join group.", e)
-                onComplete(false, "Permission denied or network error: ${e.message}")
+                onComplete(false, getString(R.string.toast_permission_denied_or_network_error, e.message ?: ""))
             }
     }
 
@@ -605,12 +633,12 @@ class MainActivity : ComponentActivity() {
                         if (name.isNotBlank() && phone.isNotBlank()) {
                             saveUserProfile(name, phone, googlePhotoUrl ?: sharedPreferences.getString("user_avatar_url", null))
                         } else {
-                            Toast.makeText(this, "Name and Phone are required.", Toast.LENGTH_LONG).show()
+                            Toast.makeText(this, getString(R.string.toast_name_and_phone_required), Toast.LENGTH_LONG).show()
                             showUserRegistrationDialog(name.ifBlank { googleName }, googlePhotoUrl)
                         }
                     },
                     onDismiss = { 
-                        Toast.makeText(this, "Registration is required.", Toast.LENGTH_LONG).show()
+                        Toast.makeText(this, getString(R.string.toast_registration_required), Toast.LENGTH_LONG).show()
                         if (auth.currentUser != null) {
                             initializeMainScreen()
                         } else {
@@ -659,12 +687,12 @@ class MainActivity : ComponentActivity() {
             userRef.setValue(userMap)
                 .addOnSuccessListener {
                     Log.d(TAG, "User profile saved to Firebase: $name. Avatar URL: $finalAvatarUrlToSave")
-                    Toast.makeText(this, "Welcome, $name! Profile saved.", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.toast_welcome_profile_saved, name), Toast.LENGTH_SHORT).show()
                     initializeMainScreen()
                 }
                 .addOnFailureListener { e ->
                     Log.e(TAG, "Failed to save profile to Firebase.", e)
-                    Toast.makeText(this, "Welcome, $name! (Profile saved locally)", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(this, getString(R.string.toast_welcome_profile_saved_locally, name), Toast.LENGTH_SHORT).show()
                     initializeMainScreen()
                 }
         } else {
@@ -701,6 +729,8 @@ class MainActivity : ComponentActivity() {
                 else -> null
             }
             AkahidegnTheme(selectedColorScheme = colorScheme) {
+                val celebrationKey by animationViewModel.celebrationEvent.collectAsState()
+                SharedElementsRoot {
                 Scaffold(
                     bottomBar = {
                         NavigationBar {
@@ -741,13 +771,13 @@ class MainActivity : ComponentActivity() {
                                         val clearRequest = ClearCredentialStateRequest()
                                         credentialManager.clearCredentialState(clearRequest)
                                         Log.d(TAG, "CredentialManager state cleared.")
-                                        Toast.makeText(this@MainActivity, "Signed out.", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(this@MainActivity, getString(R.string.toast_signed_out), Toast.LENGTH_SHORT).show()
                                         sharedPreferences.edit().remove("user_name").remove("user_phone").remove("user_avatar_url").apply()
                                         userName = null
                                         startGoogleSignInFlow()
                                     } catch (e: Exception) {
                                         Log.e(TAG, "Error during sign out: ${e.message}", e)
-                                        Toast.makeText(this@MainActivity, "Error signing out.", Toast.LENGTH_SHORT).show()
+                                        Toast.makeText(this@MainActivity, getString(R.string.toast_sign_out_error), Toast.LENGTH_SHORT).show()
                                         startGoogleSignInFlow()
                                     }
                                 }
@@ -766,6 +796,13 @@ class MainActivity : ComponentActivity() {
                             )
                         }
                     }
+                }
+                // Celebration confetti overlay (drawn on top of current screen)
+                ConfettiEmitter(
+                    triggerKey = celebrationKey,
+                    testTag = "confettiOverlay",
+                    seed = if (BuildConfig.DEBUG) 42L else null
+                )
                 }
             }
         }
@@ -876,7 +913,7 @@ class MainActivity : ComponentActivity() {
                     onDismiss = { selectedGroupForDialog = null },
                     onLeaveGroup = { groupId, userId ->
                         Log.d("GROUP_ACTION", "Leave group $groupId requested by $userId")
-                        Toast.makeText(this@MainActivity, "Leave group feature not fully implemented.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(this@MainActivity, getString(R.string.toast_leave_group_not_implemented), Toast.LENGTH_SHORT).show()
                         selectedGroupForDialog = null 
                     }
                 )
@@ -895,7 +932,7 @@ class MainActivity : ComponentActivity() {
                 Log.d("LOCATION", "Location updates requested.")
             } catch (e: SecurityException) { 
                 Log.e("LOCATION", "SecurityException requesting location updates.", e)
-                Toast.makeText(this, "Location permission error.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.toast_location_permission_error), Toast.LENGTH_LONG).show()
             }
         } else {
             Log.d("LOCATION", "ACCESS_FINE_LOCATION permission not granted. Requesting...")
@@ -913,7 +950,7 @@ class MainActivity : ComponentActivity() {
                 setupLocationUpdates()
             } else {
                 Log.w("LOCATION", "ACCESS_FINE_LOCATION permission denied.")
-                Toast.makeText(this, "Location permission is required for nearby groups.", Toast.LENGTH_LONG).show()
+                Toast.makeText(this, getString(R.string.toast_location_permission_required_nearby), Toast.LENGTH_LONG).show()
             }
         }
     }

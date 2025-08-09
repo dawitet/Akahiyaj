@@ -17,4 +17,5 @@ dependencyResolutionManagement {
 
 rootProject.name = "Akahidegn"
 include(":app")
+include(":benchmark")
  

@@ -85,6 +85,9 @@
     <string name="dialog_button_cancel">ሰርዝ</string>
     <string name="dialog_button_ok_amharic">እሺ</string>
     <string name="dialog_button_no_amharic">እንቢ</string>
+    <string name="dialog_create_group_title_new">አዲስ ግሩፕ ፍጠር</string>
+    <string name="dialog_create_group_message">የመሳፈሪያ ቡድን ይፍጠሩ እና ከሌሎች ሰዎች ጋር ተጋሩ!</string>
+    <string name="dialog_button_create_group">ግሩፕ ፍጠር</string>
     <string name="dialog_button_confirm">አረጋግጥ</string>
     <string name="dialog_button_delete">ሰርዝ</string>
     <string name="dialog_button_save">አስቀምጥ</string>
@@ -147,7 +150,7 @@
     <string name="dark_mode">ጨለማ ሁነታ</string>
     <string name="light_mode">ብሩህ ሁነታ</string>
     <string name="system_theme">የስርዓት ገጽታ</string>
-    <string name="auto_join_enabled">ራስ-ሰር መቀላቀል ንቁ</string>
+    <!-- auto_join_enabled default is now in values/strings.xml to avoid duplicate; override not required -->
     <string name="location_sharing_enabled">የአካባቢ መጋራት ንቁ</string>
     
     <!-- Trip History -->

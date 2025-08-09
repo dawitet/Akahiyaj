@@ -6,6 +6,7 @@ import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
 import android.media.RingtoneManager
+import android.media.Ringtone
 import android.os.Build
 import android.os.VibrationEffect
 import android.os.Vibrator
@@ -187,6 +188,17 @@ class NotificationManagerService @Inject constructor(
                 val pattern = longArrayOf(0, 100, 50, 100)
                 vibrator.vibrate(pattern, -1)
             }
+        }
+    }
+
+    fun playSuccessSound() {
+        if (!preferencesManager.isSoundEnabled()) return
+        val uri = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION)
+        try {
+            val ringtone: Ringtone = RingtoneManager.getRingtone(context, uri)
+            ringtone.play()
+        } catch (_: Throwable) {
+            // Ignore sound errors
         }
     }
 }
