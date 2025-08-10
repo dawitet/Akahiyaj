@@ -28,6 +28,7 @@
     <!-- GroupListScreen -->
     <string name="group_list_title">የቡድኖች ዝርዝር</string> <!-- Group List -->
     <string name="group_members_count">%1$d/%2$d አባላት</string> <!-- 3/6 members -->
+    <string name="toast_user_must_sign_in_join">ቡድን ለመቀላቀል መግባት አለብዎት።</string> <!-- You must sign in to join a group. -->
     <string name="button_join_group">ቡድን ተቀላቀል</string> <!-- Join Group -->
     <string name="button_view_group">ቡድን ይመልከቱ</string> <!-- View Group -->
     <string name="toast_joined_group">ቡድኑን ተቀላቅለዋል።</string> <!-- You have joined the group. -->
