@@ -1,3 +1,5 @@
+@file:OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
+
 package com.dawitf.akahidegn.ui.components
 
 import androidx.compose.animation.*
@@ -20,6 +22,9 @@ import com.dawitf.akahidegn.Group
 import android.location.Location
 import kotlin.math.*
 import com.dawitf.akahidegn.ui.animation.shared.SharedElement
+import com.dawitf.akahidegn.performance.rememberDistanceCalculation
+import com.dawitf.akahidegn.performance.rememberTimeFormat
+import com.dawitf.akahidegn.performance.rememberDistanceFormat
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -32,22 +37,23 @@ fun GroupCard(
 ) {
     var isPressed by remember { mutableStateOf(false) }
 
-    // Calculate distance if user location is available
-    val distance = remember(userLocation, group.pickupLat, group.pickupLng) {
-        if (userLocation != null && group.pickupLat != null && group.pickupLng != null) {
-            calculateDistance(
-                userLocation.latitude, userLocation.longitude,
-                group.pickupLat!!, group.pickupLng!!
-            )
-        } else null
-    }
+    // Optimized distance calculation with caching
+    val distance = rememberDistanceCalculation(
+        userLat = userLocation?.latitude,
+        userLng = userLocation?.longitude,
+        targetLat = group.pickupLat,
+        targetLng = group.pickupLng
+    )
 
-    // Calculate group age
-    val ageMinutes = remember(group.timestamp) {
-        if (group.timestamp != null) {
-            (System.currentTimeMillis() - group.timestamp!!) / (60 * 1000)
-        } else null
-    }
+    // Optimized time formatting with caching
+    val timeAgo = rememberTimeFormat(group.timestamp)
+
+    // Optimized distance formatting with caching
+    val distanceText = rememberDistanceFormat(distance)
+
+    // Use stable callbacks to prevent recomposition
+    val stableOnClick = remember { onClick }
+    val stableOnJoinClick = remember { onJoinClick }
 
     // Use groupId as a stable shared element key
     val sharedKey = remember(group.groupId) { "groupCard-${group.groupId ?: group.destinationName}" }
@@ -55,7 +61,7 @@ fun GroupCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .clickable { onClick() }
+            .clickable { stableOnClick() }
             .then(
                 if (isPressed) {
                     Modifier.background(
@@ -70,12 +76,12 @@ fun GroupCard(
         ),
         shape = RoundedCornerShape(12.dp)
     ) {
-        SharedElement(key = sharedKey, screenKey = "list") { sharedMod ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp)
-        ) {
+        SharedElement(key = sharedKey) { sharedMod ->
+            Column(
+                modifier = sharedMod
+                    .fillMaxWidth()
+                    .padding(16.dp)
+            ) {
             // Header row with destination and status
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -139,7 +145,7 @@ fun GroupCard(
                 }
 
                 // Distance (if available)
-                distance?.let { dist ->
+                if (distance != null && distanceText.isNotEmpty()) {
                     Row(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
@@ -151,31 +157,29 @@ fun GroupCard(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "${dist.roundToInt()}m",
+                            text = distanceText,
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 }
 
-                // Age (if available)
-                ageMinutes?.let { age ->
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.Schedule,
-                            contentDescription = "Time",
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(16.dp)
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = "${age}ደቂቃ",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
-                        )
-                    }
+                // Time ago (always available with fallback)
+                Row(
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Schedule,
+                        contentDescription = "Time",
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(16.dp)
+                    )
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = timeAgo,
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant
+                    )
                 }
             }
 

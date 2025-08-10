@@ -17,8 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dawitf.akahidegn.R
 import com.dawitf.akahidegn.viewmodel.ActivityHistoryViewModel
+import com.dawitf.akahidegn.ui.animation.shared.SharedElement
+import com.dawitf.akahidegn.ui.animation.shared.SharedElementKeys
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ActivityHistoryScreen(
     onBack: () -> Unit,
@@ -26,23 +29,25 @@ fun ActivityHistoryScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(id = R.string.activity_history_title)) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button))
+    SharedElement(key = SharedElementKeys.HISTORY_SCREEN) { sharedModifier ->
+        Scaffold(
+            modifier = sharedModifier,
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.activity_history_title)) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button))
+                        }
+                    },
+                    actions = {
+                        if (!state.isEmpty) {
+                            TextButton(onClick = { viewModel.clear() }) { Text(stringResource(id = R.string.clear_button)) }
+                        }
                     }
-                },
-                actions = {
-                    if (!state.isEmpty) {
-                        TextButton(onClick = { viewModel.clear() }) { Text(stringResource(id = R.string.clear_button)) }
-                    }
-                }
-            )
-        }
-    ) { padding ->
+                )
+            }
+        ) { padding ->
         if (state.isEmpty) {
             Box(Modifier.fillMaxSize().padding(padding), contentAlignment = Alignment.Center) {
                 Text(stringResource(id = R.string.no_trip_history), fontWeight = FontWeight.Medium)
@@ -65,4 +70,5 @@ fun ActivityHistoryScreen(
             }
         }
     }
+}
 }

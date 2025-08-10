@@ -5,6 +5,7 @@ import com.dawitf.akahidegn.data.remote.service.impl.GroupServiceImpl
 import com.dawitf.akahidegn.data.repository.GroupRepositoryImpl
 import com.dawitf.akahidegn.data.repository.UserProfileRepositoryImpl
 import com.dawitf.akahidegn.domain.repository.GroupRepository
+import com.dawitf.akahidegn.domain.repository.OptimisticGroupRepository
 import com.dawitf.akahidegn.domain.repository.UserProfileRepository
 import com.dawitf.akahidegn.analytics.AnalyticsManager
 import com.dawitf.akahidegn.localization.LocalizationManager

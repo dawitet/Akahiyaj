@@ -55,11 +55,6 @@ object AvatarUtil {
     fun getDefaultUserAvatar(): Int = userAvatars.first()
     
     /**
-     * Get the default anonymous user avatar
-     */
-    fun getAnonymousUserAvatar(): Int = R.drawable.default_avatar
-    
-    /**
      * Get a default group avatar (first in the list)
      */
     fun getDefaultGroupAvatar(): Int = groupAvatars.first()

@@ -64,6 +64,9 @@ class ProfileFeatureViewModel @Inject constructor(
                         error = result.error.message
                     )
                 }
+                is Result.Loading -> {
+                    // Loading state is already handled by setting isLoading = true above
+                }
             }
         }
     }
@@ -85,6 +88,9 @@ class ProfileFeatureViewModel @Inject constructor(
                         error = result.error.message
                     )
                 }
+                is Result.Loading -> {
+                    // Loading state is already handled by setting isLoading = true above
+                }
             }
         }
     }
@@ -104,6 +110,9 @@ class ProfileFeatureViewModel @Inject constructor(
                         error = result.error.message
                     )
                 }
+                is Result.Loading -> {
+                    // Loading state is already handled by setting isLoading = true above
+                }
             }
         }
     }
@@ -121,6 +130,9 @@ class ProfileFeatureViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         error = result.error.message
                     )
+                }
+                is Result.Loading -> {
+                    // Loading state handled by UI
                 }
             }
         }
@@ -160,6 +172,9 @@ class ProfileFeatureViewModel @Inject constructor(
                     _uiState.value = _uiState.value.copy(
                         error = result.error.message
                     )
+                }
+                is Result.Loading -> {
+                    // Loading state handled by UI
                 }
             }
         }

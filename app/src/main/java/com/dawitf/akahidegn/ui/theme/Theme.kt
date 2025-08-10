@@ -125,38 +125,38 @@ private val LightThemeColorScheme = lightColorScheme(
     onError = Color.White
 )
 
-// Tab-specific color schemes with new design
+// Define distinct color schemes for each tab
 val HomeColorScheme = lightColorScheme(
-    primary = HomeGradientTop,           // Misty Blue for gradient top
-    onPrimary = HomeContentText,         // Golden Yellow for text
-    secondary = HomeGradientBottom,      // Byzantium for gradient bottom  
-    onSecondary = HomeContentText,       // Golden Yellow for text
-    background = HomeContentBackground,  // Charcoal Grey for content background
-    onBackground = HomeContentText,      // Golden Yellow for content text
-    surface = HomeContentBackground,
-    onSurface = HomeContentText
+    primary = Color(0xFF4CAF50), // Green
+    onPrimary = Color.White,
+    secondary = Color(0xFF8BC34A),
+    onSecondary = Color.White,
+    background = Color(0xFFF1F8E9),
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black
 )
 
 val ActiveGroupsColorScheme = lightColorScheme(
-    primary = ActiveGroupsGradientTop,           // Charcoal Grey for gradient top
-    onPrimary = ActiveGroupsContentText,         // Byzantium for text
-    secondary = ActiveGroupsGradientBottom,      // Golden Yellow for gradient bottom
-    onSecondary = ActiveGroupsContentText,       // Byzantium for text  
-    background = ActiveGroupsContentBackground,  // Misty Blue for content background
-    onBackground = ActiveGroupsContentText,      // Byzantium for content text
-    surface = ActiveGroupsContentBackground,
-    onSurface = ActiveGroupsContentText
+    primary = Color(0xFF2196F3), // Blue
+    onPrimary = Color.White,
+    secondary = Color(0xFF90CAF9),
+    onSecondary = Color.White,
+    background = Color(0xFFE3F2FD),
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black
 )
 
 val SettingsColorScheme = lightColorScheme(
-    primary = SettingsGradientTop,       // Dark Green for gradient top
-    onPrimary = SettingsContentText,     // Golden Yellow for text
-    secondary = SettingsGradientBottom,  // Pink for gradient bottom
-    onSecondary = SettingsContentText,   // Golden Yellow for text
-    background = SettingsContentBackground, // Charcoal Grey for content background
-    onBackground = SettingsContentText,  // Golden Yellow for content text
-    surface = SettingsContentBackground,
-    onSurface = SettingsContentText
+    primary = Color(0xFFFF9800), // Orange
+    onPrimary = Color.White,
+    secondary = Color(0xFFFFCC80),
+    onSecondary = Color.White,
+    background = Color(0xFFFFF3E0),
+    onBackground = Color.Black,
+    surface = Color.White,
+    onSurface = Color.Black
 )
 
 @Composable

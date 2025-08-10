@@ -3,34 +3,34 @@
 3    package="com.dawitf.akahidegn.benchmark" >
 4
 5    <uses-sdk
-5-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:5:5-7:41
+5-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:5:5-7:41
 6        android:minSdkVersion="23"
-6-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:6:9-35
+6-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:6:9-35
 7        android:targetSdkVersion="35" />
-7-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:7:9-38
+7-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:7:9-38
 8    <!-- Required permissions for Macrobenchmark to control the target app -->
 9    <uses-permission android:name="android.permission.DUMP" />
-9-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:9:5-63
-9-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:9:22-60
+9-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:9:5-63
+9-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:9:22-60
 10    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
-10-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:10:5-78
-10-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:10:22-75
+10-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:10:5-78
+10-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:10:22-75
 11    <uses-permission android:name="android.permission.READ_LOGS" />
-11-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:11:5-68
-11-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:11:22-65
+11-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:11:5-68
+11-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:11:22-65
 12
 13    <instrumentation
-13-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:13:5-18:66
+13-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:13:5-18:66
 14        android:name="androidx.test.runner.AndroidJUnitRunner"
-14-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:14:9-63
+14-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:14:9-63
 15        android:functionalTest="false"
-15-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:15:9-39
+15-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:15:9-39
 16        android:handleProfiling="false"
-16-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:16:9-40
+16-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:16:9-40
 17        android:label="Tests for com.dawitf.akahidegn.benchmark"
-17-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:17:9-65
+17-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:17:9-65
 18        android:targetPackage="com.dawitf.akahidegn.benchmark" />
-18-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:18:9-63
+18-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:18:9-63
 19
 20    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
 20-->[androidx.benchmark:benchmark-macro:1.2.4] /Users/dawitsahle/.gradle/caches/8.13/transforms/00b33017546a32a26243fdccc498789c/transformed/benchmark-macro-1.2.4/AndroidManifest.xml:23:5-25:53
@@ -80,24 +80,24 @@
 45-->[androidx.core:core:1.9.0] /Users/dawitsahle/.gradle/caches/8.13/transforms/4d78c83e09db9596308b1a9abd865a66/transformed/core-1.9.0/AndroidManifest.xml:26:22-94
 46
 47    <application
-47-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:20:5-25:19
+47-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:20:5-25:19
 48        android:appComponentFactory="androidx.core.app.CoreComponentFactory"
 48-->[androidx.core:core:1.9.0] /Users/dawitsahle/.gradle/caches/8.13/transforms/4d78c83e09db9596308b1a9abd865a66/transformed/core-1.9.0/AndroidManifest.xml:28:18-86
 49        android:debuggable="true"
 50        android:extractNativeLibs="false"
 51        android:label="benchmark"
-51-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:20:18-43
+51-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:20:18-43
 52        android:networkSecurityConfig="@xml/network_security_config" >
 52-->[androidx.benchmark:benchmark-macro:1.2.4] /Users/dawitsahle/.gradle/caches/8.13/transforms/00b33017546a32a26243fdccc498789c/transformed/benchmark-macro-1.2.4/AndroidManifest.xml:42:18-78
 53        <uses-library
-53-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:21:9-23:40
+53-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:21:9-23:40
 54            android:name="androidx.test.runner"
-54-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:22:13-48
+54-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:22:13-48
 55            android:required="false" />
-55-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:23:13-37
+55-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:23:13-37
 56        <uses-library android:name="android.test.runner" />
-56-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:24:9-60
-56-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest11647490503693231569.xml:24:23-57
+56-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:24:9-60
+56-->/Users/dawitsahle/AndroidStudioProjects/Akahidegn/benchmark/build/intermediates/tmp/manifest/debug/tempFile2ProcessTestManifest2356595554632448523.xml:24:23-57
 57        <!-- Activity used to block background content while benchmarks are running -->
 58        <activity
 58-->[androidx.benchmark:benchmark-common:1.2.4] /Users/dawitsahle/.gradle/caches/8.13/transforms/560355fbdc3e85bd0667251a0203695e/transformed/benchmark-common-1.2.4/AndroidManifest.xml:32:9-36:20

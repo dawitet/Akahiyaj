@@ -14,24 +14,7 @@ import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import com.google.android.gms.ads.AdError
-import com.google.android.gms.ads.FullScreenContentCallback
-import com.google.android.gms.ads.interstitial.InterstitialAd
-import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
-import com.google.android.gms.ads.AdRequest
-import com.google.android.gms.ads.LoadAdError
-import com.google.android.gms.ads.MobileAds
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.TextButton
-import androidx.compose.ui.unit.dp
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
@@ -63,8 +46,7 @@ import com.dawitf.akahidegn.viewmodel.MainViewModel
 import com.dawitf.akahidegn.ui.components.UserRegistrationDialog
 import com.dawitf.akahidegn.ui.components.GroupMembersDialog
 import com.dawitf.akahidegn.ui.components.GroupMember
-import com.dawitf.akahidegn.ui.components.SignInPromptDialog
-import com.dawitf.akahidegn.ui.components.CreateGroupDialog
+import com.dawitf.akahidegn.ui.components.UiEventHandler
 import com.dawitf.akahidegn.domain.model.SearchFilters
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.ktx.auth
@@ -77,13 +59,13 @@ import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import android.content.SharedPreferences
 import androidx.compose.runtime.Composable
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.interstitial.InterstitialAd
+import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
-import com.google.android.gms.ads.nativead.NativeAd
-import com.google.android.gms.ads.nativead.NativeAdOptions
-import androidx.compose.foundation.layout.Box
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.viewinterop.AndroidView
 import android.app.AlertDialog
 import android.widget.EditText
 import dagger.hilt.android.AndroidEntryPoint
@@ -114,6 +96,10 @@ import com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel
 import com.dawitf.akahidegn.ui.viewmodels.showQuickSuccess
 import com.dawitf.akahidegn.ui.animation.ConfettiEmitter
 import com.dawitf.akahidegn.ui.animation.shared.SharedElementsRoot
+import com.dawitf.akahidegn.ui.animation.shared.SharedAnimatedVisibility
+import com.dawitf.akahidegn.ui.animation.shared.renderInSharedTransitionScopeOverlay
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
 
 
 @AndroidEntryPoint
@@ -131,16 +117,9 @@ class MainActivity : ComponentActivity() {
 
     private val currentGroups = mutableListOf<Group>() // Consider if this is still needed or use ViewModel's state
     private var selectedGroupForDialog by mutableStateOf<Group?>(null)
-    private var showSignInDialog by mutableStateOf(false)
-    private var showCreateGroupDialog by mutableStateOf(false)
-    private var showDisbandConfirmDialog by mutableStateOf(false)
-    private var showLeaveConfirmDialog by mutableStateOf(false)
-    private var groupToDisband by mutableStateOf<Group?>(null)
-    private var groupToLeave by mutableStateOf<Group?>(null)
 
     private var rewardedAd: RewardedAd? = null
     private var interstitialAd: InterstitialAd? = null
-    private var nativeAd: NativeAd? = null
 
     private val _userLocationFlow = MutableStateFlow<Location?>(null)
     val userLocationFlow: StateFlow<Location?> = _userLocationFlow.asStateFlow()
@@ -173,7 +152,6 @@ class MainActivity : ComponentActivity() {
     companion object {
         val THEME_MODE_KEY = androidx.datastore.preferences.core.stringPreferencesKey("theme_mode")
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
-        private const val NOTIFICATION_PERMISSION_REQUEST_CODE = 1002
         private const val TAG = "MainActivityAuth"
     }
 
@@ -188,7 +166,6 @@ class MainActivity : ComponentActivity() {
         }
         locationManager = getSystemService(Context.LOCATION_SERVICE) as LocationManager
         setupLocationUpdates() // Request location updates
-        requestNotificationPermission() // Request notification permission for push notifications
 
         MobileAds.initialize(this) { Log.d("ADS", "Mobile Ads SDK initialized") }
 
@@ -199,7 +176,6 @@ class MainActivity : ComponentActivity() {
 
         loadRewardedAd()
         loadInterstitialAd()
-        loadNativeAd()
 
         // Pass the location flow to the ViewModel once it's available
         mainViewModel.setUserLocationFlow(userLocationFlow)
@@ -379,29 +355,6 @@ class MainActivity : ComponentActivity() {
         })
     }
 
-    private fun loadNativeAd() {
-        if (!BuildConfig.ADS_ENABLED || BuildConfig.ADMOB_NATIVE_ID.isEmpty()) {
-            Log.d("ADS", "Ads disabled - NATIVE_ID empty or not enabled")
-            return
-        }
-        val adRequest = AdRequest.Builder().build()
-        val adLoader = com.google.android.gms.ads.AdLoader.Builder(this, BuildConfig.ADMOB_NATIVE_ID)
-            .forNativeAd { ad ->
-                Log.d("ADS", "Native ad loaded")
-                nativeAd = ad
-            }
-            .withAdListener(object : com.google.android.gms.ads.AdListener() {
-                override fun onAdFailedToLoad(adError: LoadAdError) {
-                    Log.d("ADS", "Native ad failed: ${adError.message}")
-                    nativeAd = null
-                }
-            })
-            .withNativeAdOptions(NativeAdOptions.Builder().build())
-            .build()
-        
-        adLoader.loadAd(adRequest)
-    }
-
     private fun refreshGroupsFromActivity() {
         Log.d("MainActivity", "refreshGroupsFromActivity called, delegating to ViewModel.")
         mainViewModel.refreshGroups()
@@ -415,135 +368,44 @@ class MainActivity : ComponentActivity() {
     }
 
     private fun showCreateGroupDialog() {
-        showCreateGroupDialog = true
+        val editText = EditText(this).apply {
+            hint = getString(R.string.destination_input_label_new)
+            setPadding(60, 40, 60, 40)
+            textSize = 16f
+        }
+        AlertDialog.Builder(this)
+            .setTitle(getString(R.string.dialog_create_group_title_new))
+            .setMessage(getString(R.string.dialog_create_group_message))
+            .setView(editText)
+            .setPositiveButton(getString(R.string.dialog_button_create_group)) { _, _ ->
+                val destination = editText.text.toString().trim()
+                if (destination.isNotEmpty()) {
+                    showRewardedAdForGroupCreation(destination)
+                } else {
+                    Toast.makeText(this, getString(R.string.toast_please_enter_destination), Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton(getString(R.string.dialog_button_cancel), null)
+            .show()
     }
 
-    private fun showRewardedAdForGroupCreation(destination: String, passengerCount: Int) {
+    private fun showRewardedAdForGroupCreation(destination: String) {
         if (rewardedAd != null) {
             rewardedAd!!.show(this) { rewardItem ->
                 Log.d("ADS", "User earned reward: ${rewardItem.amount} ${rewardItem.type}")
-                createGroupAfterAd(destination, passengerCount)
+                createGroupAfterAd(destination)
                 loadRewardedAd()
             }
         } else {
             Log.d("ADS", "Rewarded ad not ready, creating group directly")
-            createGroupAfterAd(destination, passengerCount)
+            createGroupAfterAd(destination)
         }
     }
 
-    private fun showInterstitialAdForJoining(group: Group) {
-        if (interstitialAd != null) {
-            interstitialAd!!.fullScreenContentCallback = object : com.google.android.gms.ads.FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    Log.d("ADS", "Interstitial ad dismissed, proceeding with join")
-                    joinGroupAfterAd(group)
-                    loadInterstitialAd() // Load a new ad for next time
-                }
-                
-                override fun onAdFailedToShowFullScreenContent(adError: com.google.android.gms.ads.AdError) {
-                    Log.d("ADS", "Interstitial ad failed to show: ${adError.message}")
-                    joinGroupAfterAd(group)
-                }
-                
-                override fun onAdShowedFullScreenContent() {
-                    Log.d("ADS", "Interstitial ad showed")
-                    interstitialAd = null
-                }
-            }
-            
-            interstitialAd!!.show(this)
-        } else {
-            Log.d("ADS", "Interstitial ad not ready, joining group directly")
-            joinGroupAfterAd(group)
-        }
-    }
-
-    private fun joinGroupAfterAd(group: Group) {
-        val currentUserId = auth.currentUser?.uid
-        if (currentUserId == null) {
-            Toast.makeText(this, getString(R.string.toast_user_must_sign_in_join), Toast.LENGTH_SHORT).show()
-            startGoogleSignInFlow()
-            return
-        }
-
-        if (group.groupId == null) {
-            Log.e("JOIN_GROUP", "Group ID is null, cannot join")
-            Toast.makeText(this, "Group ID error. Please try again.", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Check if group is full
-        if (group.memberCount >= group.maxMembers) {
-            Toast.makeText(this, "ቡድኑ ሙሉ ነው", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        // Check if user is already a member
-        if (group.members.containsKey(currentUserId) && group.members[currentUserId] == true) {
-            Toast.makeText(this, "አስቀድመው ቡድኑ አባል ነዎት", Toast.LENGTH_SHORT).show()
-            return
-        }
-
-        val groupRef = groupsRef.child(group.groupId!!)
-        val userAvatar = if (auth.currentUser?.isAnonymous == true) {
-            "avatar_6" // Use default avatar for anonymous users
-        } else {
-            sharedPreferences.getString("user_avatar", "avatar_1") ?: "avatar_1"
-        }
-        
-        val memberInfo = hashMapOf(
-            "name" to (auth.currentUser?.displayName ?: userName ?: "Unknown"),
-            "phone" to (sharedPreferences.getString("user_phone", "") ?: ""),
-            "avatar" to userAvatar,
-            "joinedAt" to System.currentTimeMillis()
-        )
-
-        // Add user to members list
-        groupRef.child("members").child(currentUserId).setValue(true)
-            .addOnSuccessListener {
-                // Add member details
-                groupRef.child("memberDetails").child(currentUserId).setValue(memberInfo)
-                    .addOnSuccessListener {
-                        // Update member count
-                        val newMemberCount = group.memberCount + 1
-                        groupRef.child("memberCount").setValue(newMemberCount)
-                            .addOnSuccessListener {
-                                Log.d("JOIN_GROUP", "Successfully joined group ${group.groupId}")
-                                Toast.makeText(this, "በተሳካ ሁኔታ ቡድኑን ተቀላቅለዋል!", Toast.LENGTH_SHORT).show()
-                                
-                                // Send notification to group creator about new member
-                                val userName = auth.currentUser?.displayName ?: userName ?: "Someone"
-                                notificationManagerService.showUserJoinedNotification(group, userName)
-                                
-                                // Check if group is now full and notify
-                                if (newMemberCount >= group.maxMembers) {
-                                    notificationManagerService.showGroupFullNotification(group)
-                                }
-                                
-                                // Refresh groups to show updated data
-                                mainViewModel.refreshGroups()
-                                mainViewModel.loadUserGroups()
-                            }
-                            .addOnFailureListener { exception ->
-                                Log.e("JOIN_GROUP", "Failed to update member count: ${exception.message}")
-                                Toast.makeText(this, "ቡድን መቀላቀል አልተቻለም", Toast.LENGTH_SHORT).show()
-                            }
-                    }
-                    .addOnFailureListener { exception ->
-                        Log.e("JOIN_GROUP", "Failed to add member details: ${exception.message}")
-                        Toast.makeText(this, "ቡድን መቀላቀል አልተቻለም", Toast.LENGTH_SHORT).show()
-                    }
-            }
-            .addOnFailureListener { exception ->
-                Log.e("JOIN_GROUP", "Failed to add to members: ${exception.message}")
-                Toast.makeText(this, "ቡድን መቀላቀል አልተቻለም", Toast.LENGTH_SHORT).show()
-            }
-    }
-
-    private fun createGroupAfterAd(destination: String, passengerCount: Int) {
+    private fun createGroupAfterAd(destination: String) {
         val lat = _userLocationFlow.value?.latitude ?: 8.9806 // Default if null
         val lng = _userLocationFlow.value?.longitude ?: 38.7578 // Default if null
-        createGroupInFirebase(toDestination = destination, pickupLatitude = lat, pickupLongitude = lng, passengerCount = passengerCount)
+        createGroupInFirebase(toDestination = destination, pickupLatitude = lat, pickupLongitude = lng)
     }
 
     // Removed handleGroupSelection and joinGroupAfterAd (assuming they are part of a different flow or deprecated)
@@ -552,8 +414,7 @@ class MainActivity : ComponentActivity() {
     private fun createGroupInFirebase(
         toDestination: String, 
         pickupLatitude: Double,
-        pickupLongitude: Double,
-        passengerCount: Int
+        pickupLongitude: Double
     ) {
     Log.d("SMOKE_TEST", "createGroupInFirebase called dest=$toDestination lat=$pickupLatitude lng=$pickupLongitude user=${auth.currentUser?.uid}")
         val currentUserId = auth.currentUser?.uid
@@ -569,11 +430,7 @@ class MainActivity : ComponentActivity() {
         val creatorDisplayName = auth.currentUser?.displayName ?: userName ?: "Anonymous User"
         val userPhone = sharedPreferences.getString("user_phone", "") ?: ""
         val userAvatarUrlFromPrefs = sharedPreferences.getString("user_avatar_url", null)
-        val finalUserAvatar = if (auth.currentUser?.isAnonymous == true) {
-            "avatar_6" // Use default avatar for anonymous users
-        } else {
-            userAvatarUrlFromPrefs ?: sharedPreferences.getString("user_avatar", "avatar_1")!!
-        }
+        val finalUserAvatar = userAvatarUrlFromPrefs ?: sharedPreferences.getString("user_avatar", "avatar_1")!!
         val fromLocationString = "Lat: ${"%.4f".format(pickupLatitude)}, Lng: ${"%.4f".format(pickupLongitude)}"
         val uniqueFirebaseDisplayDestinationName = "$toDestination ($timeString) - by $creatorDisplayName"
 
@@ -607,73 +464,37 @@ class MainActivity : ComponentActivity() {
             pickupLat = pickupLatitude,
             pickupLng = pickupLongitude,
             timestamp = timestamp,
-            maxMembers = passengerCount,
+            maxMembers = 4,
             members = initialMembers,
             memberDetails = initialMemberDetails,
             memberCount = 1,
             imageUrl = null
         )
 
-        newGroupRef.setValue(newGroup)
-            .addOnSuccessListener {
-                Log.d("FIREBASE", "Group created: ${newGroup.destinationName} with ID: ${newGroup.groupId}")
-                
-                // Refresh both main groups list and user groups list
-                refreshGroupsFromActivity() // Refresh main groups through ViewModel
-                mainViewModel.refreshUserGroups() // Refresh user groups as well
-                
-                Toast.makeText(this, getString(R.string.toast_group_created, newGroup.destinationName
-                    ?: ""), Toast.LENGTH_SHORT).show()
-                // Success feedback
-                runCatching { notificationManagerService.playSuccessSound() }
-                runCatching { notificationManagerService.playSuccessVibration() }
-                // Also show a quick success UI animation (Amharic-first string)
-                runCatching {
-                    val msg = getString(R.string.toast_group_created, newGroup.destinationName ?: "")
-                    animationViewModel.showQuickSuccess(msg)
-                }
+        // Use optimistic UI for instant group creation feedback
+        mainViewModel.createGroup(newGroup, currentUserId)
+        
+        // Success feedback (immediate)
+        runCatching { notificationManagerService.playSuccessSound() }
+        runCatching { notificationManagerService.playSuccessVibration() }
+        runCatching {
+            val msg = getString(R.string.toast_group_created, newGroup.destinationName ?: "")
+            animationViewModel.showQuickSuccess(msg)
+        }
 
-                lifecycleScope.launch {
-                    runCatching {
-                        activityHistoryRepository.add(
-                            TripHistoryItem(
-                                tripId = newGroupId,
-                                groupId = newGroupId,
-                                destinationName = newGroup.destinationName ?: toDestination,
-                                memberCount = 1,
-                                role = "CREATOR",
-                                status = "ACTIVE"
-                            )
-                        )
-                    }.onFailure { e -> Log.e("HISTORY", "Failed to record created group", e) }
-                }
-            }
-            .addOnFailureListener { e ->
-                Log.e("FIREBASE", "Error creating group: ${newGroup.destinationName}, ID: ${newGroup.groupId}", e)
-                Log.e("FIREBASE_DATA", "Data sent: $newGroup")
-                Toast.makeText(this, getString(R.string.toast_failed_to_create_group, e.message ?: ""), Toast.LENGTH_LONG).show()
-            }
-    }
-    
-    private fun tryJoinGroup(group: Group) {
-        // Show interstitial ad first, then join the group
-        if (interstitialAd != null) {
-            interstitialAd?.show(this)
-            interstitialAd?.fullScreenContentCallback = object : FullScreenContentCallback() {
-                override fun onAdDismissedFullScreenContent() {
-                    Log.d("ADS", "Interstitial ad dismissed. Proceeding to join group.")
-                    joinGroupAfterAd(group)
-                    loadInterstitialAd() // Load next ad
-                }
-                override fun onAdFailedToShowFullScreenContent(e: AdError) {
-                    Log.e("ADS", "Failed to show interstitial ad: ${e.message}")
-                    joinGroupAfterAd(group) // Join anyway if ad fails
-                    loadInterstitialAd() // Load next ad
-                }
-            }
-        } else {
-            Log.d("ADS", "Interstitial ad not ready. Joining group directly.")
-            joinGroupAfterAd(group)
+        lifecycleScope.launch {
+            runCatching {
+                activityHistoryRepository.add(
+                    TripHistoryItem(
+                        tripId = newGroupId,
+                        groupId = newGroupId,
+                        destinationName = newGroup.destinationName ?: toDestination,
+                        memberCount = 1,
+                        role = "CREATOR",
+                        status = "ACTIVE"
+                    )
+                )
+            }.onFailure { e -> Log.e("HISTORY", "Failed to record created group", e) }
         }
     }
     
@@ -709,11 +530,7 @@ class MainActivity : ComponentActivity() {
         val joinerDisplayName = auth.currentUser?.displayName ?: userName ?: "Anonymous User"
         val userPhone = sharedPreferences.getString("user_phone", "") ?: ""
         val userAvatarUrlFromPrefs = sharedPreferences.getString("user_avatar_url", null)
-        val finalUserAvatar = if (auth.currentUser?.isAnonymous == true) {
-            "avatar_6" // Use default avatar for anonymous users
-        } else {
-            userAvatarUrlFromPrefs ?: sharedPreferences.getString("user_avatar", "avatar_1")!!
-        }
+        val finalUserAvatar = userAvatarUrlFromPrefs ?: sharedPreferences.getString("user_avatar", "avatar_1")!!
 
         val updates = HashMap<String, Any>()
         updates["members/$currentUserId"] = true
@@ -886,14 +703,9 @@ class MainActivity : ComponentActivity() {
             startGoogleSignInFlow()
             return
         }
-        // Ensure ViewModel is initialized with Firebase refs and user ID
-        // Pass groupsRef from Activity to ViewModel; ViewModel will handle its own logic
-        if (currentUserId != null) { // Double check currentUserId is not null
-             mainViewModel.initializeFirebase(groupsRef, currentUserId)
-             // Load user groups after Firebase is initialized
-             mainViewModel.loadUserGroups()
-        } else {
-            Log.e(TAG, "Critical error: User ID is null at initializeMainScreen after checks. Cannot init ViewModel.")
+        // ViewModel now uses StateFlow and repository pattern - no manual Firebase initialization needed
+        if (currentUserId == null) {
+            Log.e(TAG, "Critical error: User ID is null at initializeMainScreen after checks.")
             startGoogleSignInFlow() // Fallback to sign-in
             return
         }
@@ -913,7 +725,9 @@ class MainActivity : ComponentActivity() {
                 SharedElementsRoot {
                 Scaffold(
                     bottomBar = {
-                        NavigationBar {
+                        NavigationBar(
+                            modifier = Modifier.renderInSharedTransitionScopeOverlay(zIndexInOverlay = 1f)
+                        ) {
                             val items = listOf(Screen.Main, Screen.ActiveGroups, Screen.Settings)
                             items.forEach { screen ->
                                 NavigationBarItem(
@@ -934,72 +748,35 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     NavHost(navController, startDestination = Screen.Main.route, Modifier.padding(innerPadding)) {
                         composable(Screen.Main.route) {
-                            MainScreenContent(
-                                navController = navController,
-                                onGroupClick = { group -> 
-                                    if (auth.currentUser?.isAnonymous == true) {
-                                        // Show sign-in prompt for anonymous users
-                                        showSignInPrompt()
-                                    } else {
-                                        // Check if group is full or user is already a member
-                                        if (group.memberCount >= group.maxMembers) {
-                                            showGroupMembersDialog(group)
-                                        } else {
-                                            val currentUserId = auth.currentUser?.uid
-                                            if (currentUserId != null && 
-                                                group.members.containsKey(currentUserId) && 
-                                                group.members[currentUserId] == true) {
-                                                // User is already a member, show members dialog
-                                                showGroupMembersDialog(group)
-                                            } else {
-                                                // Show interstitial ad before joining
-                                                showInterstitialAdForJoining(group)
-                                            }
-                                        }
-                                    }
-                                },
-                                onRefreshGroups = { refreshGroupsFromActivity() },
-                                onCreateGroup = { 
-                                    if (auth.currentUser?.isAnonymous == true) {
-                                        // Show sign-in prompt for anonymous users
-                                        showSignInPrompt()
-                                    } else {
-                                        showCreateGroupDialog = true
-                                    }
-                                }
-                            )
+                            SharedAnimatedVisibility(
+                                visible = currentRoute == Screen.Main.route,
+                                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { -it / 2 },
+                                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { -it / 2 }
+                            ) {
+                                MainScreenContent(
+                                    navController = navController,
+                                    onGroupClick = { group -> showGroupMembersDialog(group) },
+                                    onRefreshGroups = { refreshGroupsFromActivity() },
+                                    onCreateGroup = { showCreateGroupDialog() }
+                                )
+                            }
                         }
                         composable(Screen.ActiveGroups.route) { 
-                            val userGroups by mainViewModel.userGroups.collectAsState()
-                            val isLoadingUserGroups by mainViewModel.isLoadingUserGroups.collectAsState()
-                            val userLocation by mainViewModel.currentLocation.collectAsState()
-                            
-                            ActiveGroupsScreen(
-                                userGroups = userGroups,
-                                isLoading = isLoadingUserGroups,
-                                userLocation = userLocation,
-                                onRefresh = { mainViewModel.refreshUserGroups() },
-                                onGroupClick = { group ->
-                                    // Navigate to group details or chat
-                                    if (group.memberCount < group.maxMembers) {
-                                        showGroupDialog(group)
-                                    } else {
-                                        showGroupMembersDialog(group)
-                                    }
-                                },
-                                onDisbandGroup = { group ->
-                                    groupToDisband = group
-                                    showDisbandConfirmDialog = true
-                                },
-                                onLeaveGroup = { group ->
-                                    groupToLeave = group
-                                    showLeaveConfirmDialog = true
-                                },
-                                isGroupCreator = { group -> mainViewModel.isGroupCreator(group) }
-                            )
+                            SharedAnimatedVisibility(
+                                visible = currentRoute == Screen.ActiveGroups.route,
+                                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInVertically { it / 2 },
+                                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutVertically { it / 2 }
+                            ) {
+                                ActiveGroupsScreen(/* ... */)
+                            }
                         }
                         composable(Screen.Settings.route) {
-                            SettingsScreen(onSignOut = {
+                            SharedAnimatedVisibility(
+                                visible = currentRoute == Screen.Settings.route,
+                                enter = androidx.compose.animation.fadeIn() + androidx.compose.animation.slideInHorizontally { it },
+                                exit = androidx.compose.animation.fadeOut() + androidx.compose.animation.slideOutHorizontally { it }
+                            ) {
+                                SettingsScreen(onSignOut = {
                                 lifecycleScope.launch {
                                     try {
                                         auth.signOut()
@@ -1018,20 +795,43 @@ class MainActivity : ComponentActivity() {
                                     }
                                 }
                             })
+                            }
                         }
                         composable(Screen.Profile.route) { backStack ->
                             val userId = backStack.arguments?.getString("userId") ?: return@composable
-                            com.dawitf.akahidegn.ui.screens.profile.ProfileScreen(
-                                userId = userId,
-                                onBack = { navController.popBackStack() }
-                            )
+                            SharedAnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn(),
+                                exit = fadeOut()
+                            ) {
+                                com.dawitf.akahidegn.ui.screens.profile.ProfileScreen(
+                                    userId = userId,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
                         }
                         composable(Screen.ActivityHistory.route) {
-                            com.dawitf.akahidegn.ui.activity.ActivityHistoryScreen(
-                                onBack = { navController.popBackStack() }
-                            )
+                            SharedAnimatedVisibility(
+                                visible = true,
+                                enter = fadeIn(),
+                                exit = fadeOut()
+                            ) {
+                                com.dawitf.akahidegn.ui.activity.ActivityHistoryScreen(
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
                         }
                     }
+                    
+                    // Handle UI events from ViewModel
+                    UiEventHandler(
+                        uiEvents = mainViewModel.uiEvents,
+                        navController = navController,
+                        onLocationPermissionRequested = { requestLocationPermission() },
+                        onNotificationPermissionRequested = { 
+                            // Handle notification permission request if needed
+                        }
+                    )
                 }
                 // Celebration confetti overlay (drawn on top of current screen)
                 ConfettiEmitter(
@@ -1059,8 +859,7 @@ class MainActivity : ComponentActivity() {
                         createGroupInFirebase(
                             toDestination = "AutoTest",
                             pickupLatitude = lat,
-                            pickupLongitude = lng,
-                            passengerCount = 3
+                            pickupLongitude = lng
                         )
                     } else if (user == null) {
                         Log.d("SMOKE_TEST", "User still null at auto-create time; will retry in 3s")
@@ -1086,8 +885,7 @@ class MainActivity : ComponentActivity() {
                 createGroupInFirebase(
                     toDestination = "AutoTest",
                     pickupLatitude = lat,
-                    pickupLongitude = lng,
-                    passengerCount = 3
+                    pickupLongitude = lng
                 )
             } else if (user == null) {
                 Log.d("SMOKE_TEST", "Retry #$attempt: user still null; scheduling another retry")
@@ -1124,7 +922,17 @@ class MainActivity : ComponentActivity() {
                 selectedFilters = selectedFilters,
                 onFiltersChange = { filters -> selectedFilters = filters },
                 onGroupClick = onGroupClick,
-                onJoinGroup = { group -> tryJoinGroup(group) }, // Add join functionality with interstitial ad
+                onJoinGroup = { group -> 
+                    // Optimistic UI: Join group instantly with user feedback
+                    val currentUserId = auth.currentUser?.uid
+                    val userName = auth.currentUser?.displayName ?: "Anonymous User"
+                    if (currentUserId != null) {
+                        mainViewModel.joinGroup(group, currentUserId, userName)
+                    } else {
+                        Toast.makeText(this@MainActivity, getString(R.string.toast_user_must_sign_in_create), Toast.LENGTH_SHORT).show()
+                        startGoogleSignInFlow()
+                    }
+                },
                 isLoading = vmIsLoading,
                 onRefreshGroups = onRefreshGroups,
                 onCreateGroup = onCreateGroup,
@@ -1148,208 +956,20 @@ class MainActivity : ComponentActivity() {
                     }
                 }
                 GroupMembersDialog(
-                    group = group, members = members, currentUserId = currentUserId,
+                    group = group, 
+                    members = members, 
+                    currentUserId = currentUserId,
                     onDismiss = { selectedGroupForDialog = null },
                     onLeaveGroup = { groupId, userId ->
-                        Log.d("GROUP_ACTION", "Leave group $groupId requested by $userId")
-                        Toast.makeText(this@MainActivity, getString(R.string.toast_leave_group_not_implemented), Toast.LENGTH_SHORT).show()
+                        // Optimistic UI: Leave group instantly
+                        mainViewModel.leaveGroup(groupId, userId)
                         selectedGroupForDialog = null 
-                    }
-                )
-            }
-
-            // Sign-in prompt dialog for anonymous users
-            if (showSignInDialog) {
-                SignInPromptDialog(
-                    onDismiss = { showSignInDialog = false },
-                    onSignIn = { 
-                        showSignInDialog = false
-                        startGoogleSignInFlow()
-                    }
-                )
-            }
-
-            // Create group dialog
-            if (showCreateGroupDialog) {
-                CreateGroupDialog(
-                    onDismiss = { showCreateGroupDialog = false },
-                    onCreateGroup = { destination, passengerCount ->
-                        showCreateGroupDialog = false
-                        showRewardedAdForGroupCreation(destination, passengerCount)
-                    }
-                )
-            }
-
-            // Disband group confirmation dialog
-            if (showDisbandConfirmDialog && groupToDisband != null) {
-                AlertDialog(
-                    onDismissRequest = { 
-                        showDisbandConfirmDialog = false
-                        groupToDisband = null
                     },
-                    title = { Text("ቡድንን ማሰራጨት") },
-                    text = { 
-                        Column {
-                            Text(
-                                "እርግጠኛ ነዎት ይህንን ቡድን ማሰራጨት ይፈልጋሉ? ይህ ድርጊት መመለስ የማይችል ሲሆን ሁሉም አባላት ቡድኑን ይለቃሉ።",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            
-                            // Show native ad if available
-                            nativeAd?.let { ad ->
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(100.dp)
-                                ) {
-                                    AndroidView(
-                                        factory = { context ->
-                                            val nativeAdView = com.google.android.gms.ads.nativead.NativeAdView(context)
-                                            val inflater = android.view.LayoutInflater.from(context)
-                                            val adView = inflater.inflate(android.R.layout.simple_list_item_2, nativeAdView, false)
-                                            
-                                            // Simple native ad implementation
-                                            val titleView = adView.findViewById<android.widget.TextView>(android.R.id.text1)
-                                            val bodyView = adView.findViewById<android.widget.TextView>(android.R.id.text2)
-                                            
-                                            titleView?.text = ad.headline ?: "Sponsored"
-                                            bodyView?.text = ad.body ?: "Advertisement"
-                                            
-                                            nativeAdView.headlineView = titleView
-                                            nativeAdView.bodyView = bodyView
-                                            nativeAdView.setNativeAd(ad)
-                                            nativeAdView.addView(adView)
-                                            nativeAdView
-                                        },
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                groupToDisband?.let { group ->
-                                    mainViewModel.disbandGroup(
-                                        group = group,
-                                        onSuccess = {
-                                            Toast.makeText(this@MainActivity, "ቡድኑ በተሳካ ሁኔታ ተሰራጭቷል", Toast.LENGTH_SHORT).show()
-                                            // Load a new native ad for next time
-                                            loadNativeAd()
-                                        },
-                                        onError = { error ->
-                                            Toast.makeText(this@MainActivity, "ቡድንን ማሰራጨት አልተቻለም: $error", Toast.LENGTH_LONG).show()
-                                        }
-                                    )
-                                }
-                                showDisbandConfirmDialog = false
-                                groupToDisband = null
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error
-                            )
-                        ) {
-                            Text("ማሰራጨት")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = { 
-                                showDisbandConfirmDialog = false
-                                groupToDisband = null
-                            }
-                        ) {
-                            Text("ተወው")
-                        }
-                    }
-                )
-            }
-
-            // Leave group confirmation dialog
-            if (showLeaveConfirmDialog && groupToLeave != null) {
-                AlertDialog(
-                    onDismissRequest = { 
-                        showLeaveConfirmDialog = false
-                        groupToLeave = null
-                    },
-                    title = { Text("ቡድንን መልቀቅ") },
-                    text = { 
-                        Column {
-                            Text(
-                                "እርግጠኛ ነዎት ይህንን ቡድን መልቀቅ ይፈልጋሉ? በኋላ እንደገና መቀላቀል መቻል ይችላሉ።",
-                                style = MaterialTheme.typography.bodyMedium
-                            )
-                            
-                            // Show native ad if available
-                            nativeAd?.let { ad ->
-                                Spacer(modifier = Modifier.height(16.dp))
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(100.dp)
-                                ) {
-                                    AndroidView(
-                                        factory = { context ->
-                                            val nativeAdView = com.google.android.gms.ads.nativead.NativeAdView(context)
-                                            val inflater = android.view.LayoutInflater.from(context)
-                                            val adView = inflater.inflate(android.R.layout.simple_list_item_2, nativeAdView, false)
-                                            
-                                            // Simple native ad implementation
-                                            val titleView = adView.findViewById<android.widget.TextView>(android.R.id.text1)
-                                            val bodyView = adView.findViewById<android.widget.TextView>(android.R.id.text2)
-                                            
-                                            titleView?.text = ad.headline ?: "Sponsored"
-                                            bodyView?.text = ad.body ?: "Advertisement"
-                                            
-                                            nativeAdView.headlineView = titleView
-                                            nativeAdView.bodyView = bodyView
-                                            nativeAdView.setNativeAd(ad)
-                                            nativeAdView.addView(adView)
-                                            nativeAdView
-                                        },
-                                        modifier = Modifier.fillMaxSize()
-                                    )
-                                }
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        Button(
-                            onClick = {
-                                groupToLeave?.let { group ->
-                                    mainViewModel.leaveGroup(
-                                        group = group,
-                                        onSuccess = {
-                                            Toast.makeText(this@MainActivity, "ቡድኑን በተሳካ ሁኔታ ልቀዋል", Toast.LENGTH_SHORT).show()
-                                            // Load a new native ad for next time
-                                            loadNativeAd()
-                                        },
-                                        onError = { error ->
-                                            Toast.makeText(this@MainActivity, "ቡድንን መልቀቅ አልተቻለም: $error", Toast.LENGTH_LONG).show()
-                                        }
-                                    )
-                                }
-                                showLeaveConfirmDialog = false
-                                groupToLeave = null
-                            },
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = MaterialTheme.colorScheme.error
-                            )
-                        ) {
-                            Text("መውጣት")
-                        }
-                    },
-                    dismissButton = {
-                        TextButton(
-                            onClick = { 
-                                showLeaveConfirmDialog = false
-                                groupToLeave = null
-                            }
-                        ) {
-                            Text("ተወው")
-                        }
+                    onJoinGroup = { groupId, userId, userName ->
+                        // Optimistic UI: Join group instantly
+                        val actualUserName = auth.currentUser?.displayName ?: userName
+                        mainViewModel.joinGroup(group, userId, actualUserName)
+                        selectedGroupForDialog = null
                     }
                 )
             }
@@ -1360,15 +980,10 @@ class MainActivity : ComponentActivity() {
         selectedGroupForDialog = group 
     }
 
-    private fun showGroupDialog(group: Group) {
-        // This is for viewing group details when called from ActiveGroupsScreen
-        // For now, we'll also use the members dialog, but this could be enhanced 
-        // to show a different dialog for group creators/members
-        showGroupMembersDialog(group)
-    }
-
-    private fun showSignInPrompt() {
-        showSignInDialog = true
+    private fun requestLocationPermission() {
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), LOCATION_PERMISSION_REQUEST_CODE)
+        }
     }
 
     private fun setupLocationUpdates() {
@@ -1386,41 +1001,17 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun requestNotificationPermission() {
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.TIRAMISU) {
-            if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                Log.d("NOTIFICATIONS", "POST_NOTIFICATIONS permission not granted. Requesting...")
-                ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), NOTIFICATION_PERMISSION_REQUEST_CODE)
-            } else {
-                Log.d("NOTIFICATIONS", "POST_NOTIFICATIONS permission already granted.")
-            }
-        } else {
-            Log.d("NOTIFICATIONS", "POST_NOTIFICATIONS permission not required for this API level.")
-        }
-    }
-
     @Deprecated("This method has been deprecated in favor of using the Activity Result API")
     @Suppress("DEPRECATION") 
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        when (requestCode) {
-            LOCATION_PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d("LOCATION", "ACCESS_FINE_LOCATION permission granted.")
-                    setupLocationUpdates()
-                } else {
-                    Log.w("LOCATION", "ACCESS_FINE_LOCATION permission denied.")
-                    Toast.makeText(this, getString(R.string.toast_location_permission_required_nearby), Toast.LENGTH_LONG).show()
-                }
-            }
-            NOTIFICATION_PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Log.d("NOTIFICATIONS", "POST_NOTIFICATIONS permission granted.")
-                    Toast.makeText(this, "Notifications enabled. You'll receive updates about group activities.", Toast.LENGTH_SHORT).show()
-                } else {
-                    Log.w("NOTIFICATIONS", "POST_NOTIFICATIONS permission denied.")
-                    Toast.makeText(this, "Notifications disabled. You won't receive updates about group activities.", Toast.LENGTH_LONG).show()
-                }
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Log.d("LOCATION", "ACCESS_FINE_LOCATION permission granted.")
+                setupLocationUpdates()
+            } else {
+                Log.w("LOCATION", "ACCESS_FINE_LOCATION permission denied.")
+                Toast.makeText(this, getString(R.string.toast_location_permission_required_nearby), Toast.LENGTH_LONG).show()
             }
         }
     }

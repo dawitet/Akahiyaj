@@ -20,8 +20,11 @@ import androidx.hilt.navigation.compose.hiltViewModel
 import coil.compose.AsyncImage
 import com.dawitf.akahidegn.R
 import com.dawitf.akahidegn.viewmodel.ProfileViewModel
+import com.dawitf.akahidegn.ui.animation.shared.SharedElement
+import com.dawitf.akahidegn.ui.animation.shared.SharedElementKeys
+import androidx.compose.animation.ExperimentalSharedTransitionApi
 
-@OptIn(ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun ProfileScreen(
     userId: String,
@@ -32,18 +35,20 @@ fun ProfileScreen(
 
     LaunchedEffect(userId) { viewModel.load(userId) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(id = R.string.profile), fontWeight = FontWeight.Bold) },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button))
+    SharedElement(key = SharedElementKeys.PROFILE_SCREEN) { sharedModifier ->
+        Scaffold(
+            modifier = sharedModifier,
+            topBar = {
+                TopAppBar(
+                    title = { Text(stringResource(id = R.string.profile), fontWeight = FontWeight.Bold) },
+                    navigationIcon = {
+                        IconButton(onClick = onBack) {
+                            Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = stringResource(id = R.string.back_button))
+                        }
                     }
-                }
-            )
-        }
-    ) { padding ->
+                )
+            }
+        ) { padding ->
         Box(Modifier.fillMaxSize().padding(padding)) {
             when {
                 state.isLoading -> {
@@ -111,4 +116,5 @@ fun ProfileScreen(
             }
         }
     }
+}
 }

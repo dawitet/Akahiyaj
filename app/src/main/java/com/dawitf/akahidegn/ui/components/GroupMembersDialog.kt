@@ -1,7 +1,11 @@
+@file:OptIn(androidx.compose.animation.ExperimentalSharedTransitionApi::class)
+
 package com.dawitf.akahidegn.ui.components
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
@@ -9,6 +13,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Phone
 import androidx.compose.material.icons.filled.Star
@@ -45,7 +50,8 @@ fun GroupMembersDialog(
     members: List<GroupMember>,
     currentUserId: String,
     onDismiss: () -> Unit,
-    onLeaveGroup: (groupId: String, userId: String) -> Unit
+    onLeaveGroup: (groupId: String, userId: String) -> Unit,
+    onJoinGroup: ((groupId: String, userId: String, userName: String) -> Unit)? = null // New join functionality
 ) {
     val context = LocalContext.current
     
@@ -98,12 +104,12 @@ fun GroupMembersDialog(
                 
                 // Group destination with shared element from the list card
                 val sharedKey = remember(group.groupId) { "groupCard-${group.groupId ?: group.destinationName}" }
-                SharedElement(key = sharedKey, screenKey = "dialog") { _ ->
+                SharedElement(key = sharedKey) { sharedMod ->
                     Text(
                         text = "Destination: ${group.destinationName}",
                         style = MaterialTheme.typography.titleMedium,
                         color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier.padding(vertical = 8.dp)
+                        modifier = sharedMod.padding(vertical = 8.dp)
                     )
                 }
                 
@@ -123,7 +129,9 @@ fun GroupMembersDialog(
                 // Members list
                 if (members.isEmpty()) {
                     Box(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f), // Use weight instead of fillMaxSize to leave space for buttons
                         contentAlignment = Alignment.Center
                     ) {
                         Text(
@@ -136,7 +144,9 @@ fun GroupMembersDialog(
                 } else {
                     LazyColumn(
                         verticalArrangement = Arrangement.spacedBy(12.dp),
-                        modifier = Modifier.fillMaxSize()
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .weight(1f) // Use weight instead of fillMaxSize to leave space for buttons
                     ) {
                         items(members) { member ->
                             MemberCard(
@@ -151,6 +161,68 @@ fun GroupMembersDialog(
                                 }
                             )
                         }
+                    }
+                }
+                
+                // Action buttons
+                HorizontalDivider(
+                    modifier = Modifier.padding(vertical = 16.dp),
+                    color = MaterialTheme.colorScheme.outlineVariant
+                )
+                
+                Row(
+                    modifier = Modifier.fillMaxWidth(),
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    if (!userHasJoined) {
+                        // Join Group Button (only show if user hasn't joined and callback is provided)
+                        onJoinGroup?.let { joinCallback ->
+                            Button(
+                                onClick = { 
+                                    joinCallback(group.groupId!!, currentUserId, "User") // TODO: Get actual user name
+                                    onDismiss() // Close dialog after joining
+                                },
+                                modifier = Modifier.weight(1f),
+                                enabled = group.memberCount < group.maxMembers
+                            ) {
+                                Icon(
+                                    Icons.Default.Add,
+                                    contentDescription = null,
+                                    modifier = Modifier.size(18.dp)
+                                )
+                                Spacer(modifier = Modifier.width(8.dp))
+                                Text("Join Group")
+                            }
+                        }
+                    } else {
+                        // Leave Group Button (only show if user has joined)
+                        OutlinedButton(
+                            onClick = { 
+                                onLeaveGroup(group.groupId!!, currentUserId)
+                                onDismiss() // Close dialog after leaving
+                            },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.outlinedButtonColors(
+                                contentColor = MaterialTheme.colorScheme.error
+                            ),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.error)
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = null,
+                                modifier = Modifier.size(18.dp)
+                            )
+                            Spacer(modifier = Modifier.width(8.dp))
+                            Text("Leave Group")
+                        }
+                    }
+                    
+                    // Dismiss Button
+                    OutlinedButton(
+                        onClick = onDismiss,
+                        modifier = Modifier.weight(1f)
+                    ) {
+                        Text("Close")
                     }
                 }
             }

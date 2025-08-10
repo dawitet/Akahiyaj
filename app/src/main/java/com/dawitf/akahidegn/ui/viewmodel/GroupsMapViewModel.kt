@@ -46,6 +46,9 @@ class GroupsMapViewModel @Inject constructor(
                         is com.dawitf.akahidegn.core.result.Result.Error -> {
                             _error.value = result.error.message
                         }
+                        is com.dawitf.akahidegn.core.result.Result.Loading -> {
+                            _isLoading.value = true
+                        }
                     }
                 }
         }

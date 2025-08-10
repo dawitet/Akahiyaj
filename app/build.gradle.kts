@@ -52,7 +52,6 @@ android {
             buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
             buildConfigField("String", "ADMOB_REWARDED_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
             buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
-            buildConfigField("String", "ADMOB_NATIVE_ID", "\"ca-app-pub-3940256099942544/2247696110\"") // Test native ad ID
             buildConfigField("Boolean", "ADS_ENABLED", "true") // Enable test ads for debugging
             buildConfigField("Boolean", "DEBUG_LOGGING", "true")
         }
@@ -70,10 +69,9 @@ android {
             
             // Your real AdMob IDs for production
             buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3787918879230745~9551227357\"") // Your actual app ID
-            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3787918879230745/6242537735\"") // For joining groups
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3787918879230745/6242537735\"") // Native advanced for joining
             buildConfigField("String", "ADMOB_REWARDED_ID", "\"ca-app-pub-3787918879230745/7293294323\"") // Rewarded for creation
             buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3787918879230745/6242537735\"") // Same as interstitial
-            buildConfigField("String", "ADMOB_NATIVE_ID", "\"ca-app-pub-3787918879230745/8344051411\"") // Native for leave/disband
             buildConfigField("Boolean", "ADS_ENABLED", "true") // Enable real ads in production
             buildConfigField("Boolean", "DEBUG_LOGGING", "false")
             
@@ -98,7 +96,6 @@ android {
         freeCompilerArgs += listOf(
             "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
             "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-opt-in=androidx.compose.animation.ExperimentalSharedTransitionApi",
             "-Xjvm-default=all"
         )
         // JVM arguments should be set separately for kapt
@@ -121,7 +118,7 @@ android {
     composeOptions {
         // Compose Compiler aligned with Kotlin 2.0 via plugin; explicit override not needed with modern AGP
         // If needed, set to a 1.6.x compatible with Kotlin 2.0 (e.g., 1.6.11)
-    kotlinCompilerExtensionVersion = "1.7.4"
+        kotlinCompilerExtensionVersion = "1.6.11"
     }
 
     packaging {
@@ -143,14 +140,13 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx) // Now using version catalog
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation(libs.androidx.activity.compose)
+    implementation("androidx.compose.material3:material3:1.2.0") // Contains PullToRefreshContainer
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation(libs.androidx.material3)
-    implementation("androidx.compose.material:material") // for pullRefresh APIs
-    // Use foundation pullrefresh (works with Compose BOM)
-    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.material3:material3:1.3.0")
+    // Removed problematic pullrefresh dependency - using core Material3 components instead
     implementation("androidx.compose.material:material-icons-extended") // managed by BOM
 
     implementation(libs.firebase.messaging.ktx)
@@ -181,7 +177,6 @@ dependencies {
     implementation("com.google.firebase:firebase-installations-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-perf-ktx")
-    implementation("com.google.firebase:firebase-messaging-ktx") // For push notifications
     implementation("com.google.android.gms:play-services-location:21.1.0") // Latest stable version
     
     implementation("com.google.android.gms:play-services-ads:22.6.0") // Keep for interstitial and rewarded ads
