@@ -24,6 +24,7 @@ import com.dawitf.akahidegn.ui.components.GroupCard
 import com.dawitf.akahidegn.domain.model.SearchFilters
 import com.dawitf.akahidegn.ui.components.EnhancedSearchBar
 import com.dawitf.akahidegn.ui.components.NoSearchResults
+import com.dawitf.akahidegn.ui.components.HomeTabLayout
 import com.dawitf.akahidegn.R
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalMaterialApi::class)
@@ -35,6 +36,7 @@ fun MainScreen(
     selectedFilters: SearchFilters,
     onFiltersChange: (SearchFilters) -> Unit,
     onGroupClick: (Group) -> Unit,
+    onJoinGroup: (Group) -> Unit, // New parameter for join functionality
     isLoading: Boolean,
     onRefreshGroups: () -> Unit,
     onCreateGroup: () -> Unit,
@@ -51,80 +53,126 @@ fun MainScreen(
         }
     )
 
+    // Reset refreshing state when loading completes
     LaunchedEffect(isLoading) {
         if (!isLoading) refreshing = false
     }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text(stringResource(id = R.string.group_list_title)) },
-                actions = {
-                    IconButton(onClick = onOpenHistory) { Icon(Icons.Default.History, contentDescription = stringResource(id = R.string.activity_history_title)) }
-                    IconButton(onClick = onOpenProfile) { Icon(Icons.Default.Person, contentDescription = stringResource(id = R.string.profile)) }
-                }
-            )
-        },
-        floatingActionButton = {
-            FloatingActionButton(onClick = onCreateGroup) {
-                Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.create_group_button))
-            }
+    // Timeout for refreshing state to prevent getting stuck
+    LaunchedEffect(refreshing) {
+        if (refreshing) {
+            kotlinx.coroutines.delay(10000L) // 10 second timeout
+            refreshing = false
         }
-    ) { paddingValues ->
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(paddingValues)
-                .pullRefresh(pullToRefreshState)
-        ) {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                EnhancedSearchBar(
-                    query = searchQuery,
-                    onQueryChange = onSearchQueryChange,
-                    onSearchSubmit = { /* ViewModel handles search logic based on query changes */ }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
+    }
 
-                // The content area
-                if (isLoading && groups.isEmpty() && searchQuery.isBlank()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
+    HomeTabLayout(
+        headerContent = {
+            // Header content with title and action buttons
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(16.dp),
+                horizontalArrangement = Arrangement.SpaceBetween,
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Text(
+                    text = stringResource(id = R.string.group_list_title),
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = com.dawitf.akahidegn.ui.theme.HomeContentText
+                )
+                
+                Row {
+                    IconButton(onClick = onOpenHistory) { 
+                        Icon(
+                            Icons.Default.History, 
+                            contentDescription = stringResource(id = R.string.activity_history_title),
+                            tint = com.dawitf.akahidegn.ui.theme.HomeContentText
+                        ) 
                     }
-                } else if (groups.isEmpty() && searchQuery.isNotEmpty()) {
-                    NoSearchResults(query = searchQuery, onClearSearch = { onSearchQueryChange("") })
-                } else if (groups.isEmpty() && !isLoading) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            stringResource(id = R.string.empty_groups_message),
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                    IconButton(onClick = onOpenProfile) { 
+                        Icon(
+                            Icons.Default.Person, 
+                            contentDescription = stringResource(id = R.string.profile),
+                            tint = com.dawitf.akahidegn.ui.theme.HomeContentText
+                        ) 
                     }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(groups, key = { group -> group.groupId ?: group.hashCode() }) { group ->
-                            GroupCard(group = group, onClick = { onGroupClick(group) }, userLocation = userLocation)
+                }
+            }
+        },
+        mainContent = {
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .pullRefresh(pullToRefreshState)
+            ) {
+                Column(
+                    modifier = Modifier.fillMaxSize()
+                ) {
+                    EnhancedSearchBar(
+                        query = searchQuery,
+                        onQueryChange = onSearchQueryChange,
+                        onSearchSubmit = { /* ViewModel handles search logic based on query changes */ }
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+
+                    // The content area
+                    if (isLoading && groups.isEmpty() && searchQuery.isBlank()) {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(color = com.dawitf.akahidegn.ui.theme.HomeContentText)
+                        }
+                    } else if (groups.isEmpty() && searchQuery.isNotEmpty()) {
+                        NoSearchResults(query = searchQuery, onClearSearch = { onSearchQueryChange("") })
+                    } else if (groups.isEmpty() && !isLoading) {
+                        Column(
+                            modifier = Modifier.fillMaxSize().padding(16.dp),
+                            verticalArrangement = Arrangement.Center,
+                            horizontalAlignment = Alignment.CenterHorizontally
+                        ) {
+                            Text(
+                                stringResource(id = R.string.empty_groups_message),
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = com.dawitf.akahidegn.ui.theme.HomeContentText
+                            )
+                        }
+                    } else {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize(),
+                            contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(groups, key = { group -> group.groupId ?: group.hashCode() }) { group ->
+                                GroupCard(
+                                    group = group, 
+                                    onClick = { onGroupClick(group) }, 
+                                    onJoinClick = { onJoinGroup(it) },
+                                    userLocation = userLocation
+                                )
+                            }
                         }
                     }
                 }
-            }
 
-            // The PullRefreshIndicator is an overlay aligned to the top center
-            PullRefreshIndicator(
-                refreshing = refreshing,
-                state = pullToRefreshState,
-                modifier = Modifier.align(Alignment.TopCenter)
-            )
+                // The PullRefreshIndicator is an overlay aligned to the top center
+                PullRefreshIndicator(
+                    refreshing = refreshing,
+                    state = pullToRefreshState,
+                    modifier = Modifier.align(Alignment.TopCenter)
+                )
+                
+                // Floating Action Button
+                FloatingActionButton(
+                    onClick = onCreateGroup,
+                    modifier = Modifier
+                        .align(Alignment.BottomEnd)
+                        .padding(16.dp),
+                    containerColor = com.dawitf.akahidegn.ui.theme.HomeContentText,
+                    contentColor = com.dawitf.akahidegn.ui.theme.HomeContentBackground
+                ) {
+                    Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.create_group_button))
+                }
+            }
         }
-    }
+    )
 }
 

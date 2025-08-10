@@ -263,3 +263,28 @@ Integrated: Activity history logging on group create/join (MainActivity hooks); 
 - `GestureAnimation.kt`: Modifier helpers to trigger animations from taps/long-press
 - `PhysicsAnimations.kt`: Predefined spring specs (soft/snappy/bouncy)
 
+## 7. UI Color Scheme Design
+
+### 7.1. Frosted Glass Tab Title Bars
+Each tab will feature a frosted glass effect with dynamic color blobs animating behind the title bar for a modern, sophisticated look.
+
+### 7.2. Tab-Specific Color Palettes
+
+#### 7.2.1. Home Tab
+- **Top to Bottom Gradient**: Misty Blue #A8C8EC → Byzantium #702963
+- **Main Content Area**: Charcoal Grey #4A4A4A background + Golden Yellow #FFC30B text
+
+#### 7.2.2. Settings Tab  
+- **Top to Bottom Gradient**: Dark Green #06402B → Pink #FF8DA1
+- **Main Content Area**: Charcoal Grey #4A4A4A background + Golden Yellow #FFC30B text
+
+#### 7.2.3. Active Groups Tab
+- **Top to Bottom Gradient**: Charcoal Grey #4A4A4A → Golden Yellow #FFC30B  
+- **Main Content Area**: Misty Blue #A8C8EC background + Byzantium #702963 text
+
+### 7.3. Implementation Notes
+- Frosted glass effects will use Compose blur modifiers with animated gradient backgrounds
+- Color transitions will be smooth with spring animations
+- Dynamic color blobs will move subtly behind the frosted glass for visual interest
+- Each tab maintains its unique color identity while ensuring readability and accessibility
+
