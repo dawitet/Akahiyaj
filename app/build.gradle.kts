@@ -52,6 +52,7 @@ android {
             buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3940256099942544/1033173712\"")
             buildConfigField("String", "ADMOB_REWARDED_ID", "\"ca-app-pub-3940256099942544/5224354917\"")
             buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3940256099942544/6300978111\"")
+            buildConfigField("String", "ADMOB_NATIVE_ID", "\"ca-app-pub-3940256099942544/2247696110\"") // Test native ad ID
             buildConfigField("Boolean", "ADS_ENABLED", "true") // Enable test ads for debugging
             buildConfigField("Boolean", "DEBUG_LOGGING", "true")
         }
@@ -69,9 +70,10 @@ android {
             
             // Your real AdMob IDs for production
             buildConfigField("String", "ADMOB_APP_ID", "\"ca-app-pub-3787918879230745~9551227357\"") // Your actual app ID
-            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3787918879230745/6242537735\"") // Native advanced for joining
+            buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"ca-app-pub-3787918879230745/6242537735\"") // For joining groups
             buildConfigField("String", "ADMOB_REWARDED_ID", "\"ca-app-pub-3787918879230745/7293294323\"") // Rewarded for creation
             buildConfigField("String", "ADMOB_BANNER_ID", "\"ca-app-pub-3787918879230745/6242537735\"") // Same as interstitial
+            buildConfigField("String", "ADMOB_NATIVE_ID", "\"ca-app-pub-3787918879230745/8344051411\"") // Native for leave/disband
             buildConfigField("Boolean", "ADS_ENABLED", "true") // Enable real ads in production
             buildConfigField("Boolean", "DEBUG_LOGGING", "false")
             
@@ -179,6 +181,7 @@ dependencies {
     implementation("com.google.firebase:firebase-installations-ktx") // Use -ktx version
     implementation("com.google.firebase:firebase-crashlytics-ktx")
     implementation("com.google.firebase:firebase-perf-ktx")
+    implementation("com.google.firebase:firebase-messaging-ktx") // For push notifications
     implementation("com.google.android.gms:play-services-location:21.1.0") // Latest stable version
     
     implementation("com.google.android.gms:play-services-ads:22.6.0") // Keep for interstitial and rewarded ads

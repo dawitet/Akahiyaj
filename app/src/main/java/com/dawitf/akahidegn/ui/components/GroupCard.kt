@@ -27,6 +27,7 @@ fun GroupCard(
     group: Group,
     userLocation: Location?,
     onClick: () -> Unit,
+    onJoinClick: ((Group) -> Unit)? = null, // New parameter for join functionality
     modifier: Modifier = Modifier
 ) {
     var isPressed by remember { mutableStateOf(false) }
@@ -197,6 +198,35 @@ fun GroupCard(
                         color = MaterialTheme.colorScheme.onSurfaceVariant
                     )
             }
+            }
+
+            // Join button (only show if group is not full and join callback is provided)
+            onJoinClick?.let { joinCallback ->
+                val isFull = group.memberCount >= group.maxMembers
+                if (!isFull) {
+                    Spacer(modifier = Modifier.height(12.dp))
+                    Button(
+                        onClick = { joinCallback(group) },
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(
+                            containerColor = MaterialTheme.colorScheme.primary
+                        ),
+                        shape = RoundedCornerShape(8.dp)
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Add,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp)
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "ቡድን ተቀላቀል", // "Join Group" in Amharic
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontWeight = FontWeight.Medium
+                            )
+                        )
+                    }
+                }
             }
     }
     }

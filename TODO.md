@@ -73,40 +73,40 @@
 ## New Feature Requests - August 2025 🚀
 
 ### Core App Functionality
-- [ ] 1. Save progress to GitHub
-- [ ] 2. Implement swipe-down to refresh functionality
-- [ ] 3. Show groups within 500 meters of user location
-- [ ] 4. Display available groups on home page with refresh capability
-- [ ] 5. Fix user profile page errors and display user profile properly
-- [ ] 6. Implement anonymous user restrictions (view only, prompt for sign-in)
-- [ ] 7. Add passenger count field when creating groups
-- [ ] 8. Update active groups to show user's created/joined groups with crown emoji for created groups
-- [ ] 9. Add disband/leave group buttons for creators/members
-- [ ] 10. Implement interstitial ads for join group and native ads for leave/disband
-- [ ] 11. Add የዳዊት ስራ footer with dog.png image in settings
-- [ ] 12. Add feedback dialog functionality in settings
-- [ ] 13. Implement push notifications for group events
-- [ ] 14. Add default avatar.png for anonymous users
-- [ ] 15. Implement color palette system for each tab
-- [ ] 16. Add join button to available groups with interstitial ad
-- [ ] 17. Mark tasks as complete in todo.md after completion
+- [x] 1. Save progress to GitHub
+- [x] 2. Implement swipe-down to refresh functionality
+- [x] 3. Show groups within 500 meters of user location
+- [x] 4. Display available groups on home page with refresh capability
+- [x] 5. Fix user profile page errors and display user profile properly
+- [x] 6. Implement anonymous user restrictions (view only, prompt for sign-in)
+- [x] 7. Add passenger count field when creating groups
+- [x] 8. ✅ **Update Active Groups Screen**: Update the active groups to show groups created or joined by the user and edit the explainer on the page to say the same. Also when it shows the active groups put a crown emoji next to the groups that the user created to differentiate them from the groups the user joined
+- [x] 9. ✅ **Add Disband/Leave Group Buttons**: Add disband/leave group buttons for creators/members
+- [x] 10. ✅ **Implement Ads**: Interstitial ads for join group and native ads for leave/disband (FIXED)
+- [x] 11. ✅ **Add የዳዊት ስራ Footer**: Add የዳዊት ስራ footer with dog.png image in settings
+- [x] 12. ✅ **Add Feedback Dialog**: Add feedback dialog functionality in settings
+- [x] 13. ✅ **Implement Push Notifications**: Implement push notifications for group events
+- [x] 14. ✅ **Add Default Avatar**: Add default avatar.png for anonymous users
+- [x] 15. ✅ **Implement Color Palette**: Implement color palette system for each tab (Green/Blue/Orange)
+- [x] 16. ✅ **Add Join Buttons**: Add join button to available groups with interstitial ad
+- [x] 17. ✅ **Mark Tasks Complete**: Mark tasks as complete in todo.md after completion
 
 ### Settings Enhancements
-- [ ] Add ሰርቪስ (Service/Shuttle) button with "Coming Soon" message
-- [ ] Add share app functionality to share APK
+- [x] ✅ **Add ሰርቪስ (Service/Shuttle) Button**: Add ሰርቪስ (Service/Shuttle) button with "Coming Soon" message
+- [x] ✅ **Add Share App Functionality**: Add share app functionality to share APK
 
 ### UI/UX Color Schemes
 #### Home Tab
-- [ ] Top/Bottom sections: Background #4A4A4A, Font #FFC30B
-- [ ] Middle section: Background #B5C7EB, Font #702963
+- [x] ✅ **Color Scheme Implementation**: Top/Bottom sections: Background #4A4A4A, Font #FFC30B
+- [x] ✅ **Color Scheme Implementation**: Middle section: Background #B5C7EB, Font #702963
 
 #### Active Groups Tab  
-- [ ] Top/Bottom sections: Background #06402B, Font #FF8DA1
-- [ ] Middle section: Background #4A4A4A, Font #FFC30B
+- [x] ✅ **Color Scheme Implementation**: Top/Bottom sections: Background #06402B, Font #FF8DA1
+- [x] ✅ **Color Scheme Implementation**: Middle section: Background #4A4A4A, Font #FFC30B
 
 #### Settings Tab
-- [ ] Top/Bottom sections: Background #B5C7EB, Font #702963
-- [ ] Middle section: Background #06402B, Font #FF8DA1
+- [x] ✅ **Color Scheme Implementation**: Top/Bottom sections: Background #B5C7EB, Font #702963
+- [x] ✅ **Color Scheme Implementation**: Middle section: Background #06402B, Font #FF8DA1
 
 
 ## Priority Levels

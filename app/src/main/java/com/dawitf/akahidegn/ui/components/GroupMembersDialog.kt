@@ -297,7 +297,8 @@ private fun getAvatarResource(avatarId: String?): Int? {
         "avatar_3" -> R.drawable.user_avatar_3
         "avatar_4" -> R.drawable.user_avatar_4
         "avatar_5" -> R.drawable.user_avatar_5
-        "avatar_6" -> R.drawable.default_avatar
-        else -> null
+        "avatar_6" -> R.drawable.default_avatar  // For anonymous users
+        null -> R.drawable.default_avatar        // Fallback for null avatars
+        else -> R.drawable.default_avatar        // Fallback for unknown avatars
     }
 }

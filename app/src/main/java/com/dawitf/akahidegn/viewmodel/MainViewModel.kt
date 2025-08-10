@@ -7,6 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.dawitf.akahidegn.Group
 import com.dawitf.akahidegn.GroupReader
 import com.dawitf.akahidegn.domain.repository.GroupRepository
+import com.dawitf.akahidegn.notifications.service.NotificationManagerService
+import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
@@ -33,7 +35,8 @@ import javax.inject.Inject
 @OptIn(FlowPreview::class)
 @HiltViewModel
 class MainViewModel @Inject constructor(
-    private val groupRepository: GroupRepository
+    private val groupRepository: GroupRepository,
+    private val notificationManagerService: NotificationManagerService
 ) : ViewModel() {
 
     // State flows for UI state
@@ -56,8 +59,21 @@ class MainViewModel @Inject constructor(
     private val _selectedGroup = MutableStateFlow<Group?>(null)
     val selectedGroup: StateFlow<Group?> = _selectedGroup.asStateFlow()
 
+    // User groups state
+    private val _userGroups = MutableStateFlow<List<Group>>(emptyList())
+    val userGroups: StateFlow<List<Group>> = _userGroups.asStateFlow()
+
+    private val _isLoadingUserGroups = MutableStateFlow(false)
+    val isLoadingUserGroups: StateFlow<Boolean> = _isLoadingUserGroups.asStateFlow()
+
     // Firebase references
     private lateinit var activeGroupsRef: DatabaseReference
+    private val auth = FirebaseAuth.getInstance()
+    
+    // Real-time listeners for automatic updates
+    private var realTimeGroupsListener: ValueEventListener? = null
+    private var lastRealTimeUpdate = 0L
+    private val realTimeUpdateThrottleMs = 2000L // Throttle updates to prevent spam
     
     // Current search parameters
     // Search configuration - 500 meter radius for location-based filtering
@@ -89,6 +105,32 @@ class MainViewModel @Inject constructor(
     init {
         setupSearchQueryDebouncing()
         setupMemoryCleanup()
+        setupPeriodicRefresh()
+    }
+
+    /**
+     * Setup periodic refresh to catch updates from other users
+     */
+    private fun setupPeriodicRefresh() {
+        viewModelScope.launch {
+            while (true) {
+                kotlinx.coroutines.delay(30 * 1000L) // Every 30 seconds
+                
+                // Only refresh if:
+                // 1. Firebase is initialized
+                // 2. User is authenticated  
+                // 3. No search query is active (for main groups list)
+                // 4. Not currently loading
+                if (::activeGroupsRef.isInitialized && 
+                    currentFirebaseUserId != null && 
+                    _searchQuery.value.isBlank() && 
+                    !_isLoadingGroups.value) {
+                    
+                    Log.d("MainViewModel", "Performing periodic refresh")
+                    performGroupsSearch(null, forceRefresh = true)
+                }
+            }
+        }
     }
 
     fun setUserLocationFlow(locationFlow: StateFlow<Location?>) {
@@ -139,8 +181,8 @@ class MainViewModel @Inject constructor(
     /**
      * Perform groups search with optimization and smart caching
      */
-    private suspend fun performGroupsSearch(destinationFilter: String?) {
-        Log.d("MainViewModel", "performGroupsSearch called. Filter: $destinationFilter, User ID: $currentFirebaseUserId")
+    private suspend fun performGroupsSearch(destinationFilter: String?, forceRefresh: Boolean = false) {
+        Log.d("MainViewModel", "performGroupsSearch called. Filter: $destinationFilter, User ID: $currentFirebaseUserId, ForceRefresh: $forceRefresh")
         if (!::activeGroupsRef.isInitialized || currentFirebaseUserId == null) {
             Log.w("MainViewModel", "Firebase not initialized, skipping search.")
             _isLoadingGroups.value = false // Ensure loading state is reset
@@ -160,12 +202,9 @@ class MainViewModel @Inject constructor(
         
         // Use cached results if recent enough (within 2 minutes)
         // AND if the current groups list is not empty (implying a successful previous fetch for this state)
-        // If destinationFilter is null (swipe refresh or location change for "all nearby"), we might want to bypass cache more aggressively
-        // or ensure cache is invalidated properly. The current refreshGroups() clears groupsCache.
-        if (destinationFilter != null && currentTime - lastSearchTime < 120 * 1000L && _groups.value.isNotEmpty()) {
+        // Skip cache if forceRefresh is true (e.g., pull-to-refresh)
+        if (!forceRefresh && destinationFilter != null && currentTime - lastSearchTime < 120 * 1000L && _groups.value.isNotEmpty()) {
             Log.d("MainViewModel", "Using cached search results for: $cacheKey")
-            // Potentially re-apply filter if userLocation changed but filter text is same
-            // For simplicity, current refreshGroups clears cache, forcing fresh data.
             return 
         }
 
@@ -308,12 +347,16 @@ class MainViewModel @Inject constructor(
      */
     fun refreshGroups() {
         Log.d("MainViewModel", "refreshGroups called, clearing cache and performing search with current query: '${_searchQuery.value}' or null if blank")
+        
+        // Clear all caches to force fresh data
         groupsCache.clear() 
+        lastSearchTimestamp.clear()
+        
         val currentQuery = _searchQuery.value.trim().takeIf { it.isNotBlank() }
         viewModelScope.launch {
             // If currentQuery is null (blank), this will fetch all groups and filter by location.
             // If currentQuery is not null, it will search by text, and location filtering logic in passesFilters might be conditional.
-            performGroupsSearch(currentQuery)
+            performGroupsSearch(currentQuery, forceRefresh = true)
         }
     }
 
@@ -325,17 +368,95 @@ class MainViewModel @Inject constructor(
     }
 
     /**
-     * Initialize Firebase references and user ID for the ViewModel
+     * Initialize Firebase and setup real-time listeners
      */
     fun initializeFirebase(activeGroupsRef: DatabaseReference, firebaseUserId: String) {
         Log.d("MainViewModel", "initializeFirebase called with user ID: $firebaseUserId")
         this.activeGroupsRef = activeGroupsRef
         this.currentFirebaseUserId = firebaseUserId
         Log.d("MainViewModel", "Firebase initialized with user ID: $firebaseUserId")
+        
+        // Setup real-time listener for automatic updates
+        setupRealTimeListener()
+        
         // Trigger initial load if not already loading and location is available or becomes available
         if (_currentLocation.value != null && _groups.value.isEmpty() && !_isLoadingGroups.value) {
             refreshGroups()
         }
+    }
+
+    /**
+     * Setup real-time listener for automatic group updates
+     */
+    private fun setupRealTimeListener() {
+        // Remove existing listener if any
+        realTimeGroupsListener?.let { listener ->
+            activeGroupsRef.removeEventListener(listener)
+        }
+        
+        realTimeGroupsListener = object : ValueEventListener {
+            override fun onDataChange(snapshot: DataSnapshot) {
+                val currentTime = System.currentTimeMillis()
+                
+                // Throttle real-time updates to prevent excessive processing
+                if (currentTime - lastRealTimeUpdate < realTimeUpdateThrottleMs) {
+                    Log.d("MainViewModel", "Real-time update throttled")
+                    return
+                }
+                
+                lastRealTimeUpdate = currentTime
+                Log.d("MainViewModel", "Real-time data changed, children count: ${snapshot.childrenCount}")
+                
+                viewModelScope.launch(computationDispatcher) {
+                    // Only update if we're not currently performing a manual search
+                    if (!_isLoadingGroups.value) {
+                        Log.d("MainViewModel", "Processing real-time update")
+                        val currentQuery = _searchQuery.value.trim().takeIf { it.isNotBlank() }
+                        processGroupsData(snapshot, currentQuery, "realtime_${currentTime}")
+                    } else {
+                        Log.d("MainViewModel", "Skipping real-time update during manual refresh")
+                    }
+                }
+            }
+            
+            override fun onCancelled(error: DatabaseError) {
+                Log.e("MainViewModel", "Real-time listener cancelled: ${error.message}")
+                // Attempt to reconnect after a delay
+                viewModelScope.launch {
+                    kotlinx.coroutines.delay(5000L)
+                    if (::activeGroupsRef.isInitialized) {
+                        Log.d("MainViewModel", "Attempting to reconnect real-time listener")
+                        setupRealTimeListener()
+                    }
+                }
+            }
+        }
+        
+        // Add the listener to Firebase
+        activeGroupsRef.orderByChild("createdAt")
+            .limitToLast(100)
+            .addValueEventListener(realTimeGroupsListener!!)
+        
+        Log.d("MainViewModel", "Real-time listener setup completed")
+    }
+
+    /**
+     * Remove real-time listeners when ViewModel is cleared
+     */
+    override fun onCleared() {
+        super.onCleared()
+        
+        // Clean up real-time listeners
+        realTimeGroupsListener?.let { listener ->
+            if (::activeGroupsRef.isInitialized) {
+                activeGroupsRef.removeEventListener(listener)
+            }
+        }
+        
+        // Clear cache
+        groupsCache.clear()
+        
+        Log.d("MainViewModel", "MainViewModel cleared - real-time listeners and cache cleaned up")
     }
 
     /**
@@ -414,11 +535,226 @@ class MainViewModel @Inject constructor(
         _errorState.value = null
     }
 
-    // Removed updateLocation function, will use setUserLocationFlow instead
+    /**
+     * Load groups created or joined by the current user
+     */
+    fun loadUserGroups() {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Log.d("MainViewModel", "No authenticated user, cannot load user groups")
+            _userGroups.value = emptyList()
+            return
+        }
 
-    override fun onCleared() {
-        super.onCleared()
-        groupsCache.clear() // Clear cache when ViewModel is destroyed
-        Log.d("MainViewModel", "MainViewModel cleared.")
+        if (_isLoadingUserGroups.value) {
+            Log.d("MainViewModel", "User groups already loading, skipping")
+            return
+        }
+
+        _isLoadingUserGroups.value = true
+        Log.d("MainViewModel", "Loading groups for user: ${currentUser.uid}")
+
+        viewModelScope.launch(backgroundDispatcher) {
+            try {
+                activeGroupsRef.orderByChild("timestamp")
+                    .limitToLast(50) // Get recent groups
+                    .addListenerForSingleValueEvent(object : ValueEventListener {
+                        override fun onDataChange(snapshot: DataSnapshot) {
+                            viewModelScope.launch(computationDispatcher) {
+                                val userGroupsList = mutableListOf<Group>()
+                                
+                                for (childSnapshot in snapshot.children) {
+                                    try {
+                                        val group = GroupReader.fromSnapshot(childSnapshot)
+                                        if (group != null) {
+                                            // Check if user is creator or member
+                                            val isCreator = group.creatorId == currentUser.uid
+                                            val isMember = group.members.containsKey(currentUser.uid) && 
+                                                          group.members[currentUser.uid] == true
+                                            
+                                            if (isCreator || isMember) {
+                                                group.groupId = childSnapshot.key
+                                                userGroupsList.add(group)
+                                                Log.d("MainViewModel", "Added user group: ${group.destinationName}, creator: $isCreator, member: $isMember")
+                                            }
+                                        }
+                                    } catch (e: Exception) {
+                                        Log.e("MainViewModel", "Error reading user group: ${e.message}")
+                                    }
+                                }
+                                
+                                // Sort by timestamp descending (newest first)
+                                val sortedGroups = userGroupsList.sortedByDescending { it.timestamp ?: 0L }
+                                
+                                withContext(Dispatchers.Main) {
+                                    _userGroups.value = sortedGroups
+                                    _isLoadingUserGroups.value = false
+                                    Log.d("MainViewModel", "Loaded ${sortedGroups.size} user groups")
+                                }
+                            }
+                        }
+
+                        override fun onCancelled(error: DatabaseError) {
+                            Log.e("MainViewModel", "Failed to load user groups: ${error.message}")
+                            _isLoadingUserGroups.value = false
+                            _errorState.value = "Failed to load your groups: ${error.message}"
+                        }
+                    })
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error loading user groups", e)
+                _isLoadingUserGroups.value = false
+                _errorState.value = "An error occurred while loading your groups"
+            }
+        }
     }
+
+    /**
+     * Check if the current user is the creator of a specific group
+     */
+    fun isGroupCreator(group: Group): Boolean {
+        val currentUser = auth.currentUser
+        return currentUser != null && group.creatorId == currentUser.uid
+    }
+
+    /**
+     * Refresh user groups
+     */
+    fun refreshUserGroups() {
+        loadUserGroups()
+    }
+
+    /**
+     * Disband a group (creator only)
+     */
+    fun disbandGroup(group: Group, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            onError("You must be signed in to disband a group")
+            return
+        }
+
+        if (group.creatorId != currentUser.uid) {
+            onError("Only the group creator can disband this group")
+            return
+        }
+
+        if (group.groupId == null) {
+            onError("Invalid group ID")
+            return
+        }
+
+        viewModelScope.launch(backgroundDispatcher) {
+            try {
+                // Delete the group from Firebase
+                activeGroupsRef.child(group.groupId!!).removeValue()
+                    .addOnSuccessListener {
+                        Log.d("MainViewModel", "Group ${group.groupId} disbanded successfully")
+                        viewModelScope.launch(Dispatchers.Main) {
+                            // Send notification to group members about disbandment
+                            notificationManagerService.showGroupDisbandedNotification(group)
+                            
+                            onSuccess()
+                            // Refresh user groups to remove the disbanded group
+                            loadUserGroups()
+                            // Also refresh main groups list
+                            refreshGroups()
+                        }
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("MainViewModel", "Failed to disband group: ${exception.message}")
+                        viewModelScope.launch(Dispatchers.Main) {
+                            onError("Failed to disband group: ${exception.message}")
+                        }
+                    }
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error disbanding group", e)
+                viewModelScope.launch(Dispatchers.Main) {
+                    onError("An error occurred while disbanding the group")
+                }
+            }
+        }
+    }
+
+    /**
+     * Leave a group (member only)
+     */
+    fun leaveGroup(group: Group, onSuccess: () -> Unit, onError: (String) -> Unit) {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            onError("You must be signed in to leave a group")
+            return
+        }
+
+        if (group.creatorId == currentUser.uid) {
+            onError("Group creators cannot leave their own group. Use disband instead.")
+            return
+        }
+
+        if (group.groupId == null) {
+            onError("Invalid group ID")
+            return
+        }
+
+        if (!group.members.containsKey(currentUser.uid) || group.members[currentUser.uid] != true) {
+            onError("You are not a member of this group")
+            return
+        }
+
+        viewModelScope.launch(backgroundDispatcher) {
+            try {
+                val groupRef = activeGroupsRef.child(group.groupId!!)
+                
+                // Remove user from members
+                groupRef.child("members").child(currentUser.uid).removeValue()
+                    .addOnSuccessListener {
+                        // Remove user from member details
+                        groupRef.child("memberDetails").child(currentUser.uid).removeValue()
+                            .addOnSuccessListener {
+                                // Update member count
+                                val newMemberCount = maxOf(0, group.memberCount - 1)
+                                groupRef.child("memberCount").setValue(newMemberCount)
+                                    .addOnSuccessListener {
+                                        Log.d("MainViewModel", "Left group ${group.groupId} successfully")
+                                        viewModelScope.launch(Dispatchers.Main) {
+                                            // Send notification to group creator about user leaving
+                                            val userName = auth.currentUser?.displayName ?: "Someone"
+                                            notificationManagerService.showUserLeftNotification(group, userName)
+                                            
+                                            onSuccess()
+                                            // Refresh user groups to remove the left group
+                                            loadUserGroups()
+                                            // Also refresh main groups list
+                                            refreshGroups()
+                                        }
+                                    }
+                                    .addOnFailureListener { exception ->
+                                        Log.e("MainViewModel", "Failed to update member count: ${exception.message}")
+                                        viewModelScope.launch(Dispatchers.Main) {
+                                            onError("Failed to leave group: ${exception.message}")
+                                        }
+                                    }
+                            }
+                            .addOnFailureListener { exception ->
+                                Log.e("MainViewModel", "Failed to remove member details: ${exception.message}")
+                                viewModelScope.launch(Dispatchers.Main) {
+                                    onError("Failed to leave group: ${exception.message}")
+                                }
+                            }
+                    }
+                    .addOnFailureListener { exception ->
+                        Log.e("MainViewModel", "Failed to remove from members: ${exception.message}")
+                        viewModelScope.launch(Dispatchers.Main) {
+                            onError("Failed to leave group: ${exception.message}")
+                        }
+                    }
+            } catch (e: Exception) {
+                Log.e("MainViewModel", "Error leaving group", e)
+                viewModelScope.launch(Dispatchers.Main) {
+                    onError("An error occurred while leaving the group")
+                }
+            }
+        }
+    }
+
+    // Removed updateLocation function, will use setUserLocationFlow instead
 }

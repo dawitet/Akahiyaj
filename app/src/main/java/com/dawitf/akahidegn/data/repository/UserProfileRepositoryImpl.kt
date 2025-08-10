@@ -46,7 +46,22 @@ class UserProfileRepositoryImpl @Inject constructor(
                     Result.Error(AppError.ValidationError.NotFound("Profile data is invalid"))
                 }
             } else {
-                Result.Error(AppError.ValidationError.NotFound("User profile not found"))
+                // Create a default profile if one doesn't exist
+                val currentUser = auth.currentUser
+                val defaultProfile = UserProfile(
+                    userId = userId,
+                    displayName = currentUser?.displayName ?: "Anonymous User",
+                    profilePictureUrl = currentUser?.photoUrl?.toString(),
+                    email = currentUser?.email,
+                    phoneNumber = currentUser?.phoneNumber,
+                    isVerified = currentUser?.isEmailVerified ?: false,
+                    joinDate = System.currentTimeMillis(),
+                    lastActiveDate = System.currentTimeMillis()
+                )
+                
+                // Save the default profile
+                usersCollection.document(userId).set(defaultProfile).await()
+                Result.Success(defaultProfile)
             }
         } catch (e: Exception) {
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to get user profile"))
@@ -142,7 +157,8 @@ class UserProfileRepositoryImpl @Inject constructor(
             
             Result.Success(reviews)
         } catch (e: Exception) {
-            Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to load reviews"))
+            // Return empty list instead of error for better UX
+            Result.Success(emptyList())
         }
     }
 
@@ -177,9 +193,10 @@ class UserProfileRepositoryImpl @Inject constructor(
                 document.toObject(TripHistoryItem::class.java)
             }
             
-            Result.success(trips)
+            Result.Success(trips)
         } catch (e: Exception) {
-            Result.error(AppError.UnknownError(e.message ?: "Failed to get trip history"))
+            // Return empty list instead of error for better UX
+            Result.Success(emptyList())
         }
     }
 
