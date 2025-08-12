@@ -226,5 +226,9 @@ dependencies {
     // Add dependencies for WorkManager testing
     testImplementation(libs.androidx.work.testing)
     testImplementation("androidx.test:core:1.6.1") // Updated
+    
+    // Phase 5: Baseline Profile Generation Dependencies
+    implementation("androidx.profileinstaller:profileinstaller:1.3.1")
+    
     // Note: Using native Firestore geo-queries instead of GeoFirestore for simplicity
 }

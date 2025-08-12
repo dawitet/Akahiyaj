@@ -23,4 +23,8 @@ dependencies {
     implementation("androidx.test.ext:junit:1.1.5")
     implementation("androidx.test.espresso:espresso-core:3.5.1")
     implementation("androidx.benchmark:benchmark-macro-junit4:1.2.4")
+    
+    // Phase 5: Baseline Profile Generation Dependencies
+    implementation("androidx.profileinstaller:profileinstaller:1.3.1")
+    implementation("androidx.benchmark:benchmark-macro:1.2.4")
 }
