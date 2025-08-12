@@ -45,6 +45,8 @@
 # Keep data classes used with Firebase
 -keep class com.dawitf.akahidegn.data.** { *; }
 -keep class com.dawitf.akahidegn.Group { *; }
+# Keep domain models used by Firestore/serialization
+-keep class com.dawitf.akahidegn.domain.model.** { *; }
 
 # Hilt rules
 -keep class dagger.hilt.** { *; }

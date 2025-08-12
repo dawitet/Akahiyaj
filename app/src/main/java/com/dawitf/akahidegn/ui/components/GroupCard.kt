@@ -61,6 +61,7 @@ fun GroupCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
+            .glassCard()
             .clickable { stableOnClick() }
             .then(
                 if (isPressed) {
@@ -72,7 +73,7 @@ fun GroupCard(
             ),
         elevation = CardDefaults.cardElevation(defaultElevation = 4.dp),
         colors = CardDefaults.cardColors(
-            containerColor = MaterialTheme.colorScheme.surface
+            containerColor = Color.Transparent
         ),
         shape = RoundedCornerShape(12.dp)
     ) {

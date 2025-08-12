@@ -33,7 +33,9 @@ fun ProfileScreen(
 ) {
     val state by viewModel.uiState.collectAsState()
 
-    LaunchedEffect(userId) { viewModel.load(userId) }
+    LaunchedEffect(userId) { 
+        viewModel.load(userId) 
+    }
 
     SharedElement(key = SharedElementKeys.PROFILE_SCREEN) { sharedModifier ->
         Scaffold(

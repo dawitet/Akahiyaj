@@ -138,6 +138,7 @@
     <string name="toast_failed_get_group_id">ቡድን መፍጠር አልተሳካም፤ የቡድን መለያ አልተገኘም።</string>
     <string name="toast_signed_out">ወጥተዋል።</string>
     <string name="toast_sign_out_error">መውጣት አልተሳካም።</string>
+    <string name="toast_please_complete_profile">እባክዎ መገለጫዎን ያጠናቅቁ።</string>
     <string name="toast_name_and_phone_required">ስም እና ስልክ አስፈላጊ ናቸው።</string>
     <string name="toast_registration_required">መመዝገብ ያስፈልጋል።</string>
     <string name="toast_welcome_profile_saved">እንኳን ደህና መጣችሁ %1$s! መገለጫ ተቀምጧል።</string>

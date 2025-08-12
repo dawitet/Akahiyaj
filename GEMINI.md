@@ -199,6 +199,29 @@ This file is the app's manifest. It declares the app's components, permissions, 
 
 This directory contains the app's resources, including layouts, drawables, and values.
 
+## Recent User-Requested Tasks and Status
+
+- [x] Fix profile screen crash: Firestore could not deserialize object (ProGuard stripping constructors)
+	- Added @Keep to Firestore profile models and default values for non-null fields
+	- Added ProGuard keep for domain.model package
+- [x] Created groups not visible in Active tab
+	- Ensured groupId is set from Realtime DB snapshot key in GroupServiceImpl
+	- Expanded ActiveGroupsScreen filter to include groups where current user is creator
+- [x] Add developer credit with image (dog) above credit text and above logout
+	- Added developer credit Image and text in Settings screen; using drawable dog.png (removed conflicting dog.xml)
+- [x] Implement Join group and Leave group options in UI
+	- GroupMembersDialog supports join/leave via MainActivity/MainViewModel wiring
+- [x] Implement Disband group option (creator-only)
+	- Added Disband button for creators in GroupMembersDialog with confirm dialog; wired to ViewModel.deleteGroup
+- [x] Add a Suggestion button in Settings that presents a destination-like form
+	- Added a simple AlertDialog with an OutlinedTextField; backend wiring TODO
+- [x] Save exact APK to Desktop for device testing
+	- Copied built APK to Desktop with timestamp for user testing
+- [ ] Grey overlay on Main/Settings tabs due to lingering dialog/sheet
+	- Investigation pending; audit ModalBottomSheet/Dialog visibility state and dismissal paths
+- [ ] Available groups may exclude creator-owned groups due to distance filter on main list
+	- Consider including creator-owned groups regardless of radius, or surface a My Groups section
+
 -   **`values/colors.xml`**: This file defines the app's color palette.
 -   **`values/strings.xml`**: This file contains the app's string resources.
 -   **`values/themes.xml`**: This file defines the app's themes.

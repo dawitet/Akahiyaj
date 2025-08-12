@@ -1,13 +1,15 @@
 package com.dawitf.akahidegn.domain.model
 
+import androidx.annotation.Keep
 import com.dawitf.akahidegn.domain.model.LanguageOption
 
 /**
  * User profile domain model
  */
+@Keep
 data class UserProfile(
-    val userId: String,
-    val displayName: String,
+    val userId: String = "",
+    val displayName: String = "",
     val profilePictureUrl: String? = null,
     val email: String? = null,
     val phoneNumber: String? = null,
@@ -32,6 +34,7 @@ data class UserProfile(
 /**
  * User preferences model
  */
+@Keep
 data class UserPreferences(
     val preferredLanguage: String = LanguageOption.ENGLISH.code,
     val language: String = LanguageOption.ENGLISH.code, // Added for compatibility with UserProfileServiceImpl
@@ -48,6 +51,7 @@ data class UserPreferences(
 /**
  * Notification settings model
  */
+@Keep
 data class NotificationSettings(
     val notificationsEnabled: Boolean = true,
     val chatNotificationsEnabled: Boolean = true,
@@ -63,6 +67,7 @@ data class NotificationSettings(
 /**
  * Privacy settings model
  */
+@Keep
 data class PrivacySettings(
     val locationSharingEnabled: Boolean = true,
     val profileVisibilityEnabled: Boolean = true,
@@ -83,6 +88,7 @@ enum class AccountStatus {
 /**
  * User review model
  */
+@Keep
 data class UserReview(
     val reviewId: String = "",
     val reviewerId: String = "",
@@ -97,6 +103,7 @@ data class UserReview(
 /**
  * Trip history item model
  */
+@Keep
 data class TripHistoryItem(
     val tripId: String = "",
     val groupId: String = "",
@@ -110,6 +117,7 @@ data class TripHistoryItem(
 /**
  * User analytics model
  */
+@Keep
 data class UserAnalytics(
     val userId: String = "",
     val totalTrips: Int = 0,

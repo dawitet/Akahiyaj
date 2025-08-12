@@ -1,6 +1,7 @@
 package com.dawitf.akahidegn.features.profile.impl
 
 import android.net.Uri
+import android.util.Log
 import com.dawitf.akahidegn.analytics.AnalyticsService
 import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.core.result.Result
@@ -11,6 +12,7 @@ import com.dawitf.akahidegn.domain.model.NotificationPreferences
 import com.dawitf.akahidegn.domain.model.PrivacyPreferences
 import com.dawitf.akahidegn.features.profile.UserProfileService
 import com.dawitf.akahidegn.features.profile.UserProfileUpdate
+import com.dawitf.akahidegn.features.profile.ProfileSyncService
 
 import com.dawitf.akahidegn.features.profile.Friend
 import com.dawitf.akahidegn.security.SecurityService
@@ -35,7 +37,8 @@ class UserProfileServiceImpl @Inject constructor(
     private val auth: FirebaseAuth,
     private val storage: FirebaseStorage,
     private val analyticsService: AnalyticsService,
-    private val securityService: SecurityService
+    private val securityService: SecurityService,
+    private val profileSyncService: ProfileSyncService
 ) : UserProfileService {
     
     companion object {
@@ -47,10 +50,14 @@ class UserProfileServiceImpl @Inject constructor(
     
     /**
      * Retrieves the current user's profile from Firebase
+     * First attempts to sync data to ensure consistency
      */
     override suspend fun getUserProfile(): Result<UserProfile> {
         return try {
             val userId = auth.currentUser?.uid ?: return Result.Error(AppError.AuthenticationError.NotAuthenticated)
+            
+            // Attempt to sync profile data first
+            profileSyncService.syncProfileData()
             
             val userDoc = firestore.collection(USERS_COLLECTION)
                 .document(userId)
@@ -96,6 +103,7 @@ class UserProfileServiceImpl @Inject constructor(
     
     /**
      * Updates the user profile with new information
+     * Also updates local data through ProfileSyncService
      */
     override suspend fun updateUserProfile(profile: UserProfileUpdate): Result<Unit> {
         return try {
@@ -126,6 +134,13 @@ class UserProfileServiceImpl @Inject constructor(
                 .document(userId)
                 .update(updateData)
                 .await()
+            
+            // Also update through ProfileSyncService to maintain consistency
+            profileSyncService.updateProfileData(
+                name = profile.displayName,
+                phone = profile.phoneNumber,
+                avatarUrl = null // We don't update avatar here
+            )
             
             analyticsService.trackEvent("user_profile_updated", mapOf(
                 "fields_updated" to updateData.keys.joinToString(",")
@@ -327,27 +342,35 @@ class UserProfileServiceImpl @Inject constructor(
 
     /**
      * Syncs user profile from remote to local storage
+     * Now delegates to ProfileSyncService for comprehensive synchronization
      */
     override suspend fun syncProfile(): Result<Unit> {
         return try {
-            val userId = auth.currentUser?.uid ?: return Result.Error(AppError.AuthenticationError.NotAuthenticated)
+            // Use ProfileSyncService for comprehensive sync
+            val syncResult = profileSyncService.forceSyncProfile()
             
-            // Fetch latest profile from remote
-            val userDoc = firestore.collection(USERS_COLLECTION)
-                .document(userId)
-                .get()
-                .await()
-
-            if (!userDoc.exists()) {
-                return Result.Error(AppError.ValidationError.ResourceNotFound("User profile not found"))
+            // Also perform validation check
+            val validationResult = profileSyncService.validateProfileConsistency()
+            when (validationResult) {
+                is Result.Success -> {
+                    if (!validationResult.data) {
+                        analyticsService.trackEvent("profile_sync_inconsistency_detected", emptyMap())
+                        // Attempt another sync to fix inconsistency
+                        profileSyncService.forceSyncProfile()
+                    }
+                }
+                is Result.Error -> {
+                    analyticsService.logError(Exception("Profile validation failed"), "profile_validation_failed")
+                }
+                is Result.Loading -> {
+                    // Validation still in progress, but continue with sync result
+                    Log.d("UserProfileService", "Profile validation still in progress")
+                }
             }
 
-            // Implementation would depend on your syncing strategy
-            // For example, updating local cache with fresh data
-
             analyticsService.trackEvent("profile_synced", emptyMap())
-
-            Result.Success(Unit)
+            syncResult
+            
         } catch (e: Exception) {
             Result.Error(AppError.NetworkError.RequestFailed(e.message ?: "Failed to sync profile"))
         }

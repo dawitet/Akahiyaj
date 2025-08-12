@@ -207,8 +207,9 @@ class OptimisticGroupRepository @Inject constructor(
         
         // Add server groups (excluding ones pending removal)
         serverGroups.forEach { group ->
-            if (!pendingRemovals.contains(group.groupId!!)) {
-                mergedGroups[group.groupId!!] = group
+            val groupId = group.groupId
+            if (groupId != null && !pendingRemovals.contains(groupId)) {
+                mergedGroups[groupId] = group
             }
         }
         

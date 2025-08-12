@@ -191,6 +191,41 @@ fun SettingsScreen(
                         }
                     }
                 }
+                
+                // Developer Credit
+                AnimatedPressableCard(
+                    onClick = { /* Developer info */ },
+                    modifier = Modifier.fillMaxWidth()
+                ) {
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.Person,
+                            contentDescription = null,
+                            tint = MaterialTheme.colorScheme.primary
+                        )
+                        
+                        Spacer(modifier = Modifier.width(16.dp))
+                        
+                        Column {
+                            BilingualText(
+                                englishText = "Developer",
+                                amharicText = "ገንቢ",
+                                style = MaterialTheme.typography.titleMedium
+                            )
+                            Text(
+                                text = "የዳዊት ስራ",
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.primary,
+                                fontWeight = FontWeight.Medium
+                            )
+                        }
+                    }
+                }
             }
         }
     }

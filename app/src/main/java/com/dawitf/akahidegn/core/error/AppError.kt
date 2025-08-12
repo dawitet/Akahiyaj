@@ -8,6 +8,8 @@ sealed class AppError : Exception() {
     sealed class NetworkError : AppError() {
         object ConnectionTimeout : NetworkError()
         object NoInternet : NetworkError()
+        object NoConnection : NetworkError()
+        object Timeout : NetworkError()
         data class FirebaseError(override val message: String) : NetworkError()
         data class DataParsingError(override val message: String) : NetworkError()
         data class UnknownNetworkError(override val message: String) : NetworkError()
@@ -21,6 +23,11 @@ sealed class AppError : Exception() {
         object SessionExpired : AuthenticationError() {
             override val message = "Session has expired. Please sign in again."
         }
+        object TooManyRequests : AuthenticationError()
+        object UserDisabled : AuthenticationError()
+        object AccountExistsWithDifferentCredential : AuthenticationError()
+        object CredentialAlreadyInUse : AuthenticationError()
+        object TokenRefreshFailed : AuthenticationError()
         data class AuthenticationFailed(override val message: String) : AuthenticationError()
     }
     
@@ -47,6 +54,9 @@ sealed class AppError : Exception() {
         object PermissionDenied : LocationError()
         object ServiceUnavailable : LocationError()
         object ProviderDisabled : LocationError()
+        object LocationDisabled : LocationError()
+        object LocationUnavailable : LocationError()
+        object InvalidLocation : LocationError()
         data class LocationFailed(override val message: String) : LocationError()
     }
     

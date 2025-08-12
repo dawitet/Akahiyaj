@@ -1,6 +1,7 @@
 package com.dawitf.akahidegn.ui.screens
 
 import android.location.Location
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -14,6 +15,7 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import com.dawitf.akahidegn.Group
@@ -28,11 +30,17 @@ import com.dawitf.akahidegn.ui.animation.shared.SharedElementKeys
 import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.runtime.derivedStateOf
 import com.dawitf.akahidegn.performance.rememberOptimizedListState
+import com.dawitf.akahidegn.ui.components.ColorfulBlobsBackground
+import androidx.compose.ui.res.painterResource
+import com.dawitf.akahidegn.ui.components.FullWidthBannerAd
+import com.dawitf.akahidegn.ui.components.gradientBackground
 
 @OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun MainScreen(
-    groups: List<Group>,
+    mainGroups: List<Group>,
+    activeGroups: List<Group>,
+    historyGroups: List<Group>,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     selectedFilters: SearchFilters,
@@ -47,6 +55,14 @@ fun MainScreen(
     onOpenHistory: () -> Unit
 ) {
     // Optimize list state for better performance
+    var selectedTab by remember { mutableIntStateOf(0) }
+    val tabTitles = listOf("Main", "Active", "History")
+    val groups = when (selectedTab) {
+        0 -> mainGroups
+        1 -> activeGroups
+        2 -> historyGroups
+        else -> mainGroups
+    }
     val optimizedGroups = rememberOptimizedListState(
         list = groups,
         keySelector = { it.groupId ?: it.hashCode() }
@@ -70,95 +86,157 @@ fun MainScreen(
     
     HomeTabLayout(
         headerContent = {
-            Text(
-                text = "Home",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.align(Alignment.Center)
-            )
-        },
-        mainContent = {
-            Column(
-                modifier = Modifier.fillMaxSize()
-            ) {
-                EnhancedSearchBar(
-                    query = searchQuery,
-                    onQueryChange = stableOnSearchQueryChange,
-                    onSearchSubmit = { /* ViewModel handles search logic based on query changes */ }
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-
-                // The content area
-                if (isLoading && optimizedGroups.isEmpty() && searchQuery.isBlank()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else if (isEmpty) {
-                    NoSearchResults(query = searchQuery, onClearSearch = { stableOnSearchQueryChange("") })
-                } else if (optimizedGroups.isEmpty() && !isLoading) {
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Animated blobs as background
+                ColorfulBlobsBackground(modifier = Modifier.matchParentSize())
+                // Gradient overlay for glassmorphism
+                androidx.compose.material3.Surface(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .gradientBackground(),
+                    color = Color.Transparent
+                ) {
                     Column(
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                        verticalArrangement = Arrangement.Center,
+                        modifier = Modifier.fillMaxWidth(),
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            stringResource(id = R.string.empty_groups_message),
-                            style = MaterialTheme.typography.bodyLarge
+                            text = "Home",
+                            style = MaterialTheme.typography.headlineMedium,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
                         )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(optimizedGroups, key = { group -> group.groupId ?: group.hashCode() }) { group ->
-                            GroupCard(
-                                group = group, 
-                                onClick = { stableOnGroupClick(group) }, 
-                                onJoinClick = { stableOnJoinGroup(group) },
-                                userLocation = userLocation
-                            )
+                        Spacer(modifier = Modifier.height(8.dp))
+                        TabRow(
+                            selectedTabIndex = selectedTab,
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            tabTitles.forEachIndexed { index, title ->
+                                Tab(
+                                    selected = selectedTab == index,
+                                    onClick = { selectedTab = index },
+                                    text = { Text(title) }
+                                )
+                            }
                         }
                     }
                 }
             }
+        },
+        mainContent = {
+            Box(modifier = Modifier.fillMaxSize()) {
+                // Animated blobs as background
+                ColorfulBlobsBackground(modifier = Modifier.matchParentSize())
+                // Main content overlays blobs
 
-            // Multiple Floating Action Buttons positioned on top of the content
-            Box(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                contentAlignment = Alignment.BottomEnd
-            ) {
                 Column(
-                    horizontalAlignment = Alignment.End,
-                    verticalArrangement = Arrangement.spacedBy(8.dp)
+                    modifier = Modifier.fillMaxSize(),
+                    verticalArrangement = Arrangement.SpaceBetween
                 ) {
-                    // Profile button with shared element
-                    SharedElement(key = SharedElementKeys.PROFILE_BUTTON) { sharedMod ->
-                        FloatingActionButton(
-                            onClick = stableOnOpenProfile,
-                            modifier = sharedMod,
-                            containerColor = MaterialTheme.colorScheme.secondary
-                        ) {
-                            Icon(Icons.Default.Person, contentDescription = "Profile")
+                    Column {
+                        EnhancedSearchBar(
+                            query = searchQuery,
+                            onQueryChange = stableOnSearchQueryChange,
+                            onSearchSubmit = { /* ViewModel handles search logic based on query changes */ }
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        // The content area
+                        if (isLoading && optimizedGroups.isEmpty() && searchQuery.isBlank()) {
+                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                CircularProgressIndicator()
+                            }
+                        } else if (isEmpty) {
+                            NoSearchResults(query = searchQuery, onClearSearch = { stableOnSearchQueryChange("") })
+                        } else if (optimizedGroups.isEmpty() && !isLoading) {
+                            Column(
+                                modifier = Modifier.fillMaxSize().padding(16.dp),
+                                verticalArrangement = Arrangement.Center,
+                                horizontalAlignment = Alignment.CenterHorizontally
+                            ) {
+                                Text(
+                                    stringResource(id = R.string.empty_groups_message),
+                                    style = MaterialTheme.typography.bodyLarge
+                                )
+                            }
+                        } else {
+                            LazyColumn(
+                                modifier = Modifier.fillMaxSize(),
+                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
+                                verticalArrangement = Arrangement.spacedBy(8.dp)
+                            ) {
+                                items(optimizedGroups, key = { group -> group.groupId ?: group.hashCode() }) { group ->
+                                    GroupCard(
+                                        group = group, 
+                                        onClick = { stableOnGroupClick(group) }, 
+                                        onJoinClick = { stableOnJoinGroup(group) },
+                                        userLocation = userLocation
+                                    )
+                                }
+                            }
                         }
                     }
-                    
-                    // History button with shared element
-                    SharedElement(key = SharedElementKeys.HISTORY_BUTTON) { sharedMod ->
-                        FloatingActionButton(
-                            onClick = stableOnOpenHistory,
-                            modifier = sharedMod,
-                            containerColor = MaterialTheme.colorScheme.tertiary
-                        ) {
-                            Icon(Icons.Default.History, contentDescription = "History")
-                        }
+                    // Banner Ad
+                    FullWidthBannerAd(
+                        modifier = Modifier
+                            .padding(horizontal = 16.dp, vertical = 8.dp)
+                    )
+
+                    // Developer credit image and text (branding)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(bottom = 12.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally
+                    ) {
+                        Image(
+                            painter = painterResource(id = R.drawable.akahidegn_splash_logo),
+                            contentDescription = "Developer branding",
+                            modifier = Modifier.height(64.dp).padding(bottom = 4.dp)
+                        )
+                        Text(
+                            text = "የዳዊት ስራ",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.padding(vertical = 4.dp)
+                        )
                     }
-                    
-                    // Create group button
-                    FloatingActionButton(onClick = stableOnCreateGroup) {
-                        Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.create_group_button))
+                }
+
+                // Multiple Floating Action Buttons positioned on top of the content
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    contentAlignment = Alignment.BottomEnd
+                ) {
+                    Column(
+                        horizontalAlignment = Alignment.End,
+                        verticalArrangement = Arrangement.spacedBy(8.dp)
+                    ) {
+                        // Profile button with shared element
+                        SharedElement(key = SharedElementKeys.PROFILE_BUTTON) { sharedMod ->
+                            FloatingActionButton(
+                                onClick = stableOnOpenProfile,
+                                modifier = sharedMod,
+                                containerColor = MaterialTheme.colorScheme.secondary
+                            ) {
+                                Icon(Icons.Default.Person, contentDescription = "Profile")
+                            }
+                        }
+                        // History button with shared element
+                        SharedElement(key = SharedElementKeys.HISTORY_BUTTON) { sharedMod ->
+                            FloatingActionButton(
+                                onClick = stableOnOpenHistory,
+                                modifier = sharedMod,
+                                containerColor = MaterialTheme.colorScheme.tertiary
+                            ) {
+                                Icon(Icons.Default.History, contentDescription = "History")
+                            }
+                        }
+                        // Create group button
+                        FloatingActionButton(onClick = stableOnCreateGroup) {
+                            Icon(Icons.Default.Add, contentDescription = stringResource(id = R.string.create_group_button))
+                        }
                     }
                 }
             }

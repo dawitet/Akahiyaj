@@ -25,6 +25,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -51,7 +52,8 @@ fun GroupMembersDialog(
     currentUserId: String,
     onDismiss: () -> Unit,
     onLeaveGroup: (groupId: String, userId: String) -> Unit,
-    onJoinGroup: ((groupId: String, userId: String, userName: String) -> Unit)? = null // New join functionality
+    onJoinGroup: ((groupId: String, userId: String, userName: String) -> Unit)? = null, // New join functionality
+    onDisbandGroup: ((groupId: String) -> Unit)? = null
 ) {
     val context = LocalContext.current
     
@@ -170,6 +172,8 @@ fun GroupMembersDialog(
                     color = MaterialTheme.colorScheme.outlineVariant
                 )
                 
+                var showConfirmDisband by remember { mutableStateOf(false) }
+
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.spacedBy(12.dp)
@@ -217,6 +221,17 @@ fun GroupMembersDialog(
                         }
                     }
                     
+                    // Disband Group (creator-only)
+                    if (group.creatorId == currentUserId && onDisbandGroup != null) {
+                        Button(
+                            onClick = { showConfirmDisband = true },
+                            modifier = Modifier.weight(1f),
+                            colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                        ) {
+                            Text(stringResource(id = R.string.group_item_button_disband))
+                        }
+                    }
+
                     // Dismiss Button
                     OutlinedButton(
                         onClick = onDismiss,
@@ -224,6 +239,24 @@ fun GroupMembersDialog(
                     ) {
                         Text("Close")
                     }
+                }
+
+                if (showConfirmDisband) {
+                    AlertDialog(
+                        onDismissRequest = { showConfirmDisband = false },
+                        confirmButton = {
+                            TextButton(onClick = {
+                                onDisbandGroup?.invoke(group.groupId!!)
+                                showConfirmDisband = false
+                                onDismiss()
+                            }) { Text(stringResource(id = R.string.group_item_button_disband)) }
+                        },
+                        dismissButton = {
+                            TextButton(onClick = { showConfirmDisband = false }) { Text(stringResource(id = R.string.dialog_button_no_amharic)) }
+                        },
+                        title = { Text(stringResource(id = R.string.group_item_button_disband)) },
+                        text = { Text("Are you sure you want to disband this group?") }
+                    )
                 }
             }
         }

@@ -93,6 +93,7 @@
     <string name="dialog_button_save">አስቀምጥ</string>
     
     <!-- Common Actions -->
+    <string name="toast_please_complete_profile">እባክዎ መገለጫዎን ያጠናቅቁ።</string>
     <string name="retry_button">እንደገና ሞክር</string>
     <string name="refresh_button">አዘምን</string>
     <string name="back_button">ተመለስ</string>

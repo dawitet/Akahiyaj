@@ -24,18 +24,52 @@ class GroupServiceImpl @Inject constructor(
     private val groupsRef: DatabaseReference = database.getReference("groups")
 
     override fun getAllGroups(): Flow<Result<List<Group>>> = callbackFlow {
+        Log.d("GroupService", "Setting up real-time listener for all groups")
         val listener = object : ValueEventListener {
             override fun onDataChange(snapshot: DataSnapshot) {
-                val groups = snapshot.children.mapNotNull { it.getValue(Group::class.java) }
-                trySend(Result.success(groups))
+                try {
+                    val groups = snapshot.children.mapNotNull { childSnapshot ->
+                        try {
+                            val group = childSnapshot.getValue(Group::class.java)
+                            if (group != null) {
+                                // Ensure groupId is populated from the snapshot key
+                                if (group.groupId == null) {
+                                    group.groupId = childSnapshot.key
+                                }
+                                Log.d("GroupService", "Loaded group: ${group.groupId} - ${group.destinationName}")
+                                group
+                            } else {
+                                Log.w("GroupService", "Failed to deserialize group from snapshot: ${childSnapshot.key}")
+                                null
+                            }
+                        } catch (e: Exception) {
+                            Log.e("GroupService", "Error deserializing group ${childSnapshot.key}", e)
+                            null
+                        }
+                    }
+                    Log.d("GroupService", "Successfully loaded ${groups.size} groups from Firebase")
+                    trySend(Result.success(groups))
+                } catch (e: Exception) {
+                    Log.e("GroupService", "Error processing groups data", e)
+                    trySend(Result.failure(AppError.UnknownError(e.message ?: "Failed to process groups data")))
+                }
             }
 
             override fun onCancelled(error: DatabaseError) {
+                Log.e("GroupService", "Firebase listener cancelled: ${error.message}")
                 trySend(Result.failure(AppError.NetworkError.FirebaseError(error.message)))
             }
         }
+
+        // Enable Firebase offline persistence to improve reliability
+        database.setPersistenceEnabled(true)
+        groupsRef.keepSynced(true) // Keep groups data synced even when offline
         groupsRef.addValueEventListener(listener)
-        awaitClose { groupsRef.removeEventListener(listener) }
+
+        awaitClose {
+            Log.d("GroupService", "Removing Firebase listener")
+            groupsRef.removeEventListener(listener)
+        }
     }
 
     override suspend fun getGroupById(groupId: String): Result<Group> {
@@ -52,7 +86,7 @@ class GroupServiceImpl @Inject constructor(
         }
     }
 
-    
+
 
     override suspend fun createGroup(group: Group): Result<Group> {
         return try {

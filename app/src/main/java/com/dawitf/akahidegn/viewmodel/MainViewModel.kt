@@ -47,6 +47,7 @@ class MainViewModel @Inject constructor(
     private val uiEventManager: UiEventManager
 ) : ViewModel() {
 
+
     // Search query state
     private val _searchQuery = MutableStateFlow("")
     val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
@@ -98,44 +99,88 @@ class MainViewModel @Inject constructor(
     // UI Events flow for one-time events (toasts, navigation, etc.)
     val uiEvents = uiEventManager.uiEvents
 
-    // Reactive filtered groups using combine for performance
-    // This replaces the manual filtering and caching logic with clean reactive streams
-    val groups: StateFlow<List<Group>> = combine(
+
+    // Track current user ID for filtering
+    private val _currentUserId = MutableStateFlow<String?>(null)
+    val currentUserId: StateFlow<String?> = _currentUserId.asStateFlow()
+    fun setCurrentUserId(userId: String?) { _currentUserId.value = userId }
+
+    // Main tab: groups within 500m radius (default)
+    val mainGroups: StateFlow<List<Group>> = combine(
         rawGroupsResult,
-        searchQuery.debounce(300), // Debounce search to prevent excessive filtering
+        searchQuery.debounce(300),
         currentLocation
-    ) { result, query, location ->
+    ) { result: Result<List<Group>>, query: String, location: Location? ->
         when (result) {
             is Result.Success -> {
                 val allGroups = result.data
                 if (allGroups.isEmpty()) return@combine emptyList()
-                
-                // Use cached result if available
-                val cacheKey = "${query}_${location?.let { "${it.latitude}_${it.longitude}" }}"
-                PerformanceCache.getCachedSearchResult(cacheKey)?.let { cachedIds ->
-                    val cached = allGroups.filter { it.groupId in cachedIds }
-                    if (cached.isNotEmpty()) return@combine cached
-                }
-                
-                // Perform filtering
-                val filtered = allGroups.filter { group ->
-                    passesOptimizedFilters(group, query, location)
+                allGroups.filter { group ->
+                    // Only groups within 500m and not expired
+                    passesOptimizedFilters(group, "", location)
                 }.sortedByDescending { it.timestamp }
-                
-                // Cache the result
-                PerformanceCache.cacheSearchResult(cacheKey, filtered.mapNotNull { it.groupId })
-                
-                filtered
             }
             else -> emptyList()
         }
     }
-    .flowOn(Dispatchers.Default) // Move filtering to background thread
+    .flowOn(Dispatchers.Default)
     .stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(),
         initialValue = emptyList()
     )
+
+    // Active tab: groups user has joined or created and are still active
+    val activeGroups: StateFlow<List<Group>> = combine(
+        rawGroupsResult,
+        searchQuery.debounce(300),
+        currentLocation,
+        currentUserId
+    ) { result: Result<List<Group>>, query: String, location: Location?, userId: String? ->
+        when (result) {
+            is Result.Success -> {
+                val allGroups = result.data
+                if (allGroups.isEmpty() || userId.isNullOrBlank()) return@combine emptyList()
+                allGroups.filter { group ->
+                    // User is creator or member, and group is not expired
+                    val ts = group.timestamp
+                    (group.creatorId == userId || group.memberDetails.containsKey(userId)) &&
+                    (ts == null || (ts is Long && ts > System.currentTimeMillis() - (30 * 60 * 1000L)))
+                }.sortedByDescending { it.timestamp }
+            }
+            else -> emptyList()
+        }
+    }
+    .flowOn(Dispatchers.Default)
+    .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(),
+        initialValue = emptyList()
+    )
+
+    // History tab: groups user has created (regardless of expiry)
+    val historyGroups: StateFlow<List<Group>> = combine(
+        rawGroupsResult,
+        currentUserId
+    ) { result: Result<List<Group>>, userId: String? ->
+        when (result) {
+            is Result.Success -> {
+                val allGroups = result.data
+                if (allGroups.isEmpty() || userId.isNullOrBlank()) return@combine emptyList()
+                allGroups.filter { group ->
+                    group.creatorId == userId
+                }.sortedByDescending { it.timestamp }
+            }
+            else -> emptyList()
+        }
+    }
+    .flowOn(Dispatchers.Default)
+    .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(),
+        initialValue = emptyList()
+    )
+
 
     // Search configuration
     private val searchRadiusMeters = 500.0
@@ -184,6 +229,31 @@ class MainViewModel @Inject constructor(
      */
     fun clearSelectedGroup() {
         _selectedGroup.value = null
+    }
+
+    /**
+     * Load a single group by its ID into selectedGroup state
+     */
+    fun loadGroupById(groupId: String) {
+        viewModelScope.launch(Dispatchers.IO) {
+            try {
+                when (val result = groupRepository.getGroupById(groupId)) {
+                    is com.dawitf.akahidegn.core.result.Result.Success -> {
+                        _selectedGroup.value = result.data
+                    }
+                    is com.dawitf.akahidegn.core.result.Result.Error -> {
+                        Log.w("MainViewModel", "Failed to load group $groupId: ${result.error}")
+                        uiEventManager.showError("Failed to load group details")
+                    }
+                    is com.dawitf.akahidegn.core.result.Result.Loading -> {
+                        // no-op
+                    }
+                }
+            } catch (t: Throwable) {
+                Log.e("MainViewModel", "Exception loading group $groupId", t)
+                uiEventManager.showError("Failed to load group details")
+            }
+        }
     }
 
     /**
