@@ -33,6 +33,7 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import coil.request.ImageRequest
+import androidx.compose.ui.res.stringResource
 import com.dawitf.akahidegn.R
 
 @Composable
@@ -44,6 +45,9 @@ fun UserRegistrationDialog(
 ) {
     var name by remember { mutableStateOf(initialName) }
     var phone by remember { mutableStateOf("") }
+    val isPhoneValid by remember(phone) {
+        mutableStateOf(phone.matches(Regex("^09\\d{8}$")))
+    }
     val focusManager = LocalFocusManager.current
 
     Dialog(
@@ -69,7 +73,7 @@ fun UserRegistrationDialog(
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
-                    text = "🎉 እንኳን ወደ አካሂያጅ በደህና መጡ!",
+                    text = stringResource(id = R.string.registration_welcome_title),
                     style = MaterialTheme.typography.headlineSmall,
                     fontWeight = FontWeight.Bold,
                     textAlign = TextAlign.Center,
@@ -79,7 +83,7 @@ fun UserRegistrationDialog(
                 Spacer(modifier = Modifier.height(8.dp))
                 
                 Text(
-                    text = "እባክዎ ለመጀመር የእርስዎን መገለጫ ያጠናቅቁ",
+                    text = stringResource(id = R.string.registration_subtitle),
                     style = MaterialTheme.typography.bodyMedium,
                     textAlign = TextAlign.Center,
                     color = MaterialTheme.colorScheme.onSurfaceVariant
@@ -108,7 +112,7 @@ fun UserRegistrationDialog(
                 OutlinedTextField(
                     value = name,
                     onValueChange = { name = it },
-                    label = { Text("📝 የእርስዎ ስም") },
+                    label = { Text(stringResource(id = R.string.full_name)) },
                     leadingIcon = { Icon(Icons.Default.Person, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -121,16 +125,12 @@ fun UserRegistrationDialog(
                 OutlinedTextField(
                     value = phone,
                     onValueChange = { newValue ->
-                        val cleanedValue = newValue.replace(Regex("[^0-9+]"), "")
-                        when {
-                            cleanedValue.matches(Regex("^0[0-9]{0,9}$")) -> phone = cleanedValue
-                            cleanedValue.startsWith("+2519") -> phone = "0" + cleanedValue.substring(5)
-                            cleanedValue.startsWith("2519") -> phone = "0" + cleanedValue.substring(4)
-                            cleanedValue == "+" || cleanedValue == "+2" || cleanedValue == "+25" || cleanedValue == "+251" -> phone = cleanedValue
-                            cleanedValue.length <= 10 && cleanedValue.all { it.isDigit() || it == '+' } -> phone = cleanedValue
-                        }
+                        // Enforce strictly: 10 digits, starting with 09
+                        val digitsOnly = newValue.filter { it.isDigit() }
+                        val limited = digitsOnly.take(10)
+                        phone = limited
                     },
-                    label = { Text("📞 የስልክ ቁጥር") },
+                    label = { Text(stringResource(id = R.string.phone_number)) },
                     leadingIcon = { Icon(Icons.Default.Phone, contentDescription = null) },
                     modifier = Modifier.fillMaxWidth(),
                     singleLine = true,
@@ -139,18 +139,23 @@ fun UserRegistrationDialog(
                         imeAction = ImeAction.Done
                     ),
                     keyboardActions = KeyboardActions(
-                        onDone = { 
-                            if (name.isNotBlank() && phone.isNotBlank()) {
+                        onDone = {
+                            if (name.isNotBlank() && isPhoneValid) {
                                 onComplete(name.trim(), phone.trim())
                             }
                         }
                     ),
-                    placeholder = { Text("0912345678") },
-                    supportingText = { 
+                    placeholder = { Text(stringResource(id = R.string.phone_placeholder)) },
+                    supportingText = {
+                        val text = if (phone.isNotBlank() && !isPhoneValid) {
+                            stringResource(id = R.string.error_invalid_phone_format)
+                        } else {
+                            stringResource(id = R.string.phone_hint_et_only)
+                        }
                         Text(
-                            text = "ኢትዮጵያዊ ቁጥር: 0912345678 ወይም +251912345678",
+                            text = text,
                             style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant
+                            color = if (phone.isNotBlank() && !isPhoneValid) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 )
@@ -159,18 +164,18 @@ fun UserRegistrationDialog(
                 
                 Button(
                     onClick = {
-                        if (name.isNotBlank() && phone.isNotBlank()) {
+                        if (name.isNotBlank() && isPhoneValid) {
                             onComplete(name.trim(), phone.trim())
                         }
                     },
-                    enabled = name.isNotBlank() && phone.isNotBlank(),
+                    enabled = name.isNotBlank() && isPhoneValid,
                     modifier = Modifier.fillMaxWidth(),
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.primary
                     )
                 ) {
                     Text(
-                        text = "✨ ቀጥል",
+                        text = stringResource(id = R.string.next_button),
                         style = MaterialTheme.typography.titleMedium,
                         fontWeight = FontWeight.SemiBold
                     )

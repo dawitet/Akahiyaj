@@ -189,7 +189,7 @@ fun MainScreen(
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Image(
-                            painter = painterResource(id = R.drawable.akahidegn_splash_logo),
+                            painter = painterResource(id = R.drawable.splash_fallback),
                             contentDescription = "Developer branding",
                             modifier = Modifier.height(64.dp).padding(bottom = 4.dp)
                         )

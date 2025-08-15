@@ -2,6 +2,7 @@ package com.dawitf.akahidegn.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -11,6 +12,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -33,18 +35,29 @@ import com.dawitf.akahidegn.ui.components.SettingsTabLayout
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.setValue
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.ExtendedFloatingActionButton
+import com.dawitf.akahidegn.ui.animation.shared.SharedElement
+import com.dawitf.akahidegn.ui.animation.shared.SharedElementKeys
+import com.dawitf.akahidegn.ui.animation.shared.SharedAnimatedVisibility
+import com.dawitf.akahidegn.ui.animation.shared.AnimationType
+import com.dawitf.akahidegn.ui.animation.shared.TransformType
+import androidx.compose.foundation.layout.size
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SettingsScreen(onSignOut: () -> Unit) { // Added onSignOut callback
+fun SettingsScreen(onSignOut: () -> Unit, onOpenProfile: () -> Unit = {}) { // Added onOpenProfile FAB
     val viewModel: SettingsViewModel = hiltViewModel()
     val notificationsEnabled = viewModel.notificationsEnabled.collectAsState()
     val soundEnabled = viewModel.soundEnabled.collectAsState()
     val vibrationEnabled = viewModel.vibrationEnabled.collectAsState()
+    val submitting = viewModel.suggestionSubmitting.collectAsState()
+    val submitted = viewModel.suggestionSubmitted.collectAsState()
     
     var showSuggestionDialog by remember { mutableStateOf(false) }
     var suggestionText by remember { mutableStateOf("") }
@@ -52,90 +65,112 @@ fun SettingsScreen(onSignOut: () -> Unit) { // Added onSignOut callback
     SettingsTabLayout(
         headerContent = {
             Text(
-                text = "Settings",
+                text = stringResource(id = R.string.settings_title),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.align(Alignment.Center)
             )
         },
         mainContent = {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.SpaceBetween,
-                horizontalAlignment = Alignment.CenterHorizontally
-            ) {
-                Text(
-                    text = stringResource(id = R.string.settings_description),
-                    style = MaterialTheme.typography.bodyLarge,
-                modifier = Modifier.padding(bottom = 32.dp)
-            )
+            Box(modifier = Modifier.fillMaxSize()) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(16.dp),
+                    verticalArrangement = Arrangement.SpaceBetween,
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = stringResource(id = R.string.settings_description),
+                        style = MaterialTheme.typography.bodyLarge,
+                        modifier = Modifier.padding(bottom = 32.dp)
+                    )
 
-            // Toggles
-            Column(modifier = Modifier.fillMaxWidth()) {
-                SettingToggleRow(
-                    title = stringResource(id = R.string.notification_permission_needed),
-                    checked = notificationsEnabled.value,
-                    onCheckedChange = { viewModel.setNotificationsEnabled(it) }
-                )
-                Spacer(Modifier.height(12.dp))
-                SettingToggleRow(
-                    title = stringResource(id = R.string.settings_sound_effects),
-                    checked = soundEnabled.value,
-                    onCheckedChange = { viewModel.setSoundEnabled(it) }
-                )
-                Spacer(Modifier.height(12.dp))
-                SettingToggleRow(
-                    title = stringResource(id = R.string.settings_vibration),
-                    checked = vibrationEnabled.value,
-                    onCheckedChange = { viewModel.setVibrationEnabled(it) }
-                )
+                    // Toggles
+                    Column(modifier = Modifier.fillMaxWidth()) {
+                        SettingToggleRow(
+                            title = stringResource(id = R.string.notification_permission_needed),
+                            checked = notificationsEnabled.value,
+                            onCheckedChange = { viewModel.setNotificationsEnabled(it) }
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        SettingToggleRow(
+                            title = stringResource(id = R.string.settings_sound_effects),
+                            checked = soundEnabled.value,
+                            onCheckedChange = { viewModel.setSoundEnabled(it) }
+                        )
+                        Spacer(Modifier.height(12.dp))
+                        SettingToggleRow(
+                            title = stringResource(id = R.string.settings_vibration),
+                            checked = vibrationEnabled.value,
+                            onCheckedChange = { viewModel.setVibrationEnabled(it) }
+                        )
+                    }
+
+                    Spacer(modifier = Modifier.weight(1f)) // Pushes sign out button to the bottom
+
+                    // Suggestion button
+                    Button(
+                        onClick = { showSuggestionDialog = true },
+                        modifier = Modifier.fillMaxWidth()
+                    ) {
+                        Text(text = stringResource(id = R.string.send_suggestion))
+                    }
+
+                    Spacer(Modifier.height(16.dp))
+
+                    // Developer credit image and text
+                    Image(
+                        painter = painterResource(id = R.drawable.splash_fallback),
+                        contentDescription = "Developer branding",
+                        modifier = Modifier
+                            .height(80.dp)
+                            .padding(bottom = 8.dp)
+                    )
+                    Text(
+                        text = "የዳዊት ስራ",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(vertical = 8.dp)
+                    )
+
+                    Button(
+                        onClick = onSignOut, // Call the provided lambda
+                        modifier = Modifier.fillMaxWidth(),
+                        colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
+                    ) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ExitToApp,
+                            contentDescription = "Sign Out",
+                            tint = Color.White
+                        )
+                        Text(
+                            text = stringResource(id = R.string.settings_sign_out),
+                            color = Color.White,
+                            modifier = Modifier.padding(start = 8.dp)
+                        )
+                    }
+                }
+
+                // Floating labeled Profile action with Enhanced Shared Element
+                SharedAnimatedVisibility(
+                    visible = true, 
+                    animationType = AnimationType.ScaleFade
+                ) {
+                    SharedElement(
+                        key = SharedElementKeys.PROFILE_BUTTON,
+                        transform = TransformType.LUXURIOUS
+                    ) { sharedMod ->
+                        ExtendedFloatingActionButton(
+                            onClick = onOpenProfile,
+                            icon = { Icon(imageVector = Icons.Filled.Person, contentDescription = null) },
+                            text = { Text(text = stringResource(id = R.string.profile)) },
+                            modifier = sharedMod
+                                .align(Alignment.BottomEnd)
+                                .padding(16.dp)
+                        )
+                    }
+                }
             }
-            
-            Spacer(modifier = Modifier.weight(1f)) // Pushes sign out button to the bottom
-
-            // Suggestion button
-            Button(
-                onClick = { showSuggestionDialog = true },
-                modifier = Modifier.fillMaxWidth()
-            ) {
-                Text(text = "Send Suggestion")
-            }
-
-            Spacer(Modifier.height(16.dp))
-
-            // Developer credit image and text
-            Image(
-                painter = painterResource(id = R.drawable.akahidegn_splash_logo),
-                contentDescription = "Developer branding",
-                modifier = Modifier
-                    .height(80.dp)
-                    .padding(bottom = 8.dp)
-            )
-            Text(
-                text = "የዳዊት ስራ",
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(vertical = 8.dp)
-            )
-
-            Button(
-                onClick = onSignOut, // Call the provided lambda
-                modifier = Modifier.fillMaxWidth(),
-                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error)
-            ) {
-                Icon(
-                    Icons.AutoMirrored.Filled.ExitToApp,
-                    contentDescription = "Sign Out",
-                    tint = Color.White
-                )
-                Text(
-                    text = stringResource(id = R.string.settings_sign_out),
-                    color = Color.White,
-                    modifier = Modifier.padding(start = 8.dp)
-                )
-            }
-        }
         }
     )
 
@@ -143,25 +178,40 @@ fun SettingsScreen(onSignOut: () -> Unit) { // Added onSignOut callback
         AlertDialog(
             onDismissRequest = { showSuggestionDialog = false },
             confirmButton = {
-                Button(onClick = {
-                    // TODO: wire to backend (e.g., Firestore collection "suggestions")
-                    showSuggestionDialog = false
-                    suggestionText = ""
-                }) { Text("Submit") }
+                Button(
+                    enabled = !submitting.value && suggestionText.isNotBlank(),
+                    onClick = {
+                        viewModel.submitSuggestion(suggestionText)
+                    }
+                ) {
+                    if (submitting.value) {
+                        CircularProgressIndicator(modifier = Modifier.size(18.dp), strokeWidth = 2.dp)
+                    } else {
+                        Text(stringResource(id = R.string.dialog_button_save))
+                    }
+                }
             },
             dismissButton = {
-                TextButton(onClick = { showSuggestionDialog = false }) { Text("Cancel") }
+                TextButton(onClick = { showSuggestionDialog = false }) {
+                    Text(stringResource(id = R.string.dialog_button_cancel))
+                }
             },
-            title = { Text("Suggestion") },
+            title = { Text(stringResource(id = R.string.send_suggestion)) },
             text = {
                 OutlinedTextField(
                     value = suggestionText,
                     onValueChange = { suggestionText = it },
-                    label = { Text("Your suggestion (destination-style form)") },
+                    label = { Text(stringResource(id = R.string.suggestion_input_hint)) },
                     modifier = Modifier.fillMaxWidth()
                 )
             }
         )
+    }
+
+    // Close dialog after successful submission
+    if (submitted.value && showSuggestionDialog) {
+        showSuggestionDialog = false
+        suggestionText = ""
     }
 }
 

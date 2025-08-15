@@ -33,7 +33,9 @@ object FirebaseModule {
     @Provides
     @Singleton
     fun provideFirebaseDatabase(): FirebaseDatabase {
-        return Firebase.database
+    // Ensure Realtime Database uses the europe-west1 instance (matches AkahidegnApplication)
+    val correctDbUrl = "https://akahidegn-79376-default-rtdb.europe-west1.firebasedatabase.app"
+    return FirebaseDatabase.getInstance(correctDbUrl)
     }
 
     @Provides

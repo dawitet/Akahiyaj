@@ -1,6 +1,4 @@
 package com.dawitf.akahidegn.ui.screens
-
-import androidx.compose.animation.ExperimentalSharedTransitionApi
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ArrowBack
@@ -12,11 +10,10 @@ import androidx.compose.ui.unit.dp
 import com.dawitf.akahidegn.Group
 import com.dawitf.akahidegn.ui.animation.shared.SharedBounds
 import com.dawitf.akahidegn.ui.animation.shared.SharedBoundsTransforms
-import com.dawitf.akahidegn.ui.animation.shared.SharedElement
-import com.dawitf.akahidegn.ui.animation.shared.SharedElementKeys
+import com.dawitf.akahidegn.ui.animation.shared.TransformType
 import com.dawitf.akahidegn.ui.components.glassCard
 
-@OptIn(ExperimentalSharedTransitionApi::class, ExperimentalMaterial3Api::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun GroupDetailScreen(
     group: Group?,
@@ -48,7 +45,10 @@ fun GroupDetailScreen(
             }
 
             val cardKey = remember(group.groupId) { "groupCard-${group.groupId ?: group.destinationName}" }
-            SharedBounds(key = cardKey, boundsTransform = SharedBoundsTransforms.Default) { sharedMod ->
+            SharedBounds(
+                key = cardKey,
+                transform = TransformType.ELEGANT_ARC
+            ) { sharedMod ->
                 Surface(
                     modifier = sharedMod.fillMaxWidth().glassCard(),
                     tonalElevation = 2.dp,

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Golden yellow circular background -->
+    <item>
+        <shape android:shape="oval">
+            <solid android:color="#FFFFC30B" />
+        </shape>
+    </item>
+    <!-- Car icon centered on top -->
+    <item android:gravity="center">
+        <bitmap 
+            android:src="@drawable/app_icon"
+            android:gravity="center" />
+    </item>
+</layer-list>

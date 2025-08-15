@@ -11,7 +11,7 @@
         android:layout_width="120dp"
         android:layout_height="120dp"
         android:layout_marginTop="100dp"
-        android:src="@drawable/akahidegn_splash_logo"
+        android:src="@drawable/splash_screen"
         android:contentDescription="@string/app_name" />
 
     <View

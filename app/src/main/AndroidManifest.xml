@@ -27,7 +27,7 @@
         android:fullBackupContent="@xml/backup_rules"
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
-        android:roundIcon="@mipmap/ic_launcher_round"
+        android:roundIcon="@mipmap/ic_launcher"
         android:supportsRtl="true"
         android:theme="@style/Theme.Akahidegn"
         android:hardwareAccelerated="true"
@@ -44,9 +44,10 @@
             android:name=".SplashActivity"
             android:exported="true"
             android:hardwareAccelerated="true"
-            android:launchMode="singleTop"
-            android:theme="@style/Theme.Akahidegn">
-            <intent-filter>
+            android:launchMode="singleTask"
+            android:clearTaskOnLaunch="true"
+            android:theme="@style/SplashTheme">
+            <intent-filter android:priority="1000">
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
@@ -58,7 +59,7 @@
             android:exported="false"
             android:hardwareAccelerated="true"
             android:launchMode="singleTop"
-            android:theme="@style/SplashTheme">
+            android:theme="@style/Theme.Akahidegn">
         </activity>
         
         <!-- Debug Ad Test Activity - Only in debug builds -->
@@ -77,8 +78,8 @@
         <!-- Remove the meta-data above and uncomment this if you want to disable ads -->
         <!--
         <meta-data
-            android:name=\'com.google.android.gms.ads.APPLICATION_ID\'
-            android:value=\'\' />
+            android:name='com.google.android.gms.ads.APPLICATION_ID'
+            android:value='' />
         -->
 
         <!-- Fix manifest merger conflict between AdMob and Google Analytics -->

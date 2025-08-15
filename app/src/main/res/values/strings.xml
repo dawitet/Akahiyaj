@@ -2,6 +2,9 @@
 <resources>
     <string name="app_name">አካሂያጅ</string> <!-- Akahiyaj -->
 
+    <!-- Header/page names -->
+    <string name="home_title">ዋና</string> <!-- Home -->
+
     <!-- MainActivity / MainAppScreen -->
     <string name="main_title">አካሂያጅ</string> <!-- Akahiyaj App -->
     <string name="user_id_prefix">ተጠቃሚ:</string> <!-- User ID: -->
@@ -323,6 +326,17 @@
     <string name="group_creator_badge">Group Creator</string>
     <string name="destination_label">Destination</string>
     <string name="empty_groups_message">ምንም ቡድን የለም። ለማዘመን ወደታች ይግፉ ወይም አዲስ ፍጠሩ!</string> <!-- No groups available. Swipe down to refresh or create one! -->
+    
+    <!-- Registration dialog strings -->
+    <string name="registration_welcome_title">🎉 እንኳን ወደ አካሂያጅ በደህና መጡ!</string>
+    <string name="registration_subtitle">እባክዎ ለመጀመር የመገለጫ መረጃዎን ያጠናቅቁ</string>
+    <string name="phone_placeholder">0912345678</string>
+    <string name="phone_hint_et_only">ቁጥር ቅርጽ: 0912345678 (10 አሃዞች፣ 09 ይጀምር)</string>
+    <string name="error_invalid_phone_format">የስልክ ቁጥር ቅርጽ ልክ አይደለም። 0912345678 ይጠቀሙ</string>
+
+    <!-- Settings suggestion flow -->
+    <string name="send_suggestion">ሃሳብ ላክ</string>
+    <string name="suggestion_input_hint">ሃሳብዎን ያስገቡ</string>
     
     <!-- ...existing strings... -->
 </resources>

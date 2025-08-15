@@ -140,12 +140,15 @@ dependencies {
     implementation(libs.androidx.lifecycle.runtime.ktx) // Now using version catalog
     implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
     implementation(libs.androidx.activity.compose)
-    implementation("androidx.compose.material3:material3:1.2.0") // Contains PullToRefreshContainer
+    // Use BOM-managed Material3 instead of hardcoding versions
+    implementation(libs.androidx.material3)
     implementation(platform(libs.androidx.compose.bom))
     implementation(libs.androidx.ui)
     implementation(libs.androidx.ui.graphics)
     implementation(libs.androidx.ui.tooling.preview)
-    implementation("androidx.compose.material3:material3:1.3.0")
+    // Compose Foundation for layout APIs like matchParentSize
+    implementation("androidx.compose.foundation:foundation")
+    implementation("androidx.compose.foundation:foundation-layout")
     // Removed problematic pullrefresh dependency - using core Material3 components instead
     implementation("androidx.compose.material:material-icons-extended") // managed by BOM
 
@@ -162,7 +165,10 @@ dependencies {
     androidTestImplementation(libs.androidx.ui.test.junit4)
     debugImplementation(libs.androidx.ui.tooling)
     debugImplementation(libs.androidx.ui.test.manifest)
-    implementation("io.coil-kt:coil-compose:2.5.0")
+    
+    // Coil for image loading with WebP animation support
+    implementation("io.coil-kt:coil-compose:2.7.0")
+    implementation("io.coil-kt:coil-gif:2.7.0") // For animated WebP support
     implementation("com.google.code.gson:gson:2.10.1")
 
 
@@ -219,8 +225,7 @@ dependencies {
     implementation("com.google.accompanist:accompanist-systemuicontroller:0.32.0")
     implementation("androidx.compose.material:material-icons-core")
     implementation("androidx.compose.ui:ui-text-google-fonts")
-    // Keep activity-compose aligned via version catalog
-    implementation(libs.androidx.activity.compose)
+    // Keep activity-compose aligned via version catalog (already added above)
     implementation("androidx.compose.material3:material3-window-size-class:1.1.2")
 
     // Add dependencies for WorkManager testing

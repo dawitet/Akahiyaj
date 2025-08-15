@@ -138,14 +138,30 @@ val HomeColorScheme = lightColorScheme(
 )
 
 val ActiveGroupsColorScheme = lightColorScheme(
-    primary = Color(0xFF2196F3), // Blue
+    primary = Cream,            // Golden
+    onPrimary = CharcoalGrey,   // Dark text on gold
+    secondary = MustardYellow,  // Muted gold
+    onSecondary = CharcoalGrey,
+    background = CharcoalGrey,  // Dark background
+    onBackground = Cream,       // Gold text
+    surface = CharcoalGrey,
+    onSurface = Cream,
+    surfaceVariant = CharcoalGrey,
+    onSurfaceVariant = Cream
+)
+
+// Enhanced glassmorphism color scheme for modern UI
+val GlassmorphismColorScheme = lightColorScheme(
+    primary = Color(0xFF667eea),        // Beautiful blue gradient
     onPrimary = Color.White,
-    secondary = Color(0xFF90CAF9),
+    secondary = Color(0xFF764ba2),      // Purple complement
     onSecondary = Color.White,
-    background = Color(0xFFE3F2FD),
-    onBackground = Color.Black,
-    surface = Color.White,
-    onSurface = Color.Black
+    background = Color(0xFF1a1a2e),     // Deep dark background
+    onBackground = Color.White,
+    surface = Color.White.copy(alpha = 0.1f),  // Semi-transparent surfaces
+    onSurface = Color.White,
+    surfaceVariant = Color.White.copy(alpha = 0.2f),
+    onSurfaceVariant = Color.White.copy(alpha = 0.9f)
 )
 
 val SettingsColorScheme = lightColorScheme(

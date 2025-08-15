@@ -181,6 +181,29 @@ class MainViewModel @Inject constructor(
         initialValue = emptyList()
     )
 
+    // Groups tab: all groups the user created or joined (active and inactive), sorted by recency
+    val userGroups: StateFlow<List<Group>> = combine(
+        rawGroupsResult,
+        currentUserId
+    ) { result: Result<List<Group>>, userId: String? ->
+        when (result) {
+            is Result.Success -> {
+                val allGroups = result.data
+                if (allGroups.isEmpty() || userId.isNullOrBlank()) return@combine emptyList()
+                allGroups.filter { group ->
+                    group.creatorId == userId || group.memberDetails.containsKey(userId)
+                }.sortedByDescending { it.timestamp }
+            }
+            else -> emptyList()
+        }
+    }
+    .flowOn(Dispatchers.Default)
+    .stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.WhileSubscribed(),
+        initialValue = emptyList()
+    )
+
 
     // Search configuration
     private val searchRadiusMeters = 500.0

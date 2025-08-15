@@ -11,7 +11,7 @@ import com.dawitf.akahidegn.R
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector? = null) {
     object Main : Screen("main", "ዋና", Icons.Default.Home)
-    object ActiveGroups : Screen("active_groups", "ንቁ ቡድኖች", Icons.AutoMirrored.Filled.List)
+    object Groups : Screen("groups", "ቡድኖች", Icons.AutoMirrored.Filled.List)
     object Settings : Screen("settings", "ቅንብሮች", Icons.Default.Settings)
     // Added profile & history (not in bottom bar yet)
     object Profile : Screen("profile/{userId}", "profile", Icons.Default.Person) { // title key used for localization lookup

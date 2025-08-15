@@ -1,32 +1,47 @@
 package com.dawitf.akahidegn.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ExtendedFloatingActionButton
+import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.alpha
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dawitf.akahidegn.ui.components.ActiveGroupsTabLayout
+import com.dawitf.akahidegn.ui.components.EnhancedPullToRefresh
 import com.dawitf.akahidegn.ui.components.GroupCard
 import com.dawitf.akahidegn.viewmodel.MainViewModel
 import com.google.firebase.auth.ktx.auth
 import com.google.firebase.ktx.Firebase
+import com.dawitf.akahidegn.R
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.History
+import com.dawitf.akahidegn.ui.animation.shared.SharedAnimatedVisibility
+import com.dawitf.akahidegn.ui.animation.shared.SharedElement
+import com.dawitf.akahidegn.ui.animation.shared.SharedElementKeys
+import com.dawitf.akahidegn.ui.animation.shared.AnimationType
+import com.dawitf.akahidegn.ui.animation.shared.TransformType
 
 @Composable
-fun ActiveGroupsScreen() {
+fun ActiveGroupsScreen(
+    onOpenHistory: () -> Unit = {}
+) {
     val viewModel: MainViewModel = hiltViewModel()
-    val activeGroups by viewModel.activeGroups.collectAsState()
+    val userGroups by viewModel.userGroups.collectAsState()
     val isLoading by viewModel.isLoadingGroups.collectAsState()
     val currentUserId = Firebase.auth.currentUser?.uid
 
@@ -43,59 +58,86 @@ fun ActiveGroupsScreen() {
     ActiveGroupsTabLayout(
         headerContent = {
             Text(
-                text = "Active Groups",
+                text = stringResource(id = R.string.group_list_title),
                 style = MaterialTheme.typography.headlineMedium,
                 modifier = Modifier.align(Alignment.Center)
             )
         },
         mainContent = {
-            Column(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .padding(16.dp)
+            EnhancedPullToRefresh(
+                isRefreshing = isLoading,
+                onRefresh = { viewModel.refreshGroups() }
             ) {
                 if (isLoading) {
-                    Column(
-                        modifier = Modifier.fillMaxSize(),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
+                    Box(
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
+                        contentAlignment = Alignment.Center
                     ) {
-                        Text(
-                            text = "Loading your active groups...",
-                            style = MaterialTheme.typography.bodyLarge
-                        )
+                        Text(text = stringResource(id = R.string.loading_groups), style = MaterialTheme.typography.bodyLarge)
                     }
-                } else if (activeGroups.isEmpty()) {
+                } else if (userGroups.isEmpty()) {
                     Column(
-                        modifier = Modifier.fillMaxSize(),
+                        modifier = Modifier.fillMaxSize().padding(16.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally
                     ) {
                         Text(
-                            text = "You haven't joined any groups yet.",
+                            text = stringResource(id = R.string.no_groups_found),
                             style = MaterialTheme.typography.headlineSmall,
                             modifier = Modifier.padding(bottom = 8.dp)
                         )
                         Text(
-                            text = "Join a group from the main screen to see it here!",
+                            text = stringResource(id = R.string.nearby_groups_placeholder),
                             style = MaterialTheme.typography.bodyLarge,
                             color = MaterialTheme.colorScheme.onSurfaceVariant
                         )
                     }
                 } else {
-                    LazyColumn(
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(
-                            items = activeGroups,
-                            key = { group -> group.groupId ?: (group.destinationName ?: "group") }
-                        ) { group ->
-                            GroupCard(
-                                group = group,
-                                userLocation = null, // Don't show distance in active groups
-                                onClick = { /* Handle group details */ },
-                                onJoinClick = null // Don't show join button for active groups
-                            )
+                    Box(modifier = Modifier.fillMaxSize()) {
+                        LazyColumn(
+                            modifier = Modifier.fillMaxSize().padding(16.dp),
+                            verticalArrangement = Arrangement.spacedBy(8.dp)
+                        ) {
+                            items(
+                                items = userGroups,
+                                key = { group -> group.groupId ?: (group.destinationName ?: "group") }
+                            ) { group ->
+                                val isActive = (group.timestamp ?: 0L) > (System.currentTimeMillis() - (30 * 60 * 1000L))
+                                val itemAlpha = if (isActive) 1f else 0.55f
+                                Box(modifier = Modifier.alpha(itemAlpha)) {
+                                    GroupCard(
+                                        group = group,
+                                        userLocation = null,
+                                        onClick = { /* Navigate to details */ },
+                                        onJoinClick = null
+                                    )
+                                }
+                            }
+                        }
+
+                        // History FAB with label in bottom end
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(16.dp),
+                            contentAlignment = Alignment.BottomEnd
+                        ) {
+                            SharedAnimatedVisibility(
+                                visible = true,
+                                animationType = AnimationType.ScaleFade
+                            ) {
+                                SharedElement(
+                                    key = SharedElementKeys.HISTORY_BUTTON,
+                                    transform = TransformType.ELEGANT_ARC
+                                ) { sharedMod ->
+                                    ExtendedFloatingActionButton(
+                                        onClick = onOpenHistory,
+                                        icon = { Icon(Icons.Default.History, contentDescription = null) },
+                                        text = { Text(text = stringResource(id = R.string.activity_history_title)) },
+                                        modifier = sharedMod
+                                    )
+                                }
+                            }
                         }
                     }
                 }

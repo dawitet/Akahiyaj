@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!-- Base application theme. -->
-    <!-- For API 31+ the SplashTheme defined here will be used for the Splash Screen -->
-    <style name="SplashTheme" parent="Theme.SplashScreen">
-        <item name="windowSplashScreenBackground">@android:color/white</item> <!-- Or your desired background color -->
-        <item name="windowSplashScreenAnimatedIcon">@drawable/new_launcher_icon</item>
-        <item name="windowSplashScreenAnimationDuration">1000</item> <!-- Optional: Duration in ms -->
-        <item name="postSplashScreenTheme">@style/Theme.Akahidegn</item>  <!-- Theme to apply after splash -->
+    
+    <!-- Simple Launch Theme - No Splash Screen API -->
+    <style name="Theme.SplashLaunch" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">#FFFFC30B</item>
+        <item name="android:statusBarColor">#FFFFC30B</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowNoTitle">true</item>
+        <item name="android:windowFullscreen">false</item>
     </style>
 </resources>
