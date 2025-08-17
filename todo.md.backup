@@ -3441,3 +3441,337 @@ AI responses may include mistakes. Learn more
 
 
 
+gradle 9 
+Upgrade instructions
+Switch your build to use Gradle 9.0.0 by updating the wrapper in your project:
+
+./gradlew wrapper --gradle-version=9.0.0 && ./gradlew wrapper
+See the Gradle 9.0.0 upgrade guide to learn about deprecations, breaking changes, and other considerations when upgrading to Gradle 9.0.0.
+
+For Java, Groovy, Kotlin, and Android compatibility, see the full compatibility notes.
+
+New features and usability improvements
+
+Configuration Cache improvements
+Gradle's Configuration Cache improves build performance by caching and reusing the result of the configuration phase.
+
+Configuration Cache as the preferred execution mode
+The Configuration Cache is the preferred mode of execution. While not yet required, Gradle encourages adoption by prompting users and gradually phasing out incompatible APIs to prepare for a future where it becomes the only supported mode.
+
+Prompt to enable Configuration Cache
+If your build has no known Configuration Cache incompatibilities but doesn't yet have the Configuration Cache enabled, Gradle will suggest enabling it at the end of the build:
+
+Configuration Cache prompt to enable
+
+Some issues can only be detected when the Configuration Cache is active, so additional refinements may still be needed to fully adopt it.
+
+If you're not ready to invest time in this yet, you can suppress the suggestion by explicitly disabling the feature in your gradle.properties file:
+
+org.gradle.configuration-cache=false
+Graceful fallback from Configuration Cache mode
+Gradle falls back to non-Configuration Cache mode automatically when encountering unsupported features, instead of failing the build.
+
+This includes:
+
+Core plugins with limited support (such as Maven Publish and Ivy Publish)
+Unsupported or incompatible IDE plugins (such as Eclipse and IDEA)
+Features not yet supported (such as Source Dependencies)
+After running a build, the reason for the fallback can be found in the Configuration Cache report.
+
+Other notable Configuration Cache updates
+Additional updates for the Configuration Cache include:
+
+Tasks marked as incompatible prevent cache hits in warning mode, ensuring correctness. Warning mode should only be used during migration or troubleshooting. Marking tasks as incompatible remains a recommended strategy for gradual adoption.
+Task execution will abort immediately when a Configuration Cache problem is encountered, avoiding undefined behavior and ensuring affected tasks are neither marked up-to-date nor cached.
+The Configuration Cache report includes more detailed errors, such as serialization issues, unsafe concurrent access, and Groovy DSL closures capturing script state.
+
+Gradle requires Java Virtual Machine (JVM) version 17 or higher to run
+Gradle requires a Java Virtual Machine (JVM) version 17 or higher to start the Gradle daemon.
+
+If you need to build with older JVM versions, you can specify a separate JDK toolchain in the build definition by using toolchains.
+Gradle still supports compiling, testing and running other JVM-based tools with Java 8 and higher.
+
+See the Compatibility Matrix for more information.
+
+
+Update to Kotlin 2
+Gradle embeds the latest stable release of Kotlin 2.2.x runtime and uses Kotlin language version 2.2. This marks a shift from Gradle 8.x, which embedded Kotlin 2.0 starting in 8.11 but continued to use Kotlin language version 1.8 for compatibility.
+
+For a comprehensive overview of what’s new, see the Kotlin 2.2.0, Kotlin 2.1.0 and Kotlin 2.0.0 release notes.
+
+Gradle uses Kotlin for build logic, which includes:
+
+Build scripts written in the Kotlin DSL (.gradle.kts files)
+Plugins
+As a result, some behavior has changed, most notably the new K2 compiler and nullability annotations on APIs. If you're upgrading, review the Gradle 9.0.0 upgrade guide for migration details.
+
+
+Update to Groovy 4
+Gradle embeds the latest stable release of Groovy 4.0, a major upgrade from the Groovy 3.0 version used in Gradle 7 and 8.
+
+This update introduces a range of new features and improvements to the Groovy language. For a comprehensive overview of what’s new, see the Groovy 4.0 release notes for full details.
+
+Gradle uses Groovy for build logic, which includes: Build scripts written in the Groovy DSL (.gradle files) Ant integration Plugins
+
+Some behavior has changed between Groovy 3.0 and 4.0. If you're upgrading, review the Gradle 9.0.0 upgrade guide for migration details.
+
+
+Semantic Versioning for Gradle releases
+Starting with Gradle 9, all Gradle releases follow the Semantic Versioning (SemVer) specification.
+
+Version numbers are expressed as MAJOR.MINOR.PATCH, whereas previous minor releases omitted the patch segment (e.g., 8.5 instead of 8.5.0).
+
+This change only applies to new releases and does not retroactively affect older versions or backports. Additionally, internal code and features marked with @Incubating are not considered part of the public API and may change in minor releases.
+
+
+Build authoring improvements
+Gradle provides rich APIs for plugin authors and build engineers to develop custom build logic.
+
+
+Kotlin build script compilation avoidance
+Gradle speeds up feedback loops when editing build logic by avoiding unnecessary recompilation of Kotlin DSL (.kts) build scripts. This reduces build times and improves developer productivity.
+
+The improvement comes from significantly better detection of ABI (Application Binary Interface) changes, made possible by using Kotlin’s built-in ABI fingerprinting instead of Gradle’s previous internal mechanism. This brings major performance benefits, especially in builds that use inline functions, which were not handled efficiently before.
+
+For example, in the Gradle build itself, non-ABI changes to build logic result in up to a 60% reduction in configuration time by avoiding unnecessary script recompilation.
+
+Reduction in unnecessary script recompilation
+
+
+Gradle API uses JSpecify Nullability annotations
+Since Gradle 5.0 we've been using annotations from JSR-305 to make the nullness of type usages explicit for the Gradle API. Starting with Gradle 9, the Gradle API is annotated using JSpecify instead.
+
+Kotlin 2.1, when combined with JSpecify annotations in the Gradle API, introduces stricter nullability handling. For more details and potential breakages, see the dedicated upgrading guide section.
+
+
+Support for major and minor version specification in Gradle Wrapper
+Gradle supports specifying only a major or minor version when configuring the wrapper.
+
+For example, the following resolves to the latest 9.x.y release:
+
+./gradlew wrapper --gradle-version=9
+While the following resolves to the latest 9.1.x release:
+
+./gradlew wrapper --gradle-version=9.1
+This feature requires Gradle 9.0.0 or later. Earlier versions don’t follow full semantic versioning and may misinterpret partial versions (e.g., 8.12 might refer to 8.12 (because it's an exact version) and 8.12.1 (semantically the latest version for 8.12).
+
+Gradle’s version information endpoint has been extended to support this behavior. For instance, https://services.gradle.org/versions/9 lists all versions of Gradle with major version 9.
+
+Archive tasks produce reproducible archives by default
+Archive tasks such as Jar, Ear, War, Zip, Tar, and AbstractArchiveTask produce reproducible archives by default. This means that generated archives have reproducible file order and preconfigured file timestamps and permissions. As a result archives generated from the same inputs will be identical byte-for-byte.
+
+This change may affect builds that rely on non-deterministic archive characteristics like file order, file system timestamps, or file system permissions, or file executable bit.
+
+For more information, see the upgrading guide section.
+
+Detached configurations can resolve dependencies on their own project
+Detached configurations are able to resolve dependencies that reference their own project.
+
+To do this, Gradle introduces a new subtype of ComponentIdentifier called RootComponentIdentifier, which represents the root node of a resolved dependency graph.
+
+When a configuration is resolved, it is first transformed into a synthetic variant. This variant is owned by a synthetic root component, which is identified using RootComponentIdentifier. The root component itself exists only to own the root variant.
+
+Dependency graphs resolved from detached configurations and buildscript configurations will have a component identified by a RootComponentIdentifier at the root of their graph. This lets Gradle differentiate between a detached configuration and the project it lives in.
+
+Resolved project configurations will continue to have their root component live within the project's component and identified by a ProjectComponentIdentifier. In future Gradle versions, all configurations, including those declared inside projects (non-detached), will be owned by a synthetic root component identified by a RootComponentIdentifier.
+
+JAVA_HOME environment variable used for toolchain auto-detection
+Gradle's toolchain support allows provisioning and selection of specific JDK versions for building projects—compiling code, running tests, and even running Gradle itself.
+
+This release adds support for using the JAVA_HOME environment variable as a source for toolchain auto-detection. This change improves consistency between toolchains detected from the command line and those detected by IDEs, which previously did not consider JAVA_HOME.
+
+
+Documentation improvements
+Gradle Best Practices
+In partnership with JetBrains and Google, we've launched a new Gradle Best Practices guide to help you avoid common pitfalls and write more maintainable, performant builds. These recommendations consolidate community knowledge and Gradle team insights into a single, growing resource. The current version covers best practices in dependency declarations, build structure, task authoring, and more.
+
+For more information, check out the Gradle Best Practices blog post.
+
+Promoted features
+Promoted features are features that were incubating in previous versions of Gradle but are now supported and subject to backward compatibility. See the User Manual section on the "Feature Lifecycle" for more information.
+
+The following are the features that have been promoted in this Gradle release.
+
+Promoted features in the Kotlin DSL
+The following operator functions in DependencyHandlerScope are considered stable:
+
+NamedDomainObjectProvider<Configuration>.invoke(dependencyNotation: Any): Dependency?
+NamedDomainObjectProvider<Configuration>.invoke(dependencyNotation: String, dependencyConfiguration: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
+NamedDomainObjectProvider<Configuration>.invoke(group: String, name: String, version: String?, configuration: String?, classifier: String?, ext: String?): ExternalModuleDependency
+NamedDomainObjectProvider<Configuration>.invoke(group: String, name: String, version: String?, configuration: String?, classifier: String?, ext: String?, dependencyConfiguration: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
+<T : Any> Configuration.invoke(dependency: Provider<T>, dependencyConfiguration: ExternalModuleDependency.() -> Unit)
+<T : Any> Configuration.invoke(dependency: ProviderConvertible<T>, dependencyConfiguration: ExternalModuleDependency.() -> Unit)
+<T : Any> NamedDomainObjectProvider<Configuration>.invoke(dependency: Provider<T>)
+<T : Any> NamedDomainObjectProvider<Configuration>.invoke(dependency: ProviderConvertible<T>)
+<T : Any> NamedDomainObjectProvider<Configuration>.invoke(dependency: Provider<T>, dependencyConfiguration: ExternalModuleDependency.() -> Unit)
+<T : Any> NamedDomainObjectProvider<Configuration>.invoke(dependency: ProviderConvertible<T>, dependencyConfiguration: ExternalModuleDependency.() -> Unit)
+<T : Any> String.invoke(dependency: Provider<T>, dependencyConfiguration: ExternalModuleDependency.() -> Unit)
+<T : Any> String.invoke(dependency: ProviderConvertible<T>, dependencyConfiguration: ExternalModuleDependency.() -> Unit)
+<T : ModuleDependency> NamedDomainObjectProvider<Configuration>.invoke(dependency: T, dependencyConfiguration: T.() -> Unit): T
+The following operator functions in DependencyConstraintHandlerScope are considered stable:
+
+NamedDomainObjectProvider<Configuration>.invoke(dependencyConstraintNotation: Any): DependencyConstraint
+NamedDomainObjectProvider<Configuration>.invoke(dependencyConstraintNotation: String, configuration: DependencyConstraint.() -> Unit): DependencyConstraint
+The following top-level functions in DependencyHandlerExtensions are considered stable:
+
+DependencyHandler.create(dependencyNotation: String, dependencyConfiguration: ExternalModuleDependency.() -> Unit): ExternalModuleDependency
+The following top-level functions in KotlinDependencyExtensions are considered stable:
+
+PluginDependenciesSpec.embeddedKotlin(module: String): PluginDependencySpec
+The following functions are considered stable:
+
+GroovyBuilderScope.hasProperty(name: String): Boolean
+Fixed issues
+148 issues have been fixed in Gradle 9.0.0.
+
+[#33930] - eddsa CVE CWE-347
+[#33929] - jgit CVE-2025-4949
+[#33861] - Exec.args should be configurable as a property with Kotlin
+[#33854] - CC problem for execution-time Groovy script object access
+[#33848] - Remove MavenDependency
+[#33720] - Update generated doc links to match new structure
+[#33713] - Flow action provider may cause "Resolution of the configuration was attempted without an exclusive lock." error
+[#33692] - Old version of javaparser dependency prohibit parsing Java17
+[#33664] - `:kotlinDslAccessorsReport` prints incorrect sources for accessors to members of inaccessible types
+[#33661] - Interface `BuildExecutionContext.java` appears to be unused
+[#33658] - Deprecate ValueState.beforeMutate() in 9.x
+[#33638] - XmlTransformerTest in `./gradlew :core:test` fails on local machine due to locale-dependent exception messages
+[#33634] - Gradle Module Metadata spec: clarify valid attribute value types
+[#33617] - Broken links in sample_cross_project_output_sharing.html documentation
+[#33603] - `kotlinDslAccessorsReport` is not compatible with Configuration Cache
+[#33539] - ConcurrentModificationException in Groovy 4 MetaClassImpl
+[#33528] - Inner classes that reference external plugin classes cannot be used in precompiled buildscripts
+[#33526] - Promote Configuration Cache for builds that do not explicitly enable or disable it
+[#33516] - PluginSpecBuilders accessors for precompiled script plugins outputs are too unstable
+[#33490] - withoutArtifactSelector does not actually remove the artifact selector when substituting a module dependency for a project dependency
+[#33387] - Generated accessors should expose plugin types deprecation
+[#33386] - Generated accessors should also suppress deprecation errors
+[#33382] - Remove convention mapping in EarPlugin
+[#33355] - Remove conventions from codebase
+[#33349] - Add back import to javax.inject.Inject in documentation
+[#33348] - 'Executing Artifact Transforms' example has task with discouraged practice
+[#33306] - Documentation links to the archived gradle-credentials-plugin
+[#33301] - Confusing example in "Best Practices for Dependencies"
+[#33296] - mention dirPermissions/filePermissions in reproducible build section
+[#33240] - The @RELEASE_NAME@ placeholder in the signed artifact ASC file is present
+[#33225] - Make DefaultSettingsLoader fail on missing directory
+[#33215] - Non-abstract managed properties can lose their owner under Groovy 4
+[#33168] - Remove deprecated archivePath property
+[#33161] - `invokedynamic` is not considered for incremental compilation class dependencies
+[#33147] - Rework Groovy tests to ensure earlier Groovy version compilation is still supported
+[#33093] - Remove deprecated command-line option to use custom build and settings scripts
+[#33075] - When snippets can't run due to configuration issues, say something
+[#33057] - Remove deprecated CollectionUtils
+[#33018] - Remove deprecated ApplicationConvention
+[#33017] - Remove deprecated EarConvention
+[#33012] - Method naming typo "emphatize"
+[#33000] - Remove unused groovy dependencies from distribution
+[#32995] - Remove deprecated JavaPluginConvention
+[#32992] - DirectoryProperty and RegularFileProperty resolve relative paths incorrectly when loading from CC
+[#32990] - Remove deprecated ReportingPluginConvention
+[#32972] - Flaky ToolingApiClientCurrentJdkCompatibilityTest
+[#32969] - Toolchains ignore LongRunningOperation.setEnvironmentVariables
+[#32958] - AttributeDisambiguationRule registration example appears incorrect
+[#32938] - Remove deprecated elements in BasePlugin
+[#32889] - Update Tooling API compatibility matrix
+[#32858] - Broken link in 'Modifying Dependency Metadata'
+[#32857] - Gradle 9.0 regression on handling of properties in extensions
+[#32693] - Remove implicit building of artifacts for assemble
+[#32650] - All Configurations should have locked roles
+[#32564] - Configuration cache error: Class 'org.gradle.internal.classpath.Instrumented$$Lambda$2709/0x00000098020e55e0' cannot be encoded
+[#32560] - CheckStyle configuration for JDK 8 example
+[#32542] - CC problems reported at execution time can be hidden by build cache on subsequent runs
+[#32483] - Rework Groovy 4 is-property deprecation carefully
+[#32464] - Different fingerprints in the compile classpath for the same dependency.
+[#32451] - Gradle saves configuration cache for incompatible tasks when problems are turned to warnings
+[#32444] - Gradle fails to discover jdk from inside IntelliJ
+[#32370] - Upgrade workers and tooling-api modules to Java 8
+[#32212] - Upgrade to Groovy 4
+[#32019] - Kotlin RequiresOptIn annotation is not forwarding into generated accessor
+[#31963] - Spurious warning "Mutating the dependencies of configuration"
+[#31916] - Repeated VariantSelectionByAttributesException messages during Scala compilation
+[#31840] - Remove load-after-store flag
+[#31484] - JavaExec allJvmArgs property is missing user added arguments
+[#31452] - Add SPDX metadata to the wrapper MANIFEST.MF
+[#31448] - Groovy property setter interceptors fallback doesn't do type coercion
+[#31329] - ExecResult `assertNormalExitValue()` and `rethrowFailure()` throw internal ExecException
+[#31089] - Deprecate and remove UncheckedIOException
+[#31088] - Apply graceful degradation to the CC-incompatible tasks of software model
+[#31027] - Prepare the Gradle 9.0 branch
+[#30871] - Reproducible archives enabled by default
+[#30805] - Groovy interception with Groovy 4.x causes stackoverflow for implicit receivers
+[#30654] - Double memory usage when the configuration cache is enabled
+[#30620] - Upgrade default PMD version to 7
+[#30530] - The Gradle Play Plugin needs a new release that will work with Gradle 9
+[#30516] - Drop support for obsolete shadow plugin in 9.0
+[#30373] - Make JUnitOptions and JUnitPlatformOptions abstract with Gradle 9
+[#30320] - Add RootComponentIdentifier for root components
+[#30198] - Failure during classpath dependency resolution
+[#30102] - Prepare for CC as the preferred mode in Gradle 9
+[#29695] - Remove Wrapper.setWrapperVersionsResources from public API
+[#29241] - Add public API to configure ConfigurationVariant description
+[#28727] - Verify classloader pieces when loading from configuration cache
+[#28435] - Make all injector-getters abstract in public types
+[#28014] - The `CompilePrecompiledScriptPluginPlugins` task should be replaced with a custom `KotlinCompile` task
+[#27867] - Indicate safe varargs properly
+[#27390] - Capture scripts classpath as Configuration Cache fingerprint
+[#26942] - Configuration cache error with Java11 collections
+[#26534] - ☔ Use Kotlin K2 compiler for Gradle Kotlin DSL script compilation
+[#26532] - Try out new Kotlin ABI fingerprint from the Kotlin distribution
+[#26531] - ☔ Kotlin DSL script compilation avoidance
+[#26348] - Implement the slf4j 2 api on the builtin slf4j logger
+[#25184] - Update kotlinx-metadata-jvm to 0.6.0
+[#24861] - Switch Gradle to the new File Permissions API
+[#24767] - Migrate to JSpecify annotations
+[#24678] - Print actionable error message when junit dependencies are not available
+[#24352] - Kotlin DSL script compilation avoidance ignores `internal` visibility changes on types
+[#24040] - Explicit repository credentials break with configuration caching
+[#23932] - Avoid early realization of compile tasks registered on source set output.classesDirs
+[#23617] - RelativePath#getParent() return type should be marked as @Nullable
+[#23369] - allow label "milestone" for wrapper --gradle-version
+[#23268] - Missing console output when TestNG fails to initialize test classes
+[#22907] - Nag for deprecation of StartParameterInternal.isConfigurationCache()
+[#22882] - Proposal: Don't omit the `.0` from releases. Always include the patch version, even when it is zero.
+[#22416] - Let Kotlin DSL script compilation use a faster JAR file-system
+[#22383] - Remove deprecated UsageContext#getUsage
+[#22090] - Verify that asciidoctor works with resolving configurations outside of project contexts error
+[#22056] - Remove core conventions
+[#21659] - Remove @Deprecated AbstractCompile.setDestinationDir
+[#21533] - Remove @Deprecated TestReport.setDestination(File) method
+[#21284] - Use Kotlin Language 2 and K2 Kotlin compiler for the Gradle Kotlin DSL
+[#19318] - Docs improvement of "Simple sharing of artifacts between projects" section
+[#19057] - Add "idiomatic builds" documentation page with the current best practices
+[#17634] - An attempt to use finalizedBy during task execution is not notified when loading from the configuration cache
+[#17533] - DirectoryProperty#file(Provider) loses task dependency
+[#17309] - Support Kotlin's inline functions with build script compilation avoidance
+[#16791] - Shouldn't JavaExec default to using the project's toolchain if any?
+[#15530] - Report non `BuildService` listeners of `BuildEventsListenerRegistry.onTaskCompletion` as problems
+[#15023] - Remove software model related help tasks
+[#9591] - Cannot resolve a dependency on the root project in a detached configuration
+[#6875] - Don't auto-attach all output artifacts for a project to the assemble task
+[#6391] - The Gradle API bytecode should contain parameter names
+[#34473] - 404 doc link when Gradle fails with 'Resolution of the configuration attempted without an exclusive lock'
+[#34293] - Confusing passage in ConfigurationCache#RunningExternalProcesses
+[#34168] - Gradle 9 upgrade guide does not include changes in the Groovy util packages
+[#26363] - Document which `Provider`s are resolved at store time when configuration cache is used
+[#34194] - "Verifying dependencies" page instructs user to overwrite entire keychain
+[#34167] - Configuration Cache promo message is potentially shown for some incompatible builds
+[#34163] - Misleading configuration cache summary line when displaying the report link without any problems
+[#34132] - gradle-9-rc-1 caused stack overflow when adjusting Test task classpath
+[#34064] - Eclipse's resolution of the configuration was attempted without an exclusive lock
+[#34058] - Calling afterEvaluate in configurations.all fails when enabling source or javadoc
+[#34038] - ConfigurableFileCollection.from and Project.files parameters are incorrectly marked non-null
+[#34015] - Odd failures regarding custom project locations (9.0.0-rc1)
+[#34004] - References to GitHub Wrapper Validation action out of date (404)
+[#33950] - Failed to load JUnit Platform in 9.0.0-rc-1
+[#33924] - Missing dependency even if all paths do not exclude it
+[#27643] - 'org.gradle.parallel=true' causes false deprecation messages in a multi-project build
+[#27447] - Tutorials should cover multiple programming languages
+[#34252] - Builds with flaky tests now fail with cryptic "worker failures" when using Develocity
+[#34190] - GradleProject model is not parallel-safe
+[#34423] - 9.0.0-rc-3 release notes upgrade guide link points to Gradle 8.x upgrade guide
+[#34372] - 9.0.0-rc-2: `DefaultTask.group` and `DefaultTask.descriptions` are not nullable
+[#34349] - Gradle 9 (undocumented ?) change: compileJava output automatically updates sourceset destination dir
+Known issues
+Known issues are problems that were discovered post-release that are directly related to changes made in this release.
+
