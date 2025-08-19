@@ -100,10 +100,13 @@ class AnimationAnalyticsManager(private val context: Context) {
                 .count { !it.success },
             totalEventCount = events.size,
             dateRange = if (events.isNotEmpty()) {
-                val timestamps = events.map {
-                    when (it) {
-                        is AnimationAnalyticsEvent.NotificationShown -> it.timestamp
-                        is AnimationAnalyticsEvent.NotificationDismissed -> it.timestamp
+                val timestamps = events.map { event ->
+                    when (event) {
+                        is AnimationAnalyticsEvent.NotificationShown -> event.timestamp
+                        is AnimationAnalyticsEvent.NotificationDismissed -> event.timestamp
+                        is AnimationAnalyticsEvent.AnimationStarted -> event.timestamp
+                        is AnimationAnalyticsEvent.AnimationCompleted -> event.timestamp
+                        is AnimationAnalyticsEvent.UserInteraction -> event.timestamp
                     }
                 }
                 timestamps.minOrNull()!! to timestamps.maxOrNull()!!
@@ -144,6 +147,15 @@ class AnimationAnalyticsManager(private val context: Context) {
             }
             is AnimationAnalyticsEvent.NotificationDismissed -> {
                 Log.d("AnimationAnalytics", "Notification dismissed: ${event.notificationId}")
+            }
+            is AnimationAnalyticsEvent.AnimationStarted -> {
+                Log.d("AnimationAnalytics", "Animation started: ${event.animationType} - ${event.duration}ms")
+            }
+            is AnimationAnalyticsEvent.AnimationCompleted -> {
+                Log.d("AnimationAnalytics", "Animation completed: ${event.animationType} - ${event.actualDuration}ms")
+            }
+            is AnimationAnalyticsEvent.UserInteraction -> {
+                Log.d("AnimationAnalytics", "User interaction: ${event.interactionType} on ${event.elementId}")
             }
         }
     }
@@ -200,7 +212,7 @@ sealed class AnimationPerformanceMetric {
  */
 data class AnimationAnalyticsSummary(
     val totalNotifications: Int,
-    val notificationsByType: Map<AnimationType, Int>,
+    val notificationsByType: Map<String, Int>,
     val averageAnimationDuration: Double,
     val successfulAnimations: Int,
     val failedAnimations: Int,
@@ -214,8 +226,9 @@ data class AnimationAnalyticsSummary(
 fun AnimationAnalyticsManager.trackSuccessShown(title: String) {
     trackAnimationEvent(
         AnimationAnalyticsEvent.NotificationShown(
-            type = AnimationType.SUCCESS,
+            type = "SUCCESS",
             title = title,
+            notificationId = "success_${System.currentTimeMillis()}",
             timestamp = System.currentTimeMillis()
         )
     )
@@ -224,8 +237,9 @@ fun AnimationAnalyticsManager.trackSuccessShown(title: String) {
 fun AnimationAnalyticsManager.trackErrorShown(title: String) {
     trackAnimationEvent(
         AnimationAnalyticsEvent.NotificationShown(
-            type = AnimationType.ERROR,
+            type = "ERROR",
             title = title,
+            notificationId = "error_${System.currentTimeMillis()}",
             timestamp = System.currentTimeMillis()
         )
     )
@@ -234,8 +248,9 @@ fun AnimationAnalyticsManager.trackErrorShown(title: String) {
 fun AnimationAnalyticsManager.trackWarningShown(title: String) {
     trackAnimationEvent(
         AnimationAnalyticsEvent.NotificationShown(
-            type = AnimationType.WARNING,
+            type = "WARNING",
             title = title,
+            notificationId = "warning_${System.currentTimeMillis()}",
             timestamp = System.currentTimeMillis()
         )
     )
@@ -244,8 +259,9 @@ fun AnimationAnalyticsManager.trackWarningShown(title: String) {
 fun AnimationAnalyticsManager.trackLoadingShown(title: String) {
     trackAnimationEvent(
         AnimationAnalyticsEvent.NotificationShown(
-            type = AnimationType.LOADING,
+            type = "LOADING",
             title = title,
+            notificationId = "loading_${System.currentTimeMillis()}",
             timestamp = System.currentTimeMillis()
         )
     )

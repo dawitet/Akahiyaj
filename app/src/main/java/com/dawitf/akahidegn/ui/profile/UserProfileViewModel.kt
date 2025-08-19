@@ -17,6 +17,8 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+private val String.message: String?
+
 @HiltViewModel
 class ProfileFeatureViewModel @Inject constructor(
     private val userProfileService: UserProfileService,

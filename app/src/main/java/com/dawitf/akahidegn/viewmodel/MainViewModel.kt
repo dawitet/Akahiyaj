@@ -4,9 +4,6 @@ import android.location.Location
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.State
 import com.dawitf.akahidegn.Group
 import com.dawitf.akahidegn.domain.repository.GroupRepository
 import com.dawitf.akahidegn.domain.repository.OptimisticGroupRepository
@@ -21,8 +18,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
-import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -420,7 +415,7 @@ class MainViewModel @Inject constructor(
     /**
      * Join a group with optimistic UI update for instant feedback
      */
-    fun joinGroup(group: Group, userId: String, userName: String) {
+    fun joinGroup(group: com.dawitf.akahidegn.domain.model.Group, userId: String, userName: String) {
         joinGroupOptimistically(group.groupId!!, userId, userName)
     }
     
@@ -434,7 +429,7 @@ class MainViewModel @Inject constructor(
     /**
      * Create a group with optimistic UI update for instant feedback
      */
-    fun createGroup(group: Group, userId: String) {
+    fun createGroup(group: com.dawitf.akahidegn.domain.model.Group, userId: String) {
         createGroupOptimistically(group, userId)
     }
     

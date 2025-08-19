@@ -1,31 +1,22 @@
 package com.dawitf.akahidegn.domain.model
 
-data class LatLng(val latitude: Double, val longitude: Double)
-
 data class SearchFilters(
-    val destination: String = "",
-    val pickupLocation: LatLng? = null,
-    val timeRange: ClosedRange<Long> = 0L..Long.MAX_VALUE,
-    val maxMembers: Int? = null,
-    val availableSeatsOnly: Boolean = false,
-    val sortBy: SortOption = SortOption.NEAREST,
-    val maxDistance: Double = Double.MAX_VALUE
-) {
-    fun hasActiveFilters(): Boolean {
-        return destination.isNotBlank() ||
-                pickupLocation != null ||
-                timeRange.start > 0L ||
-                timeRange.endInclusive < Long.MAX_VALUE ||
-                maxMembers != null ||
-                availableSeatsOnly ||
-                maxDistance < Double.MAX_VALUE
-    }
+    val maxDistance: Double = 10.0, // km
+    val maxMembers: Int = 4,
+    val sortBy: SortBy = SortBy.DISTANCE,
+    val showOnlyActive: Boolean = true,
+    val timeWindow: TimeWindow = TimeWindow.NEXT_HOUR
+)
+
+enum class SortBy {
+    DISTANCE,
+    TIME_CREATED,
+    MEMBER_COUNT
 }
 
-enum class SortOption {
-    NEAREST,
-    DEPARTURE_TIME,
-    MOST_POPULAR,
-    NEWEST,
-    AVAILABLE_SEATS
+enum class TimeWindow {
+    NEXT_HOUR,
+    NEXT_3_HOURS,
+    TODAY,
+    ALL_TIME
 }

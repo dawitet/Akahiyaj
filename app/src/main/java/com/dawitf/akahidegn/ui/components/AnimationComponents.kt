@@ -99,7 +99,9 @@ enum class AnimationType {
     /** Warning state with orange colors and warning icon */
     WARNING,
     /** Loading state with spinning indicator */
-    LOADING
+    LOADING,
+    /** Fade animation */
+    FADE
 }
 
 /**

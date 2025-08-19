@@ -85,7 +85,7 @@ class LeaveGroupWorker @AssistedInject constructor(
         val debugContext: String
     )
     
-    private fun mapToIntelligentError(appError: AppError): IntelligentError {
+    private fun mapToIntelligentError(appError: String): IntelligentError {
         return when (appError) {
             is AppError.NetworkError.ConnectionTimeout -> IntelligentError(
                 userMessage = "Connection timed out. Please check your internet and try again.",

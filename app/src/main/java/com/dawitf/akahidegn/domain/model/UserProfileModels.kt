@@ -1,7 +1,17 @@
 package com.dawitf.akahidegn.domain.model
 
 import androidx.annotation.Keep
-import com.dawitf.akahidegn.domain.model.LanguageOption
+
+/**
+ * User analytics model
+ */
+@Keep
+data class UserAnalytics(
+    val totalTrips: Int = 0,
+    val averageRating: Float = 0f,
+    val totalRatings: Int = 0,
+    val preferredLanguage: String = "en"
+)
 
 /**
  * User profile domain model
