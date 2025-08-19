@@ -1,158 +1,276 @@
 package com.dawitf.akahidegn.ui.screens
 
-import android.location.Location
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.*
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.History
-import androidx.compose.material.icons.filled.Person
-import androidx.compose.foundation.clickable
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import com.dawitf.akahidegn.Group
-import com.dawitf.akahidegn.ui.components.GroupCard
-import com.dawitf.akahidegn.domain.model.SearchFilters
-import com.dawitf.akahidegn.ui.components.EnhancedSearchBar
-import com.dawitf.akahidegn.ui.components.NoSearchResults
-import com.dawitf.akahidegn.ui.components.EnhancedPullToRefresh
-import com.dawitf.akahidegn.ui.components.HomeTabLayout
-import com.dawitf.akahidegn.R
-import com.dawitf.akahidegn.ui.animation.shared.SharedElement
-import com.dawitf.akahidegn.ui.animation.shared.SharedElementKeys
-import androidx.compose.animation.ExperimentalSharedTransitionApi
-import androidx.compose.runtime.derivedStateOf
-import com.dawitf.akahidegn.performance.rememberOptimizedListState
-import com.dawitf.akahidegn.ui.components.ColorfulBlobsBackground
-import androidx.compose.ui.res.painterResource
-import com.dawitf.akahidegn.ui.components.FullWidthBannerAd
-import com.dawitf.akahidegn.ui.components.gradientBackground
-import com.dawitf.akahidegn.ui.animation.shared.SharedAnimatedVisibility
-import com.dawitf.akahidegn.ui.animation.shared.AnimationType
-import com.dawitf.akahidegn.ui.animation.shared.TransformType
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.dawitf.akahidegn.ui.components.*
+import com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel
+import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalSharedTransitionApi::class)
+/**
+ * Main Screen
+ * This is the simplified version of the Main Screen without the deprecated enhanced features
+ */
 @Composable
 fun MainScreen(
-    mainGroups: List<Group>,
-    activeGroups: List<Group>,
-    historyGroups: List<Group>,
-    searchQuery: String,
-    onSearchQueryChange: (String) -> Unit,
-    selectedFilters: SearchFilters,
-    onFiltersChange: (SearchFilters) -> Unit,
-    onGroupClick: (Group) -> Unit,
-    onJoinGroup: (Group) -> Unit, // New parameter for optimistic join operations
-    isLoading: Boolean,
-    onRefreshGroups: () -> Unit,
-    onCreateGroup: () -> Unit,
-    userLocation: Location?
+    modifier: Modifier = Modifier
 ) {
-    // Optimize list state for better performance
-    // Only show mainGroups, no tabs or history/active switching
-    val optimizedGroups = rememberOptimizedListState(
-        list = mainGroups,
-        keySelector = { it.groupId ?: it.hashCode() }
-    )
-    
-    // Create stable callbacks to prevent unnecessary recompositions
-    val stableOnGroupClick = remember { onGroupClick }
-    val stableOnJoinGroup = remember { onJoinGroup }
-    val stableOnSearchQueryChange = remember { onSearchQueryChange }
-    val stableOnRefreshGroups = remember { onRefreshGroups }
-    val stableOnCreateGroup = remember { onCreateGroup }
-    
-    // Memoized empty state check to prevent recomposition
-    val isEmpty = remember(optimizedGroups, searchQuery) {
-        derivedStateOf {
-            optimizedGroups.isEmpty() && searchQuery.isNotEmpty()
-        }
-    }.value
-    
-    // No tabs or animated balls, just a simple column with Create Group FAB
-    Box(modifier = Modifier.fillMaxSize()) {
-        Column(modifier = Modifier.fillMaxSize()) {
-            Text(
-                text = "Home",
-                style = MaterialTheme.typography.headlineMedium,
-                modifier = Modifier.align(Alignment.CenterHorizontally).padding(top = 24.dp)
-            )
-            EnhancedSearchBar(
-                query = searchQuery,
-                onQueryChange = stableOnSearchQueryChange,
-                onSearchSubmit = { /* ViewModel handles search logic based on query changes */ }
-            )
-            Spacer(modifier = Modifier.height(8.dp))
+    val animationViewModel: AnimationViewModel = viewModel()
+    val notifications by animationViewModel.notifications.collectAsState()
+    val isLoading by animationViewModel.isLoading.collectAsState()
+    val coroutineScope = rememberCoroutineScope()
 
-            // Content area with official pull-to-refresh
-            val refreshing = isLoading
-            val pullToRefreshState = rememberPullToRefreshState()
-            PullToRefreshBox(
-                isRefreshing = refreshing,
-                onRefresh = stableOnRefreshGroups,
-                state = pullToRefreshState,
-                modifier = Modifier.fillMaxSize(),
-                indicator = {
-                    PullToRefreshDefaults.Indicator(
-                        state = pullToRefreshState,
-                        isRefreshing = refreshing,
-                        modifier = Modifier.align(Alignment.TopCenter)
-                    )
-                }
-            ) {
-                if (refreshing && optimizedGroups.isEmpty() && searchQuery.isBlank()) {
-                    Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                        CircularProgressIndicator()
-                    }
-                } else if (isEmpty) {
-                    NoSearchResults(query = searchQuery, onClearSearch = { stableOnSearchQueryChange("") })
-                } else if (optimizedGroups.isEmpty() && !refreshing) {
-                    Column(
-                        modifier = Modifier.fillMaxSize().padding(16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally
-                    ) {
-                        Text(
-                            stringResource(id = R.string.empty_groups_message),
-                            style = MaterialTheme.typography.bodyLarge
+    // State management for your existing features
+    var showUserRegistrationDialog by remember { mutableStateOf(false) }
+    var showGroupMembersDialog by remember { mutableStateOf(false) }
+    var isLocationUpdateInProgress by remember { mutableStateOf(false) }
+    var networkStatus by remember { mutableStateOf(true) }
+
+    Box(modifier = modifier.fillMaxSize()) {
+        Column(
+            modifier = Modifier.fillMaxSize()
+        ) {
+            // Your existing MainScreen content goes here
+
+            // Location updates section
+            LocationUpdateSection(
+                onLocationUpdateRequested = {
+                    if (!isLocationUpdateInProgress) {
+                        isLocationUpdateInProgress = true
+                        val loadingId = animationViewModel.showLoading(
+                            title = "አካባቢ እየፈለገ...",
+                            subtitle = "GPS ምልክት እየተሰላ ነው..."
                         )
-                    }
-                } else {
-                    LazyColumn(
-                        modifier = Modifier.fillMaxSize(),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 8.dp),
-                        verticalArrangement = Arrangement.spacedBy(8.dp)
-                    ) {
-                        items(optimizedGroups, key = { group -> group.groupId ?: group.hashCode() }) { group ->
-                            GroupCard(
-                                group = group,
-                                onClick = { stableOnGroupClick(group) },
-                                onJoinClick = { stableOnJoinGroup(group) },
-                                userLocation = userLocation
-                            )
+
+                        // Use coroutine scope instead of LaunchedEffect
+                        coroutineScope.launch {
+                            kotlinx.coroutines.delay(3000) // Replace with your actual location logic
+                            animationViewModel.hideLoading(loadingId)
+
+                            // Show success or error based on actual result
+                            val locationFound = kotlin.random.Random.nextBoolean() // Replace with actual result
+                            if (locationFound) {
+                                animationViewModel.showSuccess(
+                                    title = "አካባቢ ተገኘ!",
+                                    subtitle = "የአንተ አካባቢ በተሳካ ሁኔታ ተዘምኗል።",
+                                    preset = NotificationPresets.quickSuccess("አካባቢ ተዘምኗል")
+                                )
+                            } else {
+                                animationViewModel.showError(
+                                    title = "አካባቢ አልተገኘም!",
+                                    subtitle = "GPS አገልግሎት ሊሰራ አልቻለም። እባክዎ እንደገና ይሞክሩ።",
+                                    onRetry = {
+                                        // Retry location update
+                                        isLocationUpdateInProgress = false
+                                    }
+                                )
+                            }
+                            isLocationUpdateInProgress = false
                         }
                     }
                 }
-            }
+            )
+
+            // Group management section
+            GroupManagementSection(
+                onJoinGroupRequested = { groupId ->
+                    val loadingId = animationViewModel.showLoading(
+                        title = "ወደ ቡድን እየገባ...",
+                        subtitle = "እባክዎ ይጠብቁ..."
+                    )
+
+                    // Use coroutine scope instead of LaunchedEffect
+                    coroutineScope.launch {
+                        kotlinx.coroutines.delay(2000)
+                        animationViewModel.hideLoading(loadingId)
+                        animationViewModel.showSuccess(
+                            title = "ወደ ቡድን ገብተዋል!",
+                            subtitle = "በተሳካ ሁኔታ ወደ ቡድን ገብተዋል።",
+                            preset = ContextPresets.FormSubmission.success
+                        )
+                    }
+                },
+                onShowGroupMembers = {
+                    showGroupMembersDialog = true
+                }
+            )
+
+            // User registration section
+            UserRegistrationSection(
+                onShowRegistration = {
+                    showUserRegistrationDialog = true
+                }
+            )
+
+            // Network status monitoring
+            NetworkStatusMonitor(
+                isConnected = networkStatus,
+                animationViewModel = animationViewModel
+            )
+
+            // Your existing MainScreen components can be placed here
+            // For example: AvailableGroupsBox, LocationHistoryBox, etc.
         }
 
-        // Create Group FAB in bottom-right corner
-        ExtendedFloatingActionButton(
-            onClick = stableOnCreateGroup,
-            icon = { Icon(Icons.Default.Add, contentDescription = null) },
-            text = { Text(text = stringResource(id = R.string.create_group_button)) },
-            modifier = Modifier
-                .align(Alignment.BottomEnd)
-                .padding(16.dp)
+        // Display all animations as an overlay
+        AnimatedNotificationList(
+            notifications = notifications,
+            modifier = Modifier.fillMaxWidth()
+        )
+
+        // Dialogs
+        EnhancedUserRegistrationDialog(
+            showDialog = showUserRegistrationDialog,
+            onDismiss = { showUserRegistrationDialog = false },
+            onRegistrationSuccess = {
+                // Handle successful registration
+                showUserRegistrationDialog = false
+            }
+        )
+
+        EnhancedGroupMembersDialog(
+            showDialog = showGroupMembersDialog,
+            groupMembers = emptyList(), // Replace with your actual group members
+            onDismiss = { showGroupMembersDialog = false },
+            onMemberRemoved = { member ->
+                // Handle member removal with animation feedback
+            }
         )
     }
 }
 
+@Composable
+private fun LocationUpdateSection(
+    onLocationUpdateRequested: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "አካባቢ ዝማኔ",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onLocationUpdateRequested,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("አካባቢ ዘምን")
+            }
+        }
+    }
+}
+
+@Composable
+private fun GroupManagementSection(
+    onJoinGroupRequested: (String) -> Unit,
+    onShowGroupMembers: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "ቡድን አስተዳደር",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Button(
+                    onClick = { onJoinGroupRequested("sample_group") },
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("ወደ ቡድን ግባ")
+                }
+                Button(
+                    onClick = onShowGroupMembers,
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text("አባላት ይመልከቱ")
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun UserRegistrationSection(
+    onShowRegistration: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp)
+    ) {
+        Column(
+            modifier = Modifier.padding(16.dp)
+        ) {
+            Text(
+                text = "ተጠቃሚ ምዝገባ",
+                style = MaterialTheme.typography.headlineSmall
+            )
+            Spacer(modifier = Modifier.height(8.dp))
+            Button(
+                onClick = onShowRegistration,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Text("አዲስ ተጠቃሚ ይመዝገቡ")
+            }
+        }
+    }
+}
+
+@Composable
+private fun NetworkStatusMonitor(
+    isConnected: Boolean,
+    animationViewModel: AnimationViewModel,
+    modifier: Modifier = Modifier
+) {
+    LaunchedEffect(isConnected) {
+        if (isConnected) {
+            animationViewModel.showNetworkConnected()
+        } else {
+            animationViewModel.showNetworkDisconnected()
+        }
+    }
+
+    // Optional: Show current network status
+    Card(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isConnected)
+                MaterialTheme.colorScheme.primaryContainer
+            else
+                MaterialTheme.colorScheme.errorContainer
+        )
+    ) {
+        Text(
+            text = if (isConnected) "ኢንተርኔት ግንኙነት አለ" else "ኢንተርኔት ግንኙነት የለም",
+            modifier = Modifier.padding(16.dp),
+            color = if (isConnected)
+                MaterialTheme.colorScheme.onPrimaryContainer
+            else
+                MaterialTheme.colorScheme.onErrorContainer
+        )
+    }
+}
