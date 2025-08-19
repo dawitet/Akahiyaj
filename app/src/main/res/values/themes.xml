@@ -2,15 +2,15 @@
 <resources>
 
     <style name="Theme.Akahidegn" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#FFFFC30B</item>
-        <item name="android:statusBarColor">#FFFFC30B</item>
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/white</item>
         <item name="android:windowLightStatusBar">true</item>
     </style>
     
     <!-- Simple Launch Theme - No Splash Screen API -->
     <style name="Theme.SplashLaunch" parent="android:Theme.Material.Light.NoActionBar">
-        <item name="android:windowBackground">#FFFFC30B</item>
-        <item name="android:statusBarColor">#FFFFC30B</item>
+        <item name="android:windowBackground">@android:color/white</item>
+        <item name="android:statusBarColor">@android:color/white</item>
         <item name="android:windowLightStatusBar">true</item>
         <item name="android:windowNoTitle">true</item>
         <item name="android:windowFullscreen">false</item>

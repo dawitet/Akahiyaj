@@ -1,0 +1,19 @@
+{
+    "logs": [
+        {
+            "outputFile": "com.dawitf.akahidegn.benchmark-mergeDebugResources-15:/values-sl/values-sl.xml",
+            "map": [
+                {
+                    "source": "/Users/dawitsahle/.gradle/caches/9.0.0/transforms/e6cd4b68bec2b1cc2d4a7da694861178/transformed/core-1.9.0/res/values-sl/values-sl.xml",
+                    "from": {
+                        "startLines": "2",
+                        "startColumns": "4",
+                        "startOffsets": "55",
+                        "endColumns": "100",
+                        "endOffsets": "151"
+                    }
+                }
+            ]
+        }
+    ]
+}

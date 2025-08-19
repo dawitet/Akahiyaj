@@ -14,11 +14,17 @@ import com.google.firebase.FirebaseApp
 import com.google.firebase.appcheck.FirebaseAppCheck
 import com.google.firebase.appcheck.playintegrity.PlayIntegrityAppCheckProviderFactory
 import com.google.firebase.appcheck.debug.DebugAppCheckProviderFactory
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.GifDecoder
+import coil.decode.ImageDecoderDecoder
+import coil.decode.SvgDecoder
+import coil.util.DebugLogger
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
 
 @HiltAndroidApp
-class AkahidegnApplication : Application(), Configuration.Provider {
+class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderFactory {
     
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
@@ -130,5 +136,22 @@ class AkahidegnApplication : Application(), Configuration.Provider {
         } catch (e: Exception) {
             Log.e("APP_INIT", "Group cleanup scheduler initialization failed: ${e.message}")
         }
+    }
+    
+    override fun newImageLoader(): ImageLoader {
+        return ImageLoader.Builder(this)
+            .components {
+                // Add GIF decoder for animated WebP support
+                add(GifDecoder.Factory())
+                // Add ImageDecoder for API 28+ (Android 9+) devices for better WebP support
+                if (android.os.Build.VERSION.SDK_INT >= 28) {
+                    add(ImageDecoderDecoder.Factory())
+                }
+                // Add SVG support if needed
+                add(SvgDecoder.Factory())
+            }
+            .respectCacheHeaders(false)
+            .logger(DebugLogger()) // Enable debug logging
+            .build()
     }
 }

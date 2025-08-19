@@ -81,7 +81,6 @@ android {
             }
             
             // Optimize R8 processing to reduce memory usage
-            kotlinOptions.freeCompilerArgs += listOf("-Xjvm-default=all")
         }
         
         // Staging variant removed to avoid Google Services configuration issues
@@ -91,14 +90,15 @@ android {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    kotlinOptions {
-        jvmTarget = "17"
-        freeCompilerArgs += listOf(
-            "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
-            "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
-            "-Xjvm-default=all"
-        )
-        // JVM arguments should be set separately for kapt
+    kotlin {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17)
+            freeCompilerArgs.addAll(listOf(
+                "-opt-in=androidx.compose.material3.ExperimentalMaterial3Api",
+                "-opt-in=kotlinx.coroutines.ExperimentalCoroutinesApi",
+                "-Xjvm-default=all"
+            ))
+        }
     }
     buildFeatures {
         compose = true
@@ -169,6 +169,7 @@ dependencies {
     // Coil for image loading with WebP animation support
     implementation("io.coil-kt:coil-compose:2.7.0")
     implementation("io.coil-kt:coil-gif:2.7.0") // For animated WebP support
+    implementation("io.coil-kt:coil-svg:2.7.0") // For SVG support
     implementation("com.google.code.gson:gson:2.10.1")
 
 

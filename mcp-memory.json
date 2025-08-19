@@ -1,0 +1,3 @@
+{"type":"entity","entityType":"TestType","name":"TestEntity","observations":["This is a test observation for memory MCP.","Adding a second observation to test append."]}
+{"type":"entity","entityType":"TestType","name":"AnotherEntity","observations":["This is a second entity for advanced memory MCP test."]}
+{"type":"relation","from":"TestEntity","relationType":"related_to","to":"AnotherEntity"}

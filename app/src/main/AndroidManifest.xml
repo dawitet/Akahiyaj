@@ -39,9 +39,9 @@
         <profileable
             android:shell="true" />
 
-        <!-- Splash Activity - LAUNCHER -->
+        <!-- Enhanced Splash Activity - LAUNCHER -->
         <activity
-            android:name=".SplashActivity"
+            android:name=".EnhancedSplashActivity"
             android:exported="true"
             android:hardwareAccelerated="true"
             android:launchMode="singleTask"

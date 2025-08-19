@@ -31,6 +31,9 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.compose.currentBackStackEntryAsState
+import androidx.navigation.NavDestination.Companion.hierarchy
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.animation.slideInHorizontally
@@ -39,6 +42,8 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import com.dawitf.akahidegn.ui.navigation.Screen
 import androidx.compose.material3.Scaffold
+import androidx.navigation.NavType
+import androidx.navigation.compose.navArgument
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
@@ -267,26 +272,131 @@ class MainActivity : ComponentActivity() {
         // Pass the location flow to the ViewModel once it's available
         mainViewModel.setUserLocationFlow(userLocationFlow)
 
-        // Check if Google ID token was passed from SplashActivity
-        val googleIdTokenFromSplash = intent.getStringExtra(SplashActivity.EXTRA_GOOGLE_ID_TOKEN)
-        val isFirstTimeUser = intent.getBooleanExtra(SplashActivity.EXTRA_IS_FIRST_TIME_USER, false)
+        // Check if Google ID token was passed from EnhancedSplashActivity
+        val googleIdTokenFromSplash = intent.getStringExtra(EnhancedSplashActivity.EXTRA_GOOGLE_ID_TOKEN)
+        val isFirstTimeUser = intent.getBooleanExtra(EnhancedSplashActivity.EXTRA_IS_FIRST_TIME_USER, false)
+        
+        // Set up initial UI to prevent white screen
+        setInitialLoadingContent()
         
         if (googleIdTokenFromSplash != null) {
             Log.d(TAG, "Google ID token received from SplashActivity - processing background authentication")
             Log.d(TAG, "First time user: $isFirstTimeUser")
             processGoogleIdTokenFromSplash(googleIdTokenFromSplash, isFirstTimeUser)
-        } else if (auth.currentUser == null) {
+        } else if (auth.currentUser != null) {
+            Log.d(TAG, "User already authenticated with Firebase, no token needed - proceeding to profile check")
+            // User is already authenticated but no fresh Google token was available
+            // This is normal after app process restart when Firebase auth persists
+            verifyCurrentUserToken()
+        } else {
             Log.d(TAG, "No current user and no token from splash, starting Google Sign-In flow")
             startGoogleSignInFlowWithRetry()
-        } else {
-            Log.d(TAG, "User already signed in, checking profile")
-            userName = auth.currentUser?.displayName ?: sharedPreferences.getString("user_name", null)
-            val photoUrlFromFirebase = auth.currentUser?.photoUrl?.toString()
+        }
+    }
+
+    /**
+     * Sets up initial loading UI to prevent white screen during authentication
+     */
+    private fun setInitialLoadingContent() {
+        setContent {
+            AkahidegnTheme {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    Box(
+                        modifier = Modifier.fillMaxSize(),
+                        contentAlignment = Alignment.Center
+                    ) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(48.dp),
+                                color = MaterialTheme.colorScheme.primary
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            Text(
+                                text = "Loading...",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onBackground
+                            )
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    /**
+     * Verifies that the current user's token is still valid
+     * If invalid, starts fresh authentication flow
+     */
+    private fun verifyCurrentUserToken() {
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Log.w(TAG, "verifyCurrentUserToken: currentUser is null")
+            startGoogleSignInFlowWithRetry()
+            return
+        }
+        
+        Log.d(TAG, "Verifying token for user: ${currentUser.email}")
+        
+        // Check if we've verified the token recently (within the last hour)
+        val lastTokenVerification = sharedPreferences.getLong("last_token_verification", 0)
+        val currentTime = System.currentTimeMillis()
+        val oneHourInMillis = 60 * 60 * 1000L // 1 hour
+        
+        if (currentTime - lastTokenVerification < oneHourInMillis) {
+            Log.d(TAG, "Token was verified recently, skipping verification and proceeding")
+            userName = currentUser.displayName ?: sharedPreferences.getString("user_name", null)
+            val photoUrlFromFirebase = currentUser.photoUrl?.toString()
             if (photoUrlFromFirebase != null) {
                 sharedPreferences.edit().putString("user_avatar_url", photoUrlFromFirebase).apply()
             }
             checkUserProfile() // This will call initializeMainScreen if profile is complete
+            return
         }
+        
+        // Only force refresh if more than 1 hour has passed
+        Log.d(TAG, "Token verification needed, checking token validity")
+        currentUser.getIdToken(false) // Don't force refresh unless necessary
+            .addOnCompleteListener { task ->
+                if (task.isSuccessful) {
+                    Log.d(TAG, "Token verification successful, proceeding with profile check")
+                    
+                    // Save the current timestamp as last successful verification
+                    sharedPreferences.edit().putLong("last_token_verification", currentTime).apply()
+                    
+                    userName = currentUser.displayName ?: sharedPreferences.getString("user_name", null)
+                    val photoUrlFromFirebase = currentUser.photoUrl?.toString()
+                    if (photoUrlFromFirebase != null) {
+                        sharedPreferences.edit().putString("user_avatar_url", photoUrlFromFirebase).apply()
+                    }
+                    checkUserProfile() // This will call initializeMainScreen if profile is complete
+                } else {
+                    Log.w(TAG, "Token verification failed, user needs to re-authenticate", task.exception)
+                    
+                    // Clear the invalid auth state and timestamp
+                    lifecycleScope.launch {
+                        try {
+                            auth.signOut()
+                            sharedPreferences.edit().remove("last_token_verification").apply()
+                            Log.d(TAG, "Signed out invalid user, starting fresh authentication")
+                        } catch (e: Exception) {
+                            Log.e(TAG, "Error signing out invalid user", e)
+                        }
+                        
+                        // Clear any cached token data
+                        intent.removeExtra(EnhancedSplashActivity.EXTRA_GOOGLE_ID_TOKEN)
+                        
+                        // Start fresh authentication
+                        Toast.makeText(this@MainActivity, "Session expired. Please sign in again.", Toast.LENGTH_SHORT).show()
+                        startGoogleSignInFlowWithRetry()
+                    }
+                }
+            }
     }
 
     /**
@@ -611,15 +721,35 @@ class MainActivity : ComponentActivity() {
                         checkUserProfile()
                     }
                 } else {
-                    Log.w(TAG, "Firebase Auth with Google ID Token: FAILURE", task.exception)
-                    Toast.makeText(
-                        this,
-                        getString(
-                            R.string.toast_auth_failed_firebase_reason,
-                            task.exception?.message ?: ""
-                        ),
-                        Toast.LENGTH_LONG
-                    ).show()
+                    val exception = task.exception
+                    Log.w(TAG, "Firebase Auth with Google ID Token: FAILURE", exception)
+                    
+                    // Check if this is an expired token error
+                    if (exception?.message?.contains("expired") == true || 
+                        exception?.message?.contains("incorrect") == true ||
+                        exception?.message?.contains("malformed") == true ||
+                        exception?.message?.contains("not issued by Google") == true) {
+                        
+                        Log.w(TAG, "Token appears to be expired or invalid, clearing and starting fresh authentication")
+                        
+                        // Clear any cached token data
+                        intent.removeExtra(EnhancedSplashActivity.EXTRA_GOOGLE_ID_TOKEN)
+                        
+                        // Start fresh authentication flow
+                        Toast.makeText(this, "Session expired. Please sign in again.", Toast.LENGTH_SHORT).show()
+                        startGoogleSignInFlowWithRetry()
+                        
+                    } else {
+                        // Handle other authentication errors
+                        Toast.makeText(
+                            this,
+                            getString(
+                                R.string.toast_auth_failed_firebase_reason,
+                                exception?.message ?: ""
+                            ),
+                            Toast.LENGTH_LONG
+                        ).show()
+                    }
                 }
             }
     }
@@ -933,9 +1063,42 @@ class MainActivity : ComponentActivity() {
         val user = auth.currentUser
         val storedUserName = sharedPreferences.getString("user_name", null)
         val userPhone = sharedPreferences.getString("user_phone", null)
+        
+        // If we came from splash screen with a token, give Firebase auth time to sync
+        val intentHadToken = intent.getStringExtra(EnhancedSplashActivity.EXTRA_GOOGLE_ID_TOKEN) != null
 
-        if (user == null) {
-            Log.w(TAG, "checkUserProfile: auth.currentUser is null. Starting sign-in.")
+        if (user == null && intentHadToken) {
+            Log.d(TAG, "checkUserProfile: Token from splash detected, waiting for Firebase auth to sync")
+            lifecycleScope.launch {
+                // Wait for Firebase auth to sync
+                var attempts = 0
+                while (auth.currentUser == null && attempts < 10) {
+                    delay(100)
+                    attempts++
+                }
+                
+                if (auth.currentUser != null) {
+                    Log.d(TAG, "checkUserProfile: Firebase auth synced successfully")
+                    // Continue with profile check
+                    checkUserProfile()
+                } else {
+                    Log.w(TAG, "checkUserProfile: Firebase auth sync timeout, starting sign-in flow")
+                    startGoogleSignInFlowWithRetry()
+                }
+            }
+            return
+        }
+
+        if (user == null && !intentHadToken) {
+            Log.w(TAG, "checkUserProfile: auth.currentUser is null and no token from splash. Starting sign-in.")
+            startGoogleSignInFlowWithRetry()
+            return
+        }
+
+        // Get fresh user reference after auth sync checks
+        val currentUser = auth.currentUser
+        if (currentUser == null) {
+            Log.w(TAG, "checkUserProfile: auth.currentUser is still null after checks. Starting sign-in.")
             startGoogleSignInFlowWithRetry()
             return
         }
@@ -967,31 +1130,33 @@ class MainActivity : ComponentActivity() {
                 Log.w(TAG, "Profile sync failed: ${e.message}")
             }
             
-            val currentDisplayName = user.displayName?.takeIf { it.isNotBlank() } ?: storedUserName
+            val currentDisplayName = currentUser?.displayName?.takeIf { it.isNotBlank() } ?: storedUserName
             this@MainActivity.userName = currentDisplayName
 
             if (!userPhone.isNullOrBlank() && !currentDisplayName.isNullOrBlank()) {
-                Log.d(TAG, "User profile complete. Welcome: $currentDisplayName. Phone: $userPhone. Photo: ${user.photoUrl ?: sharedPreferences.getString("user_avatar_url", "N/A")}")
+                Log.d(TAG, "User profile complete. Welcome: $currentDisplayName. Phone: $userPhone. Photo: ${currentUser?.photoUrl ?: sharedPreferences.getString("user_avatar_url", "N/A")}")
                 initializeMainScreen()
                 return@launch
             }
 
             // If local profile incomplete, check remote users/{uid} doc to decide whether to skip overlay
             try {
-                val uid = user.uid
-                val snapshot = database.reference
-                    .child("users").child(uid).get().await()
-                if (snapshot.exists()) {
-                    val remoteName = snapshot.child("name").getValue(String::class.java)
-                    val remotePhone = snapshot.child("phone").getValue(String::class.java)
-                    if (!remoteName.isNullOrBlank() && !remotePhone.isNullOrBlank()) {
-                        sharedPreferences.edit()
-                            .putString("user_name", remoteName)
-                            .putString("user_phone", remotePhone)
-                            .apply()
-                        Log.d(TAG, "Remote user profile found; skipping registration overlay")
-                        initializeMainScreen()
-                        return@launch
+                val uid = currentUser?.uid
+                if (uid != null) {
+                    val snapshot = database.reference
+                        .child("users").child(uid).get().await()
+                    if (snapshot.exists()) {
+                        val remoteName = snapshot.child("name").getValue(String::class.java)
+                        val remotePhone = snapshot.child("phone").getValue(String::class.java)
+                        if (!remoteName.isNullOrBlank() && !remotePhone.isNullOrBlank()) {
+                            sharedPreferences.edit()
+                                .putString("user_name", remoteName)
+                                .putString("user_phone", remotePhone)
+                                .apply()
+                            Log.d(TAG, "Remote user profile found; skipping registration overlay")
+                            initializeMainScreen()
+                            return@launch
+                        }
                     }
                 }
             } catch (e: Exception) {
@@ -999,7 +1164,7 @@ class MainActivity : ComponentActivity() {
             }
 
             Log.d(TAG, "User profile incomplete. Name: $currentDisplayName, Phone: $userPhone. Showing registration dialog.")
-            val photoUrlForDialog = user.photoUrl?.toString() ?: sharedPreferences.getString("user_avatar_url", null)
+            val photoUrlForDialog = currentUser?.photoUrl?.toString() ?: sharedPreferences.getString("user_avatar_url", null)
             showUserRegistrationDialog(
                 googleName = currentDisplayName,
                 googlePhotoUrl = photoUrlForDialog
@@ -1128,11 +1293,39 @@ class MainActivity : ComponentActivity() {
 
     private fun initializeMainScreen() {
         val currentUserId = auth.currentUser?.uid
-        if (currentUserId == null && !isFinishing) {
-            Log.w(TAG, "initializeMainScreen: user not signed in. Starting sign-in.")
+        
+        // If we came from splash screen with a token, trust that authentication was successful
+        val intentHadToken = intent.getStringExtra("googleIdToken") != null
+        
+        if (currentUserId == null && !isFinishing && !intentHadToken) {
+            Log.w(TAG, "initializeMainScreen: user not signed in and no token from splash. Starting sign-in.")
             startGoogleSignInFlow()
             return
         }
+        
+        // If we have a token from splash screen, wait a moment for Firebase auth to catch up
+        if (intentHadToken && currentUserId == null && !isFinishing) {
+            Log.d(TAG, "Token from splash detected, waiting for Firebase auth to sync")
+            lifecycleScope.launch {
+                // Wait for Firebase auth to sync
+                var attempts = 0
+                while (auth.currentUser?.uid == null && attempts < 10) {
+                    delay(100)
+                    attempts++
+                }
+                
+                if (auth.currentUser?.uid != null) {
+                    Log.d(TAG, "Firebase auth synced successfully")
+                    // Continue with initialization
+                    initializeMainScreen()
+                } else {
+                    Log.w(TAG, "Firebase auth sync timeout, starting sign-in flow")
+                    startGoogleSignInFlow()
+                }
+            }
+            return
+        }
+        
         // ViewModel now uses StateFlow and repository pattern - no manual Firebase initialization needed
         if (currentUserId == null) {
             Log.e(TAG, "Critical error: User ID is null at initializeMainScreen after checks.")
@@ -1140,6 +1333,14 @@ class MainActivity : ComponentActivity() {
             return
         }
 
+        // Set up the main UI content
+        setupMainScreenContent()
+    }
+    
+    /**
+     * Sets up the main screen content with proper navigation
+     */
+    private fun setupMainScreenContent() {
         setContent {
             val navController = rememberNavController()
             val navBackStackEntry by navController.currentBackStackEntryAsState()
@@ -1151,13 +1352,9 @@ class MainActivity : ComponentActivity() {
                 else -> null
             }
             AkahidegnTheme(selectedColorScheme = colorScheme) {
-                val celebrationKey by animationViewModel.celebrationEvent.collectAsState()
-                SharedElementsRoot {
                 Scaffold(
                     bottomBar = {
-                        NavigationBar(
-                            modifier = Modifier.renderInSharedTransitionScopeOverlay(zIndexInOverlay = 1f)
-                        ) {
+                        NavigationBar {
                             val items = listOf(Screen.Main, Screen.Groups, Screen.Settings)
                             items.forEach { screen ->
                                 NavigationBarItem(
@@ -1178,165 +1375,57 @@ class MainActivity : ComponentActivity() {
                 ) { innerPadding ->
                     NavHost(navController, startDestination = Screen.Main.route, Modifier.padding(innerPadding)) {
                         composable(Screen.Main.route) {
-                            AnimatedVisibility(
-                                visible = currentRoute == Screen.Main.route,
-                                enter = fadeIn() + slideInVertically { -it / 2 },
-                                exit = fadeOut() + slideOutVertically { -it / 2 }
-                            ) {
-                                MainScreenContent(
-                                    navController = navController,
-                                    onGroupClick = { group ->
-                                        val id = group.groupId
-                                        if (id != null) {
-                                            mainViewModel.selectGroup(group)
-                                            navController.navigate("group_details/$id")
-                                        } else {
-                                            showGroupMembersDialog(group)
-                                        }
-                                    },
-                                    onRefreshGroups = { refreshGroupsFromActivity() },
-                                    onCreateGroup = { showCreateGroupDialog() }
-                                )
-                            }
+                            MainScreenContent(
+                                navController = navController,
+                                onGroupClick = { group -> showGroupMembersDialog(group) },
+                                onRefreshGroups = { refreshGroupsFromActivity() },
+                                onCreateGroup = { showCreateGroupDialog() }
+                            )
                         }
-                        composable("group_details/{groupId}") { backStack ->
-                            val groupId = backStack.arguments?.getString("groupId")
-                            val selected by mainViewModel.selectedGroup.collectAsState()
-                            LaunchedEffect(groupId) {
-                                if (groupId != null && (selected == null || selected?.groupId != groupId)) {
-                                    mainViewModel.loadGroupById(groupId)
+                        composable(Screen.Groups.route) {
+                            ActiveGroupsScreen(
+                                onOpenHistory = {
+                                    navController.navigate(Screen.ActivityHistory.route)
                                 }
-                            }
-                            AnimatedVisibility(visible = true) {
-                                com.dawitf.akahidegn.ui.screens.GroupDetailScreen(
-                                    group = selected,
-                                    onBack = { navController.popBackStack() },
-                                    onJoin = { g ->
-                                        val uid = auth.currentUser?.uid
-                                        val uname = auth.currentUser?.displayName ?: "User"
-                                        if (uid != null && g.groupId != null) {
-                                            mainViewModel.joinGroupOptimistically(g.groupId!!, uid, uname)
-                                        }
-                                    }
-                                )
-                            }
-                        }
-                        composable(Screen.Groups.route) { 
-                            AnimatedVisibility(
-                                visible = currentRoute == Screen.Groups.route,
-                                enter = fadeIn() + slideInVertically { it / 2 },
-                                exit = fadeOut() + slideOutVertically { it / 2 }
-                            ) {
-                                ActiveGroupsScreen(
-                                    onOpenHistory = { navController.navigate(Screen.ActivityHistory.route) }
-                                )
-                            }
+                            )
                         }
                         composable(Screen.Settings.route) {
-                            AnimatedVisibility(
-                                visible = currentRoute == Screen.Settings.route,
-                                enter = fadeIn() + slideInHorizontally { it },
-                                exit = fadeOut() + slideOutHorizontally { it }
-                            ) {
-                                SettingsScreen(onSignOut = {
-                                lifecycleScope.launch {
-                                    try {
-                                        auth.signOut()
-                                        Log.d(TAG, "Firebase sign-out successful.")
-                                        val clearRequest = ClearCredentialStateRequest()
-                                        credentialManager.clearCredentialState(clearRequest)
-                                        Log.d(TAG, "CredentialManager state cleared.")
-                                        Toast.makeText(this@MainActivity, getString(R.string.toast_signed_out), Toast.LENGTH_SHORT).show()
-                                        sharedPreferences.edit().remove("user_name").remove("user_phone").remove("user_avatar_url").apply()
-                                        userName = null
-                                        startGoogleSignInFlow()
-                                    } catch (e: Exception) {
-                                        Log.e(TAG, "Error during sign out: ${e.message}", e)
-                                        Toast.makeText(this@MainActivity, getString(R.string.toast_sign_out_error), Toast.LENGTH_SHORT).show()
-                                        startGoogleSignInFlow()
+                            SettingsScreen(
+                                onSignOut = {
+                                    signOut()
+                                    finish()
+                                },
+                                onOpenProfile = {
+                                    val userId = auth.currentUser?.uid
+                                    if (userId != null) {
+                                        navController.navigate(Screen.Profile.createRoute(userId))
+                                    } else {
+                                        Toast.makeText(this@MainActivity, getString(R.string.toast_user_must_sign_in_create), Toast.LENGTH_SHORT).show()
                                     }
                                 }
-                            }, onOpenProfile = {
-                                val uid = auth.currentUser?.uid
-                                if (uid != null) {
-                                    navController.navigate(Screen.Profile.createRoute(uid))
-                                }
-                            })
-                            }
+                            )
                         }
-                        composable(Screen.Profile.route) { backStack ->
-                            val userId = backStack.arguments?.getString("userId") ?: return@composable
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = fadeIn(),
-                                exit = fadeOut()
-                            ) {
-                                com.dawitf.akahidegn.ui.screens.profile.ProfileScreen(
-                                    userId = userId,
-                                    onBack = { navController.popBackStack() }
-                                )
-                            }
-                        }
+                        // Register ActivityHistoryScreen
                         composable(Screen.ActivityHistory.route) {
-                            AnimatedVisibility(
-                                visible = true,
-                                enter = fadeIn(),
-                                exit = fadeOut()
-                            ) {
-                                com.dawitf.akahidegn.ui.activity.ActivityHistoryScreen(
-                                    onBack = { navController.popBackStack() }
-                                )
-                            }
+                            com.dawitf.akahidegn.ui.activity.ActivityHistoryScreen(
+                                onBack = { navController.popBackStack() }
+                            )
+                        }
+                        // Register ProfileScreen
+                        composable(
+                            route = Screen.Profile.route,
+                            arguments = listOf(navArgument("userId") { type = NavType.StringType })
+                        ) { backStackEntry ->
+                            val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+                            com.dawitf.akahidegn.ui.screens.profile.ProfileScreen(
+                                userId = userId,
+                                onBack = { navController.popBackStack() }
+                            )
                         }
                     }
-                    
-                    // Handle UI events from ViewModel
-                    UiEventHandler(
-                        uiEvents = mainViewModel.uiEvents,
-                        navController = navController,
-                        onLocationPermissionRequested = { requestLocationPermission() },
-                        onNotificationPermissionRequested = { 
-                            // Handle notification permission request if needed
-                        }
-                    )
-                }
-                // Celebration confetti overlay (drawn on top of current screen)
-                ConfettiEmitter(
-                    triggerKey = celebrationKey,
-                    testTag = "confettiOverlay",
-                    seed = if (BuildConfig.DEBUG) 42L else null
-                )
                 }
             }
         }
-
-        // Remove the debug auto test group creation - this should not be in production
-        // if (BuildConfig.DEBUG && !autoTestGroupCreated) {
-        //     Log.d("SMOKE_TEST", "Scheduling auto group creation for smoke test")
-        //     lifecycleScope.launch {
-        //         try {
-        //             // Small delay to allow first frame & initial refresh
-        //             kotlinx.coroutines.delay(2500)
-        //             val user = auth.currentUser
-        //             if (user != null && !autoTestGroupCreated) {
-        //                 val lat = _userLocationFlow.value?.latitude ?: 8.9806
-        //                 val lng = _userLocationFlow.value?.longitude ?: 38.7578
-        //                 Log.d("SMOKE_TEST", "Creating AutoTest group now (user=${user.uid})")
-        //                 autoTestGroupCreated = true
-        //                 createGroupInFirebase(
-        //                     toDestination = "AutoTest",
-        //                     pickupLatitude = lat,
-        //                     pickupLongitude = lng
-        //                 )
-        //             } else if (user == null) {
-        //                 Log.d("SMOKE_TEST", "User still null at auto-create time; will retry in 3s")
-        //                 retryAutoCreateGroup()
-        //             }
-        //         } catch (t: Throwable) {
-        //             Log.e("SMOKE_TEST", "Auto-create debug group scheduling failed", t)
-        //         }
-        //     }
-        // }
     }
 
     @Composable
@@ -1347,17 +1436,9 @@ class MainActivity : ComponentActivity() {
         onCreateGroup: () -> Unit
     ) {
         Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-            // Collect states from MainViewModel
             val mainGroups by mainViewModel.mainGroups.collectAsState()
-            val activeGroups by mainViewModel.activeGroups.collectAsState()
-            val historyGroups by mainViewModel.historyGroups.collectAsState()
             val vmIsLoading by mainViewModel.isLoadingGroups.collectAsState()
             val currentLocation by userLocationFlow.collectAsState()
-
-            val currentUserId = auth.currentUser?.uid
-            LaunchedEffect(currentUserId) {
-                mainViewModel.setCurrentUserId(currentUserId)
-            }
 
             var searchQuery by remember { mutableStateOf("") }
             var selectedFilters by remember { mutableStateOf(SearchFilters()) }
@@ -1368,8 +1449,8 @@ class MainActivity : ComponentActivity() {
 
             MainScreen(
                 mainGroups = mainGroups,
-                activeGroups = activeGroups,
-                historyGroups = historyGroups,
+                activeGroups = emptyList(),
+                historyGroups = emptyList(),
                 searchQuery = searchQuery,
                 onSearchQueryChange = { query -> searchQuery = query },
                 selectedFilters = selectedFilters,
@@ -1392,63 +1473,33 @@ class MainActivity : ComponentActivity() {
                 isLoading = vmIsLoading,
                 onRefreshGroups = onRefreshGroups,
                 onCreateGroup = onCreateGroup,
-                userLocation = currentLocation,
-                onOpenProfile = {
-                    val uid = auth.currentUser?.uid ?: return@MainScreen
-                    navController.navigate(Screen.Profile.createRoute(uid))
-                },
-                onOpenHistory = { navController.navigate(Screen.ActivityHistory.route) }
+                userLocation = currentLocation
             )
-
-            selectedGroupForDialog?.let { group ->
-                val currentUserId = auth.currentUser?.uid ?: ""
-                val members = remember(group.memberDetails) { 
-                    group.memberDetails.map { (userId, memberInfo) ->
-                        GroupMember(
-                            id = userId, name = memberInfo.name, phone = memberInfo.phone,
-                            avatar = memberInfo.avatar ?: sharedPreferences.getString("user_avatar", "avatar_1")!!, 
-                            isCreator = userId == group.creatorId
-                        )
-                    }
-                }
-                GroupMembersDialog(
-                    group = group, 
-                    members = members, 
-                    currentUserId = currentUserId,
-                    onDismiss = { selectedGroupForDialog = null },
-                    onLeaveGroup = { groupId, userId ->
-                        // Optimistic UI: Leave group instantly
-                        mainViewModel.leaveGroup(groupId, userId)
-                        selectedGroupForDialog = null 
-                    },
-                    onJoinGroup = { groupId, userId, userName ->
-                        // Optimistic UI: Join group instantly
-                        val actualUserName = auth.currentUser?.displayName ?: userName
-                        mainViewModel.joinGroup(group, userId, actualUserName)
-                        selectedGroupForDialog = null
-                    },
-                    onDisbandGroup = { groupId ->
-                        val uid = auth.currentUser?.uid
-                        if (uid == null) {
-                            Toast.makeText(this@MainActivity, getString(R.string.toast_user_must_sign_in_create), Toast.LENGTH_SHORT).show()
-                            startGoogleSignInFlow()
-                            return@GroupMembersDialog
-                        }
-                        if (uid != group.creatorId) {
-                            Toast.makeText(this@MainActivity, getString(R.string.toast_not_creator_disband), Toast.LENGTH_SHORT).show()
-                            return@GroupMembersDialog
-                        }
-                        mainViewModel.deleteGroup(groupId, uid)
-                        Toast.makeText(this@MainActivity, getString(R.string.toast_group_disband_success), Toast.LENGTH_SHORT).show()
-                        selectedGroupForDialog = null
-                    }
-                )
-            }
         }
     }
 
     private fun showGroupMembersDialog(group: Group) {
         selectedGroupForDialog = group 
+    }
+
+    private fun signOut() {
+        lifecycleScope.launch {
+            try {
+                auth.signOut()
+                Log.d(TAG, "Firebase sign-out successful.")
+                val clearRequest = ClearCredentialStateRequest()
+                credentialManager.clearCredentialState(clearRequest)
+                Log.d(TAG, "CredentialManager state cleared.")
+                Toast.makeText(this@MainActivity, "Signed out.", Toast.LENGTH_SHORT).show()
+                sharedPreferences.edit().remove("user_name").remove("user_phone").remove("user_avatar_url").apply()
+                userName = null
+                startGoogleSignInFlow()
+            } catch (e: Exception) {
+                Log.e(TAG, "Error during sign out: ${e.message}", e)
+                Toast.makeText(this@MainActivity, "Error signing out.", Toast.LENGTH_SHORT).show()
+                startGoogleSignInFlow()
+            }
+        }
     }
 
     private fun requestLocationPermission() {
