@@ -15,6 +15,7 @@ import androidx.compose.ui.unit.dp
 import androidx.hilt.navigation.compose.hiltViewModel
 import com.dawitf.akahidegn.R
 import com.dawitf.akahidegn.ui.components.GroupCard
+import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.ui.components.EnhancedPullToRefresh
 import com.dawitf.akahidegn.viewmodel.MainViewModel
 import com.google.firebase.ktx.Firebase
@@ -25,7 +26,7 @@ fun ActiveGroupsScreen(
     onOpenHistory: () -> Unit = {}
 ) {
     val viewModel: MainViewModel = hiltViewModel()
-    val userGroups by viewModel.userGroups.collectAsState()
+    val userGroups: List<Group> by viewModel.userGroups.collectAsState()
     val isLoading by viewModel.isLoadingGroups.collectAsState()
     val currentUserId = Firebase.auth.currentUser?.uid
 
