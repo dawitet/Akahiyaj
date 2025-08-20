@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Akahidegn Map</title>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html, body { height: 100%; margin: 0; padding: 0; background: #f0f0f0; }
+    #map { 
+      height: 100%; 
+      width: 100%; 
+      background: #e8f4f8; 
+      border: 2px solid #007acc;
+      box-sizing: border-box;
+    }
+    #debug { 
+      position: absolute; 
+      top: 10px; 
+      left: 10px; 
+      background: rgba(0,255,0,0.9); 
+      padding: 8px; 
+      z-index: 1000; 
+      border-radius: 4px;
+      font-size: 12px;
+      max-width: 200px;
+      color: black;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div id="debug">Loading map...</div>
+  <div id="map"></div>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    let map;
+    let markersLayer;
+    
+    function updateDebug(message) {
+      document.getElementById('debug').innerHTML = message;
+      console.log('Map Debug:', message);
+    }
+    
+    updateDebug('Leaflet loaded, creating map...');
+    
+    try {
+      // Create map centered on Addis Ababa
+      map = L.map('map').setView([9.0054, 38.7636], 15);
+      updateDebug('Map created, adding tiles...');
+      
+      // Add tile layer with fallback options
+      const tileLayer = L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        maxZoom: 19,
+        attribution: '© OpenStreetMap contributors',
+        crossOrigin: 'anonymous'
+      });
+      
+      updateDebug('Tile layer created, adding to map...');
+      tileLayer.addTo(map);
+      
+      // Also try adding a fallback simple background layer
+      const fallbackLayer = L.tileLayer('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0iI2Y0ZjRmNCIvPjx0ZXh0IHg9IjEyOCIgeT0iMTI4IiBmb250LWZhbWlseT0iQXJpYWwiIGZvbnQtc2l6ZT0iMTQiIGZpbGw9IiM5OTkiIHRleHQtYW5jaG9yPSJtaWRkbGUiIGR5PSIwLjNlbSI+TWFwIFRpbGU8L3RleHQ+PC9zdmc+', {
+        maxZoom: 19,
+        attribution: 'Fallback tiles'
+      });
+      
+      updateDebug('Tile layer added, creating markers layer...');
+      
+      // Create layer group for markers
+      markersLayer = L.layerGroup().addTo(map);
+      
+      updateDebug('Map ready! Waiting for groups...');
+      
+      // Add visible test content immediately
+      const testMarker = L.marker([9.0054, 38.7636]).addTo(map);
+      testMarker.bindPopup('🗺️ Map Test - If you see this, the map is working!');
+      
+      // Add a visible circle to ensure something shows
+      const testCircle = L.circle([9.0054, 38.7636], {
+        color: 'red',
+        fillColor: '#f03',
+        fillOpacity: 0.5,
+        radius: 500
+      }).addTo(map);
+      
+      // Add a polygon for more visibility
+      const testPolygon = L.polygon([
+        [9.0044, 38.7626],
+        [9.0064, 38.7626], 
+        [9.0064, 38.7646],
+        [9.0044, 38.7646]
+      ], {color: 'blue', fillColor: 'lightblue', fillOpacity: 0.7}).addTo(map);
+      
+      updateDebug('✅ Test marker + shapes added!');
+      
+      // Force the map to invalidate and redraw
+      setTimeout(() => {
+        map.invalidateSize();
+        map.setView([9.0054, 38.7636], 15); // Force center
+        updateDebug('🔄 Map repositioned and refreshed');
+      }, 500);
+      
+      // Additional redraw attempt
+      setTimeout(() => {
+        map.invalidateSize(true);
+        updateDebug('🔄 Map full invalidation done');
+      }, 1000);
+      
+      // Test tile loading events
+      tileLayer.on('loading', function() {
+        updateDebug('🔄 Tiles loading...');
+      });
+      
+      tileLayer.on('load', function() {
+        updateDebug('✅ All tiles loaded!');
+      });
+      
+      tileLayer.on('tileerror', function(e) {
+        updateDebug('❌ Tile error: ' + e.tile.src);
+        console.error('Tile error:', e);
+      });
+      
+      // This function will be called from Android to add group markers
+      window.addGroups = function(groupsJson) {
+        try {
+          updateDebug('📡 Received groups data...');
+          const groups = JSON.parse(groupsJson);
+          
+          // Clear existing markers
+          markersLayer.clearLayers();
+          
+          if (groups.length === 0) {
+            updateDebug('ℹ️ No groups to display');
+            return;
+          }
+          
+          updateDebug(`📍 Processing ${groups.length} groups...`);
+          
+          let validGroups = 0;
+          groups.forEach(function(group, index) {
+            if (group.pickupLat && group.pickupLng) {
+              const lat = parseFloat(group.pickupLat);
+              const lng = parseFloat(group.pickupLng);
+              
+              if (!isNaN(lat) && !isNaN(lng) && lat !== 0 && lng !== 0) {
+                const marker = L.marker([lat, lng]);
+                const destination = group.originalDestination || group.destinationName || 'Group';
+                const memberCount = group.memberCount || 1;
+                const maxMembers = group.maxMembers || 4;
+                
+                marker.bindPopup(`
+                  <b>${destination}</b><br/>
+                  👥 ${memberCount}/${maxMembers} ተሳታፊዎች<br/>
+                  📍 ${lat.toFixed(4)}, ${lng.toFixed(4)}
+                `);
+                
+                markersLayer.addLayer(marker);
+                validGroups++;
+              } else {
+                console.log(`Invalid coordinates for group ${index}: ${lat}, ${lng}`);
+              }
+            } else {
+              console.log(`Missing coordinates for group ${index}`);
+            }
+          });
+          
+          updateDebug(`✅ Added ${validGroups} valid markers to map`);
+          
+          // If we have markers, fit the map to show all of them
+          if (validGroups > 0) {
+            setTimeout(() => {
+              try {
+                const bounds = markersLayer.getBounds();
+                if (bounds.isValid()) {
+                  map.fitBounds(bounds, { padding: [20, 20] });
+                  updateDebug(`🗺️ Map fitted to show ${validGroups} markers`);
+                } else {
+                  updateDebug('⚠️ Could not fit bounds, keeping default view');
+                }
+              } catch (e) {
+                console.log('FitBounds failed:', e);
+                updateDebug('⚠️ FitBounds failed, using default view');
+              }
+            }, 200);
+          } else {
+            updateDebug('⚠️ No valid markers found in group data');
+          }
+          
+        } catch (e) {
+          updateDebug('❌ Error adding groups: ' + e.message);
+          console.error('Error adding groups:', e);
+        }
+      };
+      
+    } catch (e) {
+      updateDebug('❌ Map Error: ' + e.message);
+      console.error('Map initialization error:', e);
+    }
+  </script>
+</body>
+</html>

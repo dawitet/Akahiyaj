@@ -1,0 +1,142 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Four hands holding at the wrist in a circle pattern -->
+    <!-- Background circle for emphasis -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M54,54m-45,0a45,45 0,1 1,90 0a45,45 0,1 1,-90 0" 
+        android:fillAlpha="0.2"/>
+    
+    <!-- Hand 1 - Top -->
+    <group android:translateX="54" android:translateY="20">
+        <!-- Wrist -->
+        <path
+            android:fillColor="#8D6E63"
+            android:pathData="M-4,-2L4,-2L4,8L-4,8Z"/>
+        <!-- Hand -->
+        <path
+            android:fillColor="#D7CCC8"
+            android:pathData="M-8,8L8,8L6,20L4,22L2,20L0,22L-2,20L-4,22L-6,20L-8,8Z"/>
+        <!-- Fingers -->
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M-6,8L-4,8L-4,12L-6,12Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M-2,8L0,8L0,14L-2,14Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M2,8L4,8L4,14L2,14Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M4,8L6,8L6,12L4,12Z"/>
+    </group>
+    
+    <!-- Hand 2 - Right -->
+    <group android:translateX="88" android:translateY="54" android:rotation="90">
+        <!-- Wrist -->
+        <path
+            android:fillColor="#8D6E63"
+            android:pathData="M-4,-2L4,-2L4,8L-4,8Z"/>
+        <!-- Hand -->
+        <path
+            android:fillColor="#D7CCC8"
+            android:pathData="M-8,8L8,8L6,20L4,22L2,20L0,22L-2,20L-4,22L-6,20L-8,8Z"/>
+        <!-- Fingers -->
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M-6,8L-4,8L-4,12L-6,12Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M-2,8L0,8L0,14L-2,14Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M2,8L4,8L4,14L2,14Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M4,8L6,8L6,12L4,12Z"/>
+    </group>
+    
+    <!-- Hand 3 - Bottom -->
+    <group android:translateX="54" android:translateY="88" android:rotation="180">
+        <!-- Wrist -->
+        <path
+            android:fillColor="#8D6E63"
+            android:pathData="M-4,-2L4,-2L4,8L-4,8Z"/>
+        <!-- Hand -->
+        <path
+            android:fillColor="#D7CCC8"
+            android:pathData="M-8,8L8,8L6,20L4,22L2,20L0,22L-2,20L-4,22L-6,20L-8,8Z"/>
+        <!-- Fingers -->
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M-6,8L-4,8L-4,12L-6,12Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M-2,8L0,8L0,14L-2,14Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M2,8L4,8L4,14L2,14Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M4,8L6,8L6,12L4,12Z"/>
+    </group>
+    
+    <!-- Hand 4 - Left -->
+    <group android:translateX="20" android:translateY="54" android:rotation="270">
+        <!-- Wrist -->
+        <path
+            android:fillColor="#8D6E63"
+            android:pathData="M-4,-2L4,-2L4,8L-4,8Z"/>
+        <!-- Hand -->
+        <path
+            android:fillColor="#D7CCC8"
+            android:pathData="M-8,8L8,8L6,20L4,22L2,20L0,22L-2,20L-4,22L-6,20L-8,8Z"/>
+        <!-- Fingers -->
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M-6,8L-4,8L-4,12L-6,12Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M-2,8L0,8L0,14L-2,14Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M2,8L4,8L4,14L2,14Z"/>
+        <path
+            android:fillColor="#BCAAA4"
+            android:pathData="M4,8L6,8L6,12L4,12Z"/>
+    </group>
+    
+    <!-- Central connection showing unity -->
+    <path
+        android:fillColor="#4CAF50"
+        android:pathData="M54,54m-8,0a8,8 0,1 1,16 0a8,8 0,1 1,-16 0"/>
+    
+    <!-- Connection lines from center to wrists -->
+    <path
+        android:fillColor="#4CAF50"
+        android:strokeWidth="2"
+        android:strokeColor="#4CAF50"
+        android:pathData="M54,46L54,26"/>
+    <path
+        android:fillColor="#4CAF50"
+        android:strokeWidth="2"
+        android:strokeColor="#4CAF50"
+        android:pathData="M62,54L82,54"/>
+    <path
+        android:fillColor="#4CAF50"
+        android:strokeWidth="2"
+        android:strokeColor="#4CAF50"
+        android:pathData="M54,62L54,82"/>
+    <path
+        android:fillColor="#4CAF50"
+        android:strokeWidth="2"
+        android:strokeColor="#4CAF50"
+        android:pathData="M46,54L26,54"/>
+        
+</vector>

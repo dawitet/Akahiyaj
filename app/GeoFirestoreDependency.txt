@@ -1,0 +1,4 @@
+// Add GeoFirestore dependency for Firestore-based geo-queries
+// https://github.com/imperiumlabs/GeoFirestore-Android
+// Add this to your dependencies:
+// implementation 'com.github.imperiumlabs:GeoFirestore-Android:v1.5.0'

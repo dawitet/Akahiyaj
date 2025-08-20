@@ -1,0 +1,49 @@
+{
+  "project_info": {
+    "project_number": "81721365267",
+    "firebase_url": "https://akahidegn-79376-default-rtdb.europe-west1.firebasedatabase.app",
+    "project_id": "akahidegn-79376",
+    "storage_bucket": "akahidegn-79376.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:81721365267:android:dcceea55dbf8b542adc0e6",
+        "android_client_info": {
+          "package_name": "com.dawitf.akahidegn"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "81721365267-j5gcdpot5fvjhr7gqbma8qmhr99hj0ub.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dawitf.akahidegn",
+            "certificate_hash": "dd1e1230e3661dd41d68b0dc3537b1fd2057f856"
+          }
+        },
+        {
+          "client_id": "81721365267-i23fh9src6e1mn5oiif7t5bmr6l5nqva.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA-04oS-c5FmfZ-DekJqdBl_GTnW4b_yAo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "81721365267-i23fh9src6e1mn5oiif7t5bmr6l5nqva.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      },
+      "admob_app_id": "ca-app-pub-3787918879230745~9551227357"
+    }
+  ],
+  "configuration_version": "1"
+}

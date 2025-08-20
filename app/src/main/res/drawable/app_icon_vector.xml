@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    
+    <!-- Golden circular background -->
+    <path
+        android:fillColor="#FFFFC30B"
+        android:pathData="M54,54m-54,0a54,54 0,1 1,108 0a54,54 0,1 1,-108 0" />
+    
+    <!-- Profile 1 (leftmost) -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M38,32m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M38,36c-3,0-5,2-5,4v2h10v-2C43,38,41,36,38,36z" />
+    
+    <!-- Profile 2 (center-left) -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M48,26m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M48,30c-3,0-5,2-5,4v2h10v-2C53,32,51,30,48,30z" />
+    
+    <!-- Profile 3 (center-right) -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M60,26m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M60,30c-3,0-5,2-5,4v2h10v-2C65,32,63,30,60,30z" />
+    
+    <!-- Profile 4 (rightmost) -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M70,32m-4,0a4,4 0,1 1,8 0a4,4 0,1 1,-8 0" />
+    <path
+        android:fillColor="#333333"
+        android:pathData="M70,36c-3,0-5,2-5,4v2h10v-2C75,38,73,36,70,36z" />
+    
+    <!-- Car icon below the profiles -->
+    <path
+        android:fillColor="#333333"
+        android:pathData="M74,58H34c-3.3,0-6,2.7-6,6v8c0,3.3,2.7,6,6,6h4v4c0,2.2,1.8,4,4,4s4-1.8,4-4v-4h16v4c0,2.2,1.8,4,4,4s4-1.8,4-4v-4h4c3.3,0,6-2.7,6-6v-8C80,60.7,77.3,58,74,58z" />
+    
+    <!-- Car wheels -->
+    <path
+        android:fillColor="#555555"
+        android:pathData="M38,68m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    <path
+        android:fillColor="#555555"
+        android:pathData="M70,68m-3,0a3,3 0,1 1,6 0a3,3 0,1 1,-6 0" />
+    
+</vector>

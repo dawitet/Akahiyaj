@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App Identity -->
+    <string name="app_name">አካሂያጅ</string>
+    <string name="main_title">አካሂያጅ</string>
+    
+    <!-- Authentication -->
+    <string name="user_id_prefix">ተጠቃሚ:</string>
+    <string name="authenticating_user">ማንነትን በማረጋገጥ ላይ...</string>
+    <string name="sign_in">ግባ</string>
+    <string name="sign_out">ውጣ</string>
+    <string name="sign_up">መዝገብ</string>
+    <string name="email">ኢሜል</string>
+    <string name="password">የይለፍ ቃል</string>
+    <string name="confirm_password">የይለፍ ቃል አረጋግጥ</string>
+    <string name="forgot_password">የይለፍ ቃል ረሳኽ?</string>
+    
+    <!-- Location -->
+    <string name="location_prefix">አካባቢ:</string>
+    <string name="acquiring_location">አካባቢ በመፈለግ ላይ...</string>
+    <string name="grant_location_permission">የአካባቢ ማሳወቂያ ፍቃድ ስጥ</string>
+    <string name="location_permission_required">የአካባቢ ፍቃድ ያስፈልጋል</string>
+    <string name="current_location">የአሁኑ አካባቢ</string>
+    
+    <!-- Groups -->
+    <string name="nearby_groups_title">በአቅራቢያ ያሉ ቡድኖች</string>
+    <string name="nearby_groups_placeholder">እዚህ ጋር በአቅራቢያ ያሉ ቡድኖች ዝርዝር</string>
+    <string name="create_new_group_fab_description">አዲስ ቡድን ፍጠር</string>
+    <string name="group_list_title">የቡድኖች ዝርዝር</string>
+    <string name="group_members_count">%1$d/%2$d አባላት</string>
+    <string name="no_groups_found">ምንም ቡድን አልተገኘም።</string>
+    <string name="loading_groups">ቡድኖች በመጫን ላይ...</string>
+    <string name="error_loading_groups">ቡድኖችን በመጫን ላይ ስህተት: %1$s</string>
+    <string name="toast_group_is_full">ይህ ቡድን ሙሉ ነው።</string>
+    <string name="toast_already_a_member">እርስዎ ቀድሞውኑ የዚህ ቡድን አባል ነዎት።</string>
+    
+    <!-- Group Actions -->
+    <string name="create_group_button">ቡድን ፍጠር</string>
+    <string name="find_groups_button">ቡድን ፈልግ</string>
+    <string name="button_join_group">ቡድን ተቀላቀል</string>
+    <string name="button_view_group">ቡድን ይመልከቱ</string>
+    <string name="button_leave_group">ቡድን ተው</string>
+    <string name="group_item_button_disband">አፍርስ</string>
+    <string name="toast_joined_group">ቡድኑን ተቀላቅለዋል።</string>
+    <string name="toast_left_group">ቡድኑን ተውዋል።</string>
+    <string name="toast_failed_to_join_group">ቡድኑን መቀላቀል አልተቻለም: %1$s</string>
+    
+    <!-- Destinations -->
+    <string name="destination_input_label">የታክሲ መስመር ስም ያስገቡ</string>
+    <string name="dialog_destination_label">መድረሻ ያስገቡ</string>
+    <string name="destination">መድረሻ</string>
+    <string name="departure_time">የመነሻ ሰዓት</string>
+    <string name="arrival_time">የመድረሻ ሰዓት</string>
+    <string name="toast_destination_cannot_be_empty">መድረሻ ባዶ ሊሆን አይችልም።</string>
+    <string name="toast_destination_too_short">መድረሻ ትንሽ ነው។</string>
+    
+    <!-- Search & Filters -->
+    <string name="search">ፈልግ</string>
+    <string name="search_hint">ፈልግ...</string>
+    <string name="search_radius_label">የፍለጋ ርቀት:</string>
+    <string name="filter">ማጣሪያ</string>
+    <string name="apply_filters">ማጣሪያዎችን ተግብር</string>
+    <string name="clear_filters">ማጣሪያዎችን አጽዳ</string>
+    <string name="distance_filter">ርቀት</string>
+    
+    <string name="time_filter">ሰዓት</string>
+    <string name="availability_filter">መኖር</string>
+    <string name="sort_by">ደርድር በ</string>
+    <string name="sort_by_distance">በርቀት</string>
+    
+    <string name="sort_by_time">በሰዓት</string>
+    <string name="sort_by_popularity">በተወዳጅነት</string>
+    
+    <!-- Distance & Measurements -->
+    <string name="distance_from_you">%1$s ከእርስዎ</string>
+    <string name="km_unit">ኪ.ሜ</string>
+    <string name="meters_unit">ሜትር</string>
+    <string name="minutes_unit">ደቂቃ</string>
+    <string name="hours_unit">ሰዓት</string>
+    <string name="birr_currency">ብር</string>
+    
+    <!-- Dialog Actions -->
+    <string name="dialog_title_create_group">ግሩፕ ፍጠር</string>
+    <string name="dialog_button_create">ፍጠር</string>
+    <string name="dialog_button_cancel">ሰርዝ</string>
+    <string name="dialog_button_ok_amharic">እሺ</string>
+    <string name="dialog_button_no_amharic">እንቢ</string>
+    <string name="dialog_create_group_title_new">አዲስ ግሩፕ ፍጠር</string>
+    <string name="dialog_create_group_message">የመሳፈሪያ ቡድን ይፍጠሩ እና ከሌሎች ሰዎች ጋር ተጋሩ!</string>
+    <string name="dialog_button_create_group">ግሩፕ ፍጠር</string>
+    <string name="dialog_button_confirm">አረጋግጥ</string>
+    <string name="dialog_button_delete">ሰርዝ</string>
+    <string name="dialog_button_save">አስቀምጥ</string>
+    
+    <!-- Common Actions -->
+    <string name="toast_please_complete_profile">እባክዎ መገለጫዎን ያጠናቅቁ።</string>
+    <string name="retry_button">እንደገና ሞክር</string>
+    <string name="refresh_button">አዘምን</string>
+    <string name="back_button">ተመለስ</string>
+    <string name="next_button">ቀጣይ</string>
+    <string name="previous_button">ያለፈ</string>
+    <string name="done_button">ተጠናቀቀ</string>
+    <string name="edit_button">አስተካክል</string>
+    <string name="delete_button">ሰርዝ</string>
+    <string name="share_button">አጋራ</string>
+    
+    <!-- User Profile -->
+    <string name="profile">መገለጫ</string>
+    <string name="edit_profile">መገለጫ አስተካክል</string>
+    <string name="user_profile">የተጠቃሚ መገለጫ</string>
+    <string name="full_name">ሙሉ ስም</string>
+    <string name="phone_number">ስልክ ቁጥር</string>
+    <string name="bio">ስለ እኔ</string>
+    <string name="profile_picture">የመገለጫ ምስል</string>
+    <string name="change_profile_picture">የመገለጫ ምስል ቀይር</string>
+    <string name="rating">ደረጃ</string>
+    <string name="reviews">አስተያየቶች</string>
+    <string name="total_trips">ጠቅላላ ጉዞዎች</string>
+    <string name="member_since">አባል ሆኖ: %1$s</string>
+    
+    <!-- Achievements -->
+    <string name="achievements">ስኬቶች</string>
+    <string name="achievement_unlocked">ስኬት ተከፍቷል!</string>
+    <string name="achievement_first_trip">የመጀመሪያ ጉዞ</string>
+    <string name="achievement_early_bird">አርፋድ</string>
+    <string name="achievement_night_owl">የሌሊት ወፍ</string>
+    <string name="achievement_eco_warrior">የአካባቢ ተዋጊ</string>
+    <string name="achievement_social_butterfly">ማህበራዊ ቢራቢሮ</string>
+    <string name="achievement_reliable_rider">አስተማማኝ መንገደኛ</string>
+    <string name="achievement_helpful_driver">አጋዥ ነጂ</string>
+    <string name="achievement_safe_driver">ደህንነቱ የተጠበቀ ነጂ</string>
+    <string name="achievement_trip_master">የጉዞ አሳላፊ</string>
+    
+    <!-- Notifications -->
+    <string name="notifications">ማሳወቂያዎች</string>
+    <string name="notification_settings">የማሳወቂያ ቅንብሮች</string>
+    <string name="enable_notifications">ማሳወቂያዎችን አንቃ</string>
+    <string name="trip_notifications">የጉዞ ማሳወቂያዎች</string>
+    <string name="group_notifications">የቡድን ማሳወቂያዎች</string>
+    <string name="marketing_notifications">የግብይት ማሳወቂያዎች</string>
+    <string name="sound_enabled">ድምፅ ንቁ</string>
+    <string name="vibration_enabled">ንዝረት ንቁ</string>
+    
+    <!-- Settings -->
+    <string name="settings">ቅንብሮች</string>
+    <string name="app_settings">የመተግበሪያ ቅንብሮች</string>
+    <string name="account_settings">የመለያ ቅንብሮች</string>
+    <string name="privacy_settings">የግላዊነት ቅንብሮች</string>
+    <string name="language">ቋንቋ</string>
+    <string name="theme">ገጽታ</string>
+    <string name="dark_mode">ጨለማ ሁነታ</string>
+    <string name="light_mode">ብሩህ ሁነታ</string>
+    <string name="system_theme">የስርዓት ገጽታ</string>
+    <!-- auto_join_enabled default is now in values/strings.xml to avoid duplicate; override not required -->
+    <string name="location_sharing_enabled">የአካባቢ መጋራት ንቁ</string>
+    
+    <!-- Trip History -->
+    <string name="trip_history">የጉዞ ታሪክ</string>
+    <string name="recent_trips">የቅርብ ጊዜ ጉዞዎች</string>
+    <string name="completed_trips">የተሟሉ ጉዞዎች</string>
+    <string name="cancelled_trips">የተሰረዙ ጉዞዎች</string>
+    <string name="as_driver">እንደ ነጂ</string>
+    <string name="as_passenger">እንደ መንገደኛ</string>
+    <string name="trip_date">የጉዞ ቀን</string>
+    <string name="trip_duration">የጉዞ ቆይታ</string>
+    <string name="trip_distance">የጉዞ ርቀት</string>
+    
+    
+    
+    
+    <!-- Errors & Messages -->
+    <string name="error_generic">ስህተት ተከስቷል</string>
+    <string name="error_network">የአውታረ መረብ ስህተት</string>
+    <string name="error_loading">በመጫን ላይ ስህተት</string>
+    <string name="error_saving">በማስቀመጥ ላይ ስህተት</string>
+    <string name="success_generic">በተሳካ ሁኔታ ተጠናቋል</string>
+    <string name="loading">በመጫን ላይ...</string>
+    <string name="saving">በማስቀመጥ ላይ...</string>
+    <string name="no_internet_connection">የበይነመረብ ግንኙነት የለም</string>
+    <string name="try_again_later">ቆየት በኋላ እንደገና ይሞክሩ</string>
+    
+    
+    
+    <!-- Advertisements -->
+    <string name="create_group_ad_prompt_title">ቡድን መፍጠር</string>
+    <string name="create_group_ad_prompt_message">ግሩፕ ለመፍጠር ማስታወቂያ ማየት አለብዎት።</string>
+    <string name="toast_rewarded_ad_not_ready">የሽልማት ማስታወቂያ ገና ዝግጁ አይደለም። እባክዎ ትንሽ ቆይተው ይሞክሩ።</string>
+    
+    <!-- Group Creation Messages -->
+    <string name="toast_location_permission_required_for_create">ቡድን ለመፍጠር ያሉበትን ቦታ ለማወቅ ፍቃድ ያስፈልጋል።</string>
+    <string name="toast_group_created">ቡድን ተፈጥሯል: %1$s</string>
+    <string name="toast_group_failed_to_create">ቡድን መፍጠር አልተቻለም: %1$s</string>
+    <!-- Registration dialog strings -->
+    <string name="registration_welcome_title">🎉 እንኳን ወደ አካሂያጅ በደህና መጡ!</string>
+    <string name="registration_subtitle">ለመጀመር መገለጫዎን ያጠናቅቁ</string>
+    <string name="phone_placeholder">0912345678</string>
+    <string name="phone_hint_et_only">ቅርጽ: 0912345678 (10 አሃዞች፣ 09 ይጀምር)</string>
+    <string name="error_invalid_phone_format">የስልክ ቁጥር ቅርጽ ትክክል አይደለም። 0912345678 ይጠቀሙ</string>
+    <string name="send_suggestion">ሃሳብ ላክ</string>
+    <string name="suggestion_input_hint">ሃሳብዎን ያስገቡ</string>
+    
+    
+    
+    
+    
+</resources>

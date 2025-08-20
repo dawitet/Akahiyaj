@@ -1,0 +1,4 @@
+-keep class androidx.benchmark.** { *; }
+-keep class androidx.test.** { *; }
+-dontwarn androidx.benchmark.**
+-dontwarn androidx.test.**
