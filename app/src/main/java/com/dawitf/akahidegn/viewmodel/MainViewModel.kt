@@ -92,12 +92,16 @@ class MainViewModel @Inject constructor(
                 _isLoadingGroups.value = false
                 val allGroups = groupsResult.data
 
+                Log.d("MainViewModel", "Received ${allGroups.size} groups from repository.")
+
                 // Filter by location (500m radius) and expiration (30 minutes)
                 allGroups.filter { group ->
                     // Check if group is expired
+                    Log.d("MainViewModel", "Processing group: ${group.groupId}, expiresAt: ${group.expiresAt}, currentTime: ${System.currentTimeMillis()}")
                     if (group.isExpired()) {
                         Log.d("MainViewModel", "Filtering out expired group: ${group.groupId}")
                         return@filter false
+
                     }
 
                     // Check location proximity if user location is available
@@ -105,6 +109,7 @@ class MainViewModel @Inject constructor(
                         val isWithinRadius = group.isWithinRadius(location.latitude, location.longitude)
                         if (!isWithinRadius) {
                             Log.d("MainViewModel", "Filtering out distant group: ${group.groupId} (${group.getDistanceText(location.latitude, location.longitude)})")
+                            Log.d("MainViewModel", "User location: (${location.latitude}, ${location.longitude}), Group pickup: (${group.pickupLat}, ${group.pickupLng}), Distance: ${group.calculateDistance(location.latitude, location.longitude, group.pickupLat!!, group.pickupLng!!)}")
                             return@filter false
                         }
                     }
@@ -183,7 +188,7 @@ class MainViewModel @Inject constructor(
             locationFlow.collect { location ->
                 _currentLocation.value = location
                 if (location != null) {
-                    Log.d("MainViewModel", "Location updated: ${location.latitude}, ${location.longitude}")
+                    Log.d("LocationUpdate", "Location updated: Lat=${location.latitude}, Lng=${location.longitude}")
                 }
             }
         }

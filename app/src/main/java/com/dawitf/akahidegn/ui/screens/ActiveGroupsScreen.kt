@@ -81,7 +81,7 @@ fun ActiveGroupsScreen(
                             items = userGroups,
                             key = { group -> group.groupId ?: (group.destinationName ?: "group") }
                         ) { group ->
-                            val isActive = (group.timestamp ?: 0L) > (System.currentTimeMillis() - (30 * 60 * 1000L))
+                            val isActive = !group.isExpired()
                             val itemAlpha = if (isActive) 1f else 0.55f
                             Box(modifier = Modifier.alpha(itemAlpha)) {
                                 GroupCard(

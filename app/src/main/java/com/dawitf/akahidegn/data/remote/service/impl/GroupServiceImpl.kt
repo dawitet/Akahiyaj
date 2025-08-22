@@ -97,10 +97,32 @@ class GroupServiceImpl @Inject constructor(
             val newGroupRef = groupsRef.push()
             val newGroupId = newGroupRef.key ?: throw Exception("Failed to generate group ID")
             val now = System.currentTimeMillis()
+            
+            // Get current authenticated user's ID and details
+            val currentUserId = auth.currentUser?.uid ?: throw Exception("User not authenticated")
+            
+            // Fetch user details from Firestore
+            val userDoc = firestore.collection("users").document(currentUserId).get().await()
+            val creatorName = userDoc.getString("name") ?: "Unknown User"
+            val creatorPhone = userDoc.getString("phone") ?: "" // Assuming phone might be stored
+            val creatorAvatar = userDoc.getString("avatar") ?: "avatar_1" // Assuming avatar might be stored
+
+            // Create MemberInfo for the creator
+            val creatorMemberInfo = MemberInfo(
+                name = creatorName,
+                phone = creatorPhone,
+                avatar = creatorAvatar,
+                joinedAt = now
+            )
+
             val ensured = group.copy(
                 groupId = newGroupId,
+                creatorId = currentUserId, // Ensure creator ID is set
+                creatorName = creatorName, // Ensure creator name is set
                 timestamp = group.timestamp ?: now,
-                expiresAt = group.expiresAt ?: (group.timestamp ?: now) + (30 * 60 * 1000)
+                expiresAt = group.expiresAt ?: (group.timestamp ?: now) + (30 * 60 * 1000),
+                members = hashMapOf(currentUserId to true), // Add creator to members
+                memberDetails = hashMapOf(currentUserId to creatorMemberInfo) // Add creator details
             )
             newGroupRef.setValue(ensured).await()
             success(ensured)
