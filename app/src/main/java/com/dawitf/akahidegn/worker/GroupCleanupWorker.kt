@@ -8,6 +8,7 @@ import androidx.work.WorkerParameters
 import com.dawitf.akahidegn.domain.repository.GroupRepository
 import dagger.assisted.Assisted
 import dagger.assisted.AssistedInject
+import com.dawitf.akahidegn.domain.model.Group
 
 /**
  * WorkManager worker that periodically cleans up expired groups.
@@ -27,25 +28,34 @@ class GroupCleanupWorker @AssistedInject constructor(
 
     override suspend fun doWork(): Result {
         Log.d(TAG, "Starting group cleanup task")
-        
+
         return try {
             groupRepository.getExpiredGroups(System.currentTimeMillis() - 30 * 60 * 1000).let { result ->
-                return if (result is com.dawitf.akahidegn.core.result.Result.Success<*>) {
-                    val groups = result.data as List<com.dawitf.akahidegn.Group>
-                    groups.forEach { group ->
-                        group.groupId?.let { groupId ->
-                            groupRepository.deleteGroup(groupId)
+                return when (result) {
+                    is com.dawitf.akahidegn.core.result.Result.Success<*> -> {
+                        val data = result.data
+                        if (data is List<*> && data.all { it is Group }) {
+                            val groups = data.filterIsInstance<Group>()
+                            groups.forEach { group ->
+                                group.groupId?.let { groupId ->
+                                    groupRepository.deleteGroup(groupId)
+                                }
+                            }
+                            Log.d(TAG, "Successfully cleaned up ${groups.size} expired groups")
+                            Result.success()
+                        } else {
+                            Log.w(TAG, "Unexpected data type from getExpiredGroups")
+                            Result.failure()
                         }
                     }
-                    Log.d(TAG, "Successfully cleaned up ${groups.size} expired groups")
-                    Result.success()
-                } else if (result is com.dawitf.akahidegn.core.result.Result.Error) {
-                    Log.e(TAG, "Failed to cleanup expired groups: ${result.error}")
-                    Result.retry()
-                } else {
-                    // Should not happen, but handle for exhaustiveness
-                    Log.e(TAG, "Unexpected result type from getExpiredGroups")
-                    Result.failure()
+                    is com.dawitf.akahidegn.core.result.Result.Error -> {
+                        Log.e(TAG, "Failed to cleanup expired groups: ${result.error}")
+                        Result.retry()
+                    }
+                    else -> {
+                        Log.e(TAG, "Unexpected result type from getExpiredGroups")
+                        Result.failure()
+                    }
                 }
             }
         } catch (e: Exception) {

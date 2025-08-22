@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.work.WorkManager
 import androidx.work.WorkRequest
 import androidx.work.Operation
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.core.result.Result
 import com.dawitf.akahidegn.debug.GroupCleanupDebugHelper
 import com.dawitf.akahidegn.domain.repository.GroupRepository

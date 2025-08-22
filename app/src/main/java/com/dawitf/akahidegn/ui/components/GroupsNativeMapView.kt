@@ -16,7 +16,7 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 
 @Composable
 fun GroupsNativeMapView(

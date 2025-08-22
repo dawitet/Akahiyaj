@@ -6,7 +6,15 @@
     },
     "groups": {
       ".read": "auth != null",
-      ".write": "auth != null"
+      ".write": "auth != null && (newData.child('expiresAt').val() > now || !newData.exists())",
+      ".indexOn": ["timestamp", "expiresAt", "pickupLat", "pickupLng"],
+      "$groupId": {
+        ".validate": "newData.hasChildren(['timestamp', 'expiresAt', 'creatorId']) && newData.child('expiresAt').val() > now"
+      }
+    },
+    "debug": {
+      ".read": "auth != null && auth.token.email == 'dawitsahle@gmail.com'",
+      ".write": false
     }
   }
 }

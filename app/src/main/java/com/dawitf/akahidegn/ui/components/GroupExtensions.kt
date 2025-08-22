@@ -1,6 +1,6 @@
 package com.dawitf.akahidegn.ui.components
 
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import java.text.SimpleDateFormat
 import java.util.*
 

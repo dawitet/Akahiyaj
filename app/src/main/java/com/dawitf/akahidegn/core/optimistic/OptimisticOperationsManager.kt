@@ -1,7 +1,7 @@
 package com.dawitf.akahidegn.core.optimistic
 
 import android.util.Log
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.core.event.UiEventManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers

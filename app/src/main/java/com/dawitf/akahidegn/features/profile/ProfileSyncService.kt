@@ -2,8 +2,9 @@ package com.dawitf.akahidegn.features.profile
 
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.edit
 import com.google.firebase.auth.FirebaseAuth
-import com.google.firebase.database.FirebaseDatabase
+import com.google.firebase.firestore.FirebaseFirestore
 import com.dawitf.akahidegn.core.result.Result
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.tasks.await
@@ -14,7 +15,7 @@ import javax.inject.Singleton
 class ProfileSyncService @Inject constructor(
     @ApplicationContext private val context: Context,
     private val auth: FirebaseAuth,
-    private val database: FirebaseDatabase
+    private val firestore: FirebaseFirestore
 ) {
     private val sharedPreferences: SharedPreferences by lazy {
         context.getSharedPreferences("akahidegn_prefs", Context.MODE_PRIVATE)
@@ -25,20 +26,22 @@ class ProfileSyncService @Inject constructor(
             val currentUser = auth.currentUser ?: return Result.Error("User not authenticated")
             val uid = currentUser.uid
 
-            val snapshot = database.reference.child("users").child(uid).get().await()
+            val snapshot = firestore.collection("users").document(uid).get().await()
             if (snapshot.exists()) {
-                val remoteName = snapshot.child("name").getValue(String::class.java)
-                val remotePhone = snapshot.child("phone").getValue(String::class.java)
-                val remoteAvatarUrl = snapshot.child("avatarUrl").getValue(String::class.java)
+                val remoteName = snapshot.getString("name")
+                val remotePhone = snapshot.getString("phone")
+                val remoteAvatarUrl = snapshot.getString("avatarUrl")
 
-                if (!remoteName.isNullOrBlank()) {
-                    sharedPreferences.edit().putString("user_name", remoteName).apply()
-                }
-                if (!remotePhone.isNullOrBlank()) {
-                    sharedPreferences.edit().putString("user_phone", remotePhone).apply()
-                }
-                if (!remoteAvatarUrl.isNullOrBlank()) {
-                    sharedPreferences.edit().putString("user_avatar_url", remoteAvatarUrl).apply()
+                sharedPreferences.edit {
+                    if (!remoteName.isNullOrBlank()) {
+                        putString("user_name", remoteName)
+                    }
+                    if (!remotePhone.isNullOrBlank()) {
+                        putString("user_phone", remotePhone)
+                    }
+                    if (!remoteAvatarUrl.isNullOrBlank()) {
+                        putString("user_avatar_url", remoteAvatarUrl)
+                    }
                 }
             }
 
@@ -56,10 +59,10 @@ class ProfileSyncService @Inject constructor(
             val currentUser = auth.currentUser ?: return Result.Error("User not authenticated")
             val uid = currentUser.uid
 
-            val snapshot = database.reference.child("users").child(uid).get().await()
+            val snapshot = firestore.collection("users").document(uid).get().await()
             if (snapshot.exists()) {
-                val remoteName = snapshot.child("name").getValue(String::class.java)
-                val remotePhone = snapshot.child("phone").getValue(String::class.java)
+                val remoteName = snapshot.getString("name")
+                val remotePhone = snapshot.getString("phone")
 
                 val isConsistent = localName == remoteName && localPhone == remotePhone
                 Result.Success(isConsistent)
@@ -86,7 +89,7 @@ class ProfileSyncService @Inject constructor(
             if (!localAvatarUrl.isNullOrBlank()) userMap["avatarUrl"] = localAvatarUrl
             userMap["lastSync"] = System.currentTimeMillis()
 
-            database.reference.child("users").child(uid).updateChildren(userMap).await()
+            firestore.collection("users").document(uid).set(userMap, com.google.firebase.firestore.SetOptions.merge()).await()
             Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error("Force sync failed: ${e.message}")
@@ -99,17 +102,13 @@ class ProfileSyncService @Inject constructor(
             val uid = currentUser.uid
 
             // Update locally first
-            sharedPreferences.edit()
-                .putString("user_name", name)
-                .putString("user_phone", phone)
-                .apply {
-                    if (!avatarUrl.isNullOrBlank()) {
-                        putString("user_avatar_url", avatarUrl)
-                    }
-                }
-                .apply()
+            sharedPreferences.edit {
+                putString("user_name", name)
+                putString("user_phone", phone)
+                if (!avatarUrl.isNullOrBlank()) putString("user_avatar_url", avatarUrl)
+            }
 
-            // Then sync to Firebase
+            // Then sync to Firestore (permanent storage)
             val userMap = mutableMapOf<String, Any>(
                 "name" to name,
                 "phone" to phone,
@@ -119,7 +118,7 @@ class ProfileSyncService @Inject constructor(
                 userMap["avatarUrl"] = avatarUrl
             }
 
-            database.reference.child("users").child(uid).updateChildren(userMap).await()
+            firestore.collection("users").document(uid).set(userMap, com.google.firebase.firestore.SetOptions.merge()).await()
             Result.Success(Unit)
         } catch (e: Exception) {
             Result.Error("Profile update failed: ${e.message}")

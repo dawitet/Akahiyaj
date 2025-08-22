@@ -7,6 +7,7 @@ import com.dawitf.akahidegn.service.GroupCleanupScheduler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import com.dawitf.akahidegn.domain.model.Group
 
 /**
  * Debug helper class for Group Cleanup functionality.
@@ -39,11 +40,16 @@ class GroupCleanupDebugHelper(
                 groupRepository.getAllGroups().collect { result ->
                     when (result) {
                         is com.dawitf.akahidegn.core.result.Result.Success<*> -> {
-                            val groups = result.data as List<com.dawitf.akahidegn.Group>
-                            Log.d(TAG, "Debug: Found ${groups.size} groups")
-                            groups.forEach { group ->
-                                val ageMinutes = (System.currentTimeMillis() - (group.timestamp ?: 0)) / (60 * 1000)
-                                Log.d(TAG, "Debug: Group ${group.groupId} - Age: ${ageMinutes}min, Destination: ${group.destinationName}")
+                            val data = result.data
+                            if (data is List<*> && data.all { it is Group }) {
+                                val groups = data.filterIsInstance<Group>()
+                                Log.d(TAG, "Debug: Found ${groups.size} groups")
+                                groups.forEach { group ->
+                                    val ageMinutes = (System.currentTimeMillis() - (group.timestamp ?: 0)) / (60 * 1000)
+                                    Log.d(TAG, "Debug: Group ${group.groupId} - Age: ${ageMinutes}min, Destination: ${group.destinationName}")
+                                }
+                            } else {
+                                Log.w(TAG, "Debug: Unexpected data type received")
                             }
                         }
                         is com.dawitf.akahidegn.core.result.Result.Error -> {

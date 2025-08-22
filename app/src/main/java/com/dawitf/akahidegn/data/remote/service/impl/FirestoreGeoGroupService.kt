@@ -1,6 +1,6 @@
 package com.dawitf.akahidegn.data.remote.service.impl
 
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ktx.toObjects
 import kotlinx.coroutines.channels.awaitClose

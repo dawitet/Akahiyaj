@@ -12,7 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.features.bookmark.BookmarkManager
 import com.dawitf.akahidegn.ui.components.RideGroupCard
 import com.dawitf.akahidegn.ui.components.EmptyStateComponent

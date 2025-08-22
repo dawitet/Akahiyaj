@@ -4,7 +4,7 @@ import android.content.Context
 import androidx.hilt.work.HiltWorker
 import androidx.work.CoroutineWorker
 import androidx.work.WorkerParameters
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.domain.repository.GroupRepository
 import com.dawitf.akahidegn.core.optimistic.OptimisticOperationsManager
@@ -57,7 +57,7 @@ class CreateGroupWorker @AssistedInject constructor(
                 )
 
                 // Perform the actual repository operation
-                val result = groupRepository.createGroup(group)
+                val result = groupRepository.createGroupOptimistic(group)
                 
                 when (result) {
                     is com.dawitf.akahidegn.core.result.Result.Success -> {

@@ -2,7 +2,7 @@ package com.dawitf.akahidegn.ui.screens
 
 import androidx.compose.foundation.layout.*
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ExitToApp
+import androidx.compose.material.icons.automirrored.filled.ExitToApp
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -72,7 +72,7 @@ fun SettingsScreen(
                 verticalAlignment = Alignment.CenterVertically
             ) {
                 Icon(
-                    imageVector = Icons.Default.ExitToApp,
+                    imageVector = Icons.AutoMirrored.Filled.ExitToApp,
                     contentDescription = "Sign Out",
                     modifier = Modifier.size(24.dp),
                     tint = MaterialTheme.colorScheme.onErrorContainer

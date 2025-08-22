@@ -23,7 +23,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import android.location.Location
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import kotlin.math.*
 
 @Composable

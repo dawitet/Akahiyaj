@@ -1,8 +1,8 @@
 package com.dawitf.akahidegn.service
 
 import android.util.Log
-import com.dawitf.akahidegn.Group
-import com.dawitf.akahidegn.GroupReader
+import com.dawitf.akahidegn.domain.model.Group
+import com.dawitf.akahidegn.domain.model.GroupReader
 import com.dawitf.akahidegn.notifications.service.NotificationManagerService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*

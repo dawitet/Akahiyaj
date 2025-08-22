@@ -1,6 +1,8 @@
-package com.dawitf.akahidegn
+package com.dawitf.akahidegn.domain.model
 
 import android.util.Log
+import com.dawitf.akahidegn.domain.model.Group
+import com.dawitf.akahidegn.domain.model.MemberInfo
 import com.google.firebase.database.DataSnapshot
 
 /**

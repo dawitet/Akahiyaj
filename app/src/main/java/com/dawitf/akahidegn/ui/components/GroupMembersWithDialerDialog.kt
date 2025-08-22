@@ -23,8 +23,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.dawitf.akahidegn.Group
-import com.dawitf.akahidegn.MemberInfo
+import com.dawitf.akahidegn.domain.model.Group
+import com.dawitf.akahidegn.domain.model.MemberInfo
 
 @Composable
 fun GroupMembersWithDialerDialog(

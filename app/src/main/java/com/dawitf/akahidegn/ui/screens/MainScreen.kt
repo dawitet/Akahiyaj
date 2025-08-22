@@ -10,7 +10,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.domain.model.SearchFilters
 import com.dawitf.akahidegn.ui.components.*
 import com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel
@@ -21,13 +21,13 @@ import com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel
  */
 @Composable
 fun MainScreen(
-    mainGroups: List<com.dawitf.akahidegn.domain.model.Group>,
+    mainGroups: List<Group>,
     searchQuery: String,
     onSearchQueryChange: (String) -> Unit,
     selectedFilters: SearchFilters,
     onFiltersChange: (SearchFilters) -> Unit,
-    onGroupClick: (com.dawitf.akahidegn.domain.model.Group) -> Unit,
-    onJoinGroup: (com.dawitf.akahidegn.domain.model.Group) -> Unit,
+    onGroupClick: (Group) -> Unit,
+    onJoinGroup: (Group) -> Unit,
     isLoading: Boolean,
     onRefreshGroups: () -> Unit,
     onCreateGroup: () -> Unit,

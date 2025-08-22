@@ -8,6 +8,7 @@ import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.domain.repository.GroupRepository
 import com.dawitf.akahidegn.core.optimistic.OptimisticOperationsManager
 import com.dawitf.akahidegn.core.event.UiEventManager
+import com.dawitf.akahidegn.domain.model.MemberInfo
 import com.google.firebase.auth.FirebaseAuthException
 import com.google.firebase.firestore.FirebaseFirestoreException
 import dagger.assisted.Assisted
@@ -30,48 +31,53 @@ class JoinGroupWorker @AssistedInject constructor(
         const val KEY_GROUP_ID = "group_id"
         const val KEY_USER_ID = "user_id"
         const val KEY_OPERATION_ID = "operation_id"
+        const val KEY_USER_NAME = "user_name"
     }
 
     override suspend fun doWork(): Result {
         val operationId = inputData.getString(KEY_OPERATION_ID) ?: return Result.failure()
         
         return withContext(Dispatchers.IO) {
-            try {
-                val groupId = inputData.getString(KEY_GROUP_ID) ?: return@withContext Result.failure()
-                val userId = inputData.getString(KEY_USER_ID) ?: return@withContext Result.failure()
+	        try {
+		        val groupId = inputData.getString(KEY_GROUP_ID) ?: return@withContext Result.failure()
+		        val userId = inputData.getString(KEY_USER_ID) ?: return@withContext Result.failure()
+                val userName = inputData.getString(KEY_USER_NAME) ?: "Joined User" // Get the user's name
+                val userInfo = MemberInfo(name = userName) // Create the MemberInfo object
 
-                // Perform the actual repository operation
-                val result = groupRepository.joinGroup(groupId, userId)
-                
-                when (result) {
-                    is com.dawitf.akahidegn.core.result.Result.Success -> {
-                        optimisticOperationsManager.markOperationSuccess(operationId)
-                        uiEventManager.showSuccess("Successfully joined group!")
-                        Result.success()
-                    }
-                    is com.dawitf.akahidegn.core.result.Result.Error -> {
-                        val intelligentError = mapToIntelligentError(AppError.UnknownError(result.error))
-                        optimisticOperationsManager.markOperationFailed(operationId)
-                        uiEventManager.showError(intelligentError.userMessage)
-                        logOperationError("JoinGroupWorker", result.error, intelligentError)
-                        
-                        if (intelligentError.shouldRetry) {
-                            Result.retry()
-                        } else {
-                            Result.failure()
-                        }
-                    }
-                    is com.dawitf.akahidegn.core.result.Result.Loading -> {
-                        Result.retry()
-                    }
-                }
-            } catch (e: Exception) {
-                val intelligentError = mapExceptionToIntelligentError(e)
-                optimisticOperationsManager.markOperationFailed(operationId)
-                uiEventManager.showError(intelligentError.userMessage)
-                logOperationError("JoinGroupWorker", e, intelligentError)
-                Result.failure()
-            }
+		        // Perform the actual repository operation
+                val result = groupRepository.joinGroupOptimistic(groupId, userId, userInfo)
+
+		        when (result) {
+			        is com.dawitf.akahidegn.core.result.Result.Success -> {
+				        optimisticOperationsManager.markOperationSuccess(operationId)
+				        uiEventManager.showSuccess("Successfully joined group!")
+				        Result.success()
+			        }
+
+			        is com.dawitf.akahidegn.core.result.Result.Error -> {
+				        val intelligentError = mapToIntelligentError(AppError.UnknownError(result.error))
+				        optimisticOperationsManager.markOperationFailed(operationId)
+				        uiEventManager.showError(intelligentError.userMessage)
+				        logOperationError("JoinGroupWorker", result.error, intelligentError)
+
+				        if (intelligentError.shouldRetry) {
+					        Result.retry()
+				        } else {
+					        Result.failure()
+				        }
+			        }
+
+			        is com.dawitf.akahidegn.core.result.Result.Loading -> {
+				        Result.retry()
+			        }
+		        }
+	        } catch (e: Exception) {
+		        val intelligentError = mapExceptionToIntelligentError(e)
+		        optimisticOperationsManager.markOperationFailed(operationId)
+		        uiEventManager.showError(intelligentError.userMessage)
+		        logOperationError("JoinGroupWorker", e, intelligentError)
+		        Result.failure()
+	        } as Result
         }
     }
     

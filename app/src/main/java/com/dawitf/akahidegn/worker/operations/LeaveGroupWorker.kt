@@ -86,60 +86,42 @@ class LeaveGroupWorker @AssistedInject constructor(
     )
     
     private fun mapToIntelligentError(appError: String): IntelligentError {
-        return when (appError) {
-            is AppError.NetworkError.ConnectionTimeout -> IntelligentError(
+        return when {
+            appError.contains("timeout", ignoreCase = true) || appError.contains("connection", ignoreCase = true) -> IntelligentError(
                 userMessage = "Connection timed out. Please check your internet and try again.",
                 shouldRetry = true,
                 errorCategory = "NETWORK_TIMEOUT",
                 debugContext = "Leave operation failed due to connection timeout"
             )
-            is AppError.NetworkError.NoInternet -> IntelligentError(
+            appError.contains("network", ignoreCase = true) || appError.contains("internet", ignoreCase = true) -> IntelligentError(
                 userMessage = "Please check your internet connection and try again.",
                 shouldRetry = true,
                 errorCategory = "NO_INTERNET",
                 debugContext = "Leave operation requires internet connectivity"
             )
-            is AppError.AuthenticationError.NotAuthenticated -> IntelligentError(
+            appError.contains("auth", ignoreCase = true) || appError.contains("permission", ignoreCase = true) -> IntelligentError(
                 userMessage = "Please sign in to leave groups.",
                 shouldRetry = false,
                 errorCategory = "AUTH_REQUIRED",
                 debugContext = "User must authenticate to leave groups"
             )
-            is AppError.AuthenticationError.InvalidCredentials -> IntelligentError(
-                userMessage = "You don't have permission to leave this group.",
-                shouldRetry = false,
-                errorCategory = "PERMISSION_DENIED",
-                debugContext = "Permission denied for leave operation"
-            )
-            is AppError.ValidationError.NotFound -> IntelligentError(
+            appError.contains("not found", ignoreCase = true) || appError.contains("doesn't exist", ignoreCase = true) -> IntelligentError(
                 userMessage = "This group no longer exists.",
                 shouldRetry = false,
                 errorCategory = "GROUP_NOT_FOUND",
                 debugContext = "Group has been deleted or doesn't exist"
             )
-            is AppError.ValidationError.InvalidInput -> IntelligentError(
+            appError.contains("not a member", ignoreCase = true) || appError.contains("invalid", ignoreCase = true) -> IntelligentError(
                 userMessage = "You are not a member of this group.",
                 shouldRetry = false,
-                errorCategory = "NOT_A_MEMBER",
-                debugContext = "User is not currently a group member"
-            )
-            is AppError.RateLimitError.TooManyRequests -> IntelligentError(
-                userMessage = "Too many requests. Please wait a moment and try again.",
-                shouldRetry = true,
-                errorCategory = "RATE_LIMITED",
-                debugContext = "Rate limiting active, retry with backoff"
-            )
-            is AppError.DatabaseError.OperationFailed -> IntelligentError(
-                userMessage = "Server error. Please try again in a moment.",
-                shouldRetry = true,
-                errorCategory = "SERVER_ERROR",
-                debugContext = "Database operation failed, temporary issue"
+                errorCategory = "NOT_MEMBER",
+                debugContext = "User is not a member of the target group"
             )
             else -> IntelligentError(
                 userMessage = "Failed to leave group. Please try again.",
-                shouldRetry = false,
-                errorCategory = "UNHANDLED_ERROR",
-                debugContext = "Unhandled AppError type: ${appError::class.simpleName}"
+                shouldRetry = true,
+                errorCategory = "UNKNOWN_ERROR",
+                debugContext = "Unhandled error: $appError"
             )
         }
     }

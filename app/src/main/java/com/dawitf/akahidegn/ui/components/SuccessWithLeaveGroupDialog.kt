@@ -20,7 +20,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import kotlinx.coroutines.delay
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 
 @Composable
 fun SuccessWithLeaveGroupDialog(

@@ -1,6 +1,6 @@
 package com.dawitf.akahidegn.domain.repository
 
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.core.optimistic.OptimisticOperation
 import com.dawitf.akahidegn.core.optimistic.OptimisticOperationsManager
 import com.dawitf.akahidegn.core.result.Result

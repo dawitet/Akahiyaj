@@ -4,8 +4,8 @@ import android.location.Location
 import android.util.Log
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.dawitf.akahidegn.Group
-import com.dawitf.akahidegn.GroupReader
+import com.dawitf.akahidegn.domain.model.Group
+import com.dawitf.akahidegn.domain.model.GroupReader
 import com.dawitf.akahidegn.data.PreferenceRepository
 import com.dawitf.akahidegn.data.local.model.UserProfile
 import com.dawitf.akahidegn.data.remote.service.LocationService

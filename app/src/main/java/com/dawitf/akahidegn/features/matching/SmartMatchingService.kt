@@ -1,6 +1,6 @@
 package com.dawitf.akahidegn.features.matching
 
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.analytics.AnalyticsService
 import com.dawitf.akahidegn.core.error.AppError
 import com.dawitf.akahidegn.domain.repository.GroupRepository

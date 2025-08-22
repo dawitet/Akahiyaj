@@ -1,6 +1,6 @@
 package com.dawitf.akahidegn.core.optimistic
 
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import java.util.UUID
 
 /**

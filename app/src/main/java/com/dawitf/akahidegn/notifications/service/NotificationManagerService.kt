@@ -14,7 +14,7 @@ import android.os.VibratorManager
 import androidx.core.app.NotificationCompat
 import com.dawitf.akahidegn.MainActivity
 import com.dawitf.akahidegn.R
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.notifications.service.NotificationPreferencesManager
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -186,6 +186,7 @@ class NotificationManagerService @Inject constructor(
                 vibrator.vibrate(VibrationEffect.createWaveform(pattern, -1))
             } else {
                 val pattern = longArrayOf(0, 100, 50, 100)
+                @Suppress("DEPRECATION")
                 vibrator.vibrate(pattern, -1)
             }
         }

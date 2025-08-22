@@ -9,7 +9,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 import java.text.SimpleDateFormat
 import java.util.*
 

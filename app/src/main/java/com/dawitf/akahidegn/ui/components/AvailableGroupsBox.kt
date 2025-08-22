@@ -18,7 +18,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.dawitf.akahidegn.Group
+import com.dawitf.akahidegn.domain.model.Group
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
