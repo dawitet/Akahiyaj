@@ -74,16 +74,10 @@
     <string name="group_max_members_label">ከፍተኛ አባላት:</string> <!-- Max Members: -->
     <string name="group_current_location_label">አሁኑ አካባቢ:</string> <!-- Current Location: -->
 
-    <!-- Chat functionality -->
-    <string name="chat_title">ውይይት</string> <!-- Chat -->
-    <string name="chat_input_placeholder">መልእክት ላክ...</string> <!-- Send message... -->
+    <!-- Send button (retained as it might be used elsewhere, e.g. suggestions) -->
     <string name="send_button">ላክ</string> <!-- Send -->
-    <string name="chat_title_prefix_dynamic">ውይይት: %1$s</string>
     <string name="unknown_destination">ያልታወቀ መድረሻ</string> <!-- Unknown destination -->
-    <string name="action_close_chat">ውይይት ዝጋ</string> <!-- Close chat -->
-    <string name="chat_message_input_label">መልእክት ጻፍ</string> <!-- Write message -->
     <string name="action_send_message">መልክት ላክ</string> <!-- Send message -->
-    <string name="chat_no_messages_placeholder">ምንም መልእክት የለም። ውይይት ጀምር!</string> <!-- No messages. Start conversation! -->
 
     <!-- Missing action strings -->
     <string name="action_back">ተመለስ</string> <!-- Go back -->
@@ -187,8 +181,6 @@
     <string name="birr_currency">ብር</string>
     <string name="no_internet_connection">የበይነመረብ ግንኙነት የለም</string>
 
-    
-    
     <!-- Trip and Group related -->
     <string name="trip_history">የጉዞ ታሪክ</string>
     <string name="view_history">ታሪክ ይመልከቱ</string>
@@ -272,14 +264,6 @@
     <string name="confirm_password">የመተላለፊያ ቃል አረጋግጥ</string>
     <string name="forgot_password">የመተላለፊያ ቃልን ረሳሁ</string>
     <string name="default_web_client_id" translatable="false">81721365267-i23fh9src6e1mn5oiif7t5bmr6l5nqva.apps.googleusercontent.com</string>
-    
-    
-    
-    
-    
-    
-    
-    
     
     <!-- Notifications Types -->
     <string name="trip_notifications">የጉዞ ማሳወቂያዎች</string>

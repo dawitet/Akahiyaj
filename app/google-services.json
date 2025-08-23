@@ -23,6 +23,14 @@
           }
         },
         {
+          "client_id": "81721365267-m5onbtav1i7jedfe7tg8i3cqr0q4o0jt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.dawitf.akahidegn",
+            "certificate_hash": "b95ebe64cda2ffbe64744c8c8ac62b9b44fd2000"
+          }
+        },
+        {
           "client_id": "81721365267-i23fh9src6e1mn5oiif7t5bmr6l5nqva.apps.googleusercontent.com",
           "client_type": 3
         }

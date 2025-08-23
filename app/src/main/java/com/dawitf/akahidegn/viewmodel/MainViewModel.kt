@@ -17,7 +17,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.debounce
+// import kotlinx.coroutines.flow.debounce // No longer needed
 import kotlinx.coroutines.flow.flowOn
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -47,10 +47,6 @@ class MainViewModel @Inject constructor(
     private val _currentLocation = MutableStateFlow<Location?>(null)
     val currentLocation: StateFlow<Location?> = _currentLocation.asStateFlow()
 
-    // Search query state
-    private val _searchQuery = MutableStateFlow("")
-    val searchQuery: StateFlow<String> = _searchQuery.asStateFlow()
-
     // Current user ID state
     private val _currentUserId = MutableStateFlow<String?>(null)
     val currentUserId: StateFlow<String?> = _currentUserId.asStateFlow()
@@ -75,9 +71,8 @@ class MainViewModel @Inject constructor(
     // Filtered groups with location-based proximity and expiration checks
     private val filteredGroups = combine(
         baseGroups,
-        _currentLocation,
-        _searchQuery.debounce(300)
-    ) { groupsResult, location, query ->
+        _currentLocation
+    ) { groupsResult, location -> // query parameter removed
         when (groupsResult) {
             is Result.Loading -> {
                 _isLoadingGroups.value = true
@@ -101,9 +96,7 @@ class MainViewModel @Inject constructor(
                     if (group.isExpired()) {
                         Log.d("MainViewModel", "Filtering out expired group: ${group.groupId}")
                         return@filter false
-
                     }
-
                     // Check location proximity if user location is available
                     if (location != null && group.pickupLat != null && group.pickupLng != null) {
                         val isWithinRadius = group.isWithinRadius(location.latitude, location.longitude)
@@ -113,26 +106,9 @@ class MainViewModel @Inject constructor(
                             return@filter false
                         }
                     }
-
-                    // Search filter
-                    if (query.isNotBlank()) {
-                        val matchesSearch = group.destinationName?.contains(query, ignoreCase = true) == true ||
-                                          group.originalDestination?.contains(query, ignoreCase = true) == true ||
-                                          group.to?.contains(query, ignoreCase = true) == true
-                        if (!matchesSearch) {
-                            return@filter false
-                        }
-                    }
-
                     true
-                }.sortedWith(compareBy<Group> {
-                    // Sort by distance if location available, otherwise by creation time
-                    if (location != null && it.pickupLat != null && it.pickupLng != null) {
-                        it.calculateDistance(location.latitude, location.longitude, it.pickupLat!!, it.pickupLng!!)
-                    } else {
-                        -(it.timestamp ?: 0L) // Newest first if no location
-                    }
-                }.thenByDescending { it.timestamp })
+                }
+                // No sorting by distance or timestamp here; just filtered by expiry (and optionally proximity)
             }
         }
     }.flowOn(Dispatchers.Default)
@@ -192,10 +168,6 @@ class MainViewModel @Inject constructor(
                 }
             }
         }
-    }
-
-    fun updateSearchQuery(query: String) {
-        _searchQuery.value = query
     }
 
     // Optimistic UI: Create group immediately, sync to Firebase in background

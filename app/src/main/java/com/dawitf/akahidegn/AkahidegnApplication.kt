@@ -22,6 +22,8 @@ import coil.decode.SvgDecoder
 import coil.util.DebugLogger
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
+import org.osmdroid.config.Configuration // Added for OSMdroid
+import androidx.preference.PreferenceManager // Added for OSMdroid
 
 @HiltAndroidApp
 class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderFactory {
@@ -39,7 +41,11 @@ class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderF
     
     override fun onCreate() {
         super.onCreate()
-        
+
+        // OSMdroid configuration
+        Configuration.getInstance().load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
+        Configuration.getInstance().userAgentValue = BuildConfig.APPLICATION_ID // Using BuildConfig for safety
+
         try {
             // Initialize Firebase App first (important for other Firebase services)
             FirebaseApp.initializeApp(this)
@@ -112,11 +118,11 @@ class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderF
         try {
             // Correct project URL (previously had a typo 'akahiyaj' vs 'akahidegn')
             val correctDbUrl = "https://akahidegn-79376-default-rtdb.europe-west1.firebasedatabase.app"
-            FirebaseDatabase.getInstance(correctDbUrl).setPersistenceEnabled(true)
+            // FirebaseDatabase.getInstance(correctDbUrl).setPersistenceEnabled(true) // Line removed
             FirebaseDatabase.getInstance(correctDbUrl).setLogLevel(com.google.firebase.database.Logger.Level.DEBUG)
-            Log.d("APP_INIT", "Firebase Database initialized with URL=$correctDbUrl (persistence + DEBUG logging)")
+            Log.d("APP_INIT", "Firebase Database initialized with URL=$correctDbUrl (DEBUG logging)") // Log message updated
         } catch (e: Exception) {
-            Log.w("APP_INIT", "Firebase persistence setup failed or already enabled: ${e.message}")
+            Log.w("APP_INIT", "Firebase database setup failed: ${e.message}") // Log message updated
         }
     }
     

@@ -203,58 +203,61 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        
-        Log.d(TAG, "MainActivity onCreate - launched from SplashActivity")
-        
-        // Enable edge-to-edge for immersive UI
         WindowCompat.setDecorFitsSystemWindows(window, false)
-        // Example of using errorHandler for a guarded call
-        try {
-            sharedPreferences = getSharedPreferences("akahidegn_prefs", MODE_PRIVATE)
-        } catch (t: Throwable) {
-            errorHandler.log(t, "prefs_init")
-            Toast.makeText(this, errorHandler.toUserMessage(t), Toast.LENGTH_LONG).show()
+
+        // Check location permission before setting content
+        val hasLocationPermission = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.ACCESS_FINE_LOCATION
+        ) == PackageManager.PERMISSION_GRANTED
+
+        if (!hasLocationPermission) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                LOCATION_PERMISSION_REQUEST_CODE
+            )
         }
-        locationManager = getSystemService(LOCATION_SERVICE) as LocationManager
-        setupLocationUpdates() // Request location updates
 
-        MobileAds.initialize(this) { Log.d("ADS", "Mobile Ads SDK initialized") }
+        setContent {
+            var showPermissionDialog by remember { mutableStateOf(!hasLocationPermission) }
+            if (showPermissionDialog) {
+                LocationPermissionDialog(onRequestPermission = {
+                    ActivityCompat.requestPermissions(
+                        this,
+                        arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                        LOCATION_PERMISSION_REQUEST_CODE
+                    )
+                })
+            } else {
+                // ...existing code to show the main app UI...
+                AkahidegnTheme {
+                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
+                        MainScreen(/* pass required parameters */)
+                    }
+                }
+            }
+        }
+    }
 
-        database = Firebase.database
-        groupsRef = database.reference.child("groups") // ViewModel uses this via initializeFirebase
-        auth = Firebase.auth
-        credentialManager = CredentialManager.create(this)
-        firestore = FirebaseFirestore.getInstance()
-
-        loadRewardedAd()
-        loadInterstitialAd()
-
-        // Pass the location flow to the ViewModel once it's available
-        mainViewModel.setUserLocationFlow(userLocationFlow)
-
-        // Start the periodic group cleanup service (every 5 minutes)
-        groupCleanupService.startPeriodicCleanup()
-        Log.d(TAG, "Started automatic group cleanup service")
-
-        // Check if Google ID token was passed from EnhancedSplashActivity
-        val googleIdTokenFromSplash = intent.getStringExtra(EnhancedSplashActivity.EXTRA_GOOGLE_ID_TOKEN)
-        val isFirstTimeUser = intent.getBooleanExtra(EnhancedSplashActivity.EXTRA_IS_FIRST_TIME_USER, false)
-        
-        // Set up initial UI to prevent white screen
-        setInitialLoadingContent()
-        
-        if (googleIdTokenFromSplash != null) {
-            Log.d(TAG, "Google ID token received from SplashActivity - processing background authentication")
-            Log.d(TAG, "First time user: $isFirstTimeUser")
-            processGoogleIdTokenFromSplash(googleIdTokenFromSplash, isFirstTimeUser)
-        } else if (auth.currentUser != null) {
-            Log.d(TAG, "User already authenticated with Firebase, no token needed - proceeding to profile check")
-            // User is already authenticated but no fresh Google token was available
-            // This is normal after app process restart when Firebase auth persists
-            verifyCurrentUserToken()
-        } else {
-            Log.d(TAG, "No current user and no token from splash, starting Google Sign-In flow")
-            startGoogleSignInFlowWithRetry()
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
+            val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
+            if (!granted) {
+                // Show dialog again if permission denied
+                setContent {
+                    LocationPermissionDialog(onRequestPermission = {
+                        ActivityCompat.requestPermissions(
+                            this,
+                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
+                            LOCATION_PERMISSION_REQUEST_CODE
+                        )
+                    })
+                }
+            } else {
+                // Permission granted, reload main UI
+                recreate()
+            }
         }
     }
 
@@ -1343,4 +1346,19 @@ fun RegistrationScreen(onRegistrationComplete: (Boolean) -> Unit) {
             }
         }
     }
+}
+
+@Composable
+fun LocationPermissionDialog(onRequestPermission: () -> Unit) {
+    AlertDialog(
+        onDismissRequest = {},
+        title = { Text("Location Permission Required") },
+        text = { Text("This app requires location access to function. Please grant location permission to continue.") },
+        confirmButton = {
+            Button(onClick = onRequestPermission) {
+                Text("Grant Permission")
+            }
+        },
+        dismissButton = {}
+    )
 }

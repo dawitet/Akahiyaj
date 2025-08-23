@@ -14,6 +14,18 @@ import com.dawitf.akahidegn.domain.model.Group
 import com.dawitf.akahidegn.domain.model.SearchFilters
 import com.dawitf.akahidegn.ui.components.*
 import com.dawitf.akahidegn.ui.viewmodels.AnimationViewModel
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.compose.material3.NavigationBar
+import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.List
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.Icon
+import androidx.compose.runtime.getValue
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 /**
  * Main Screen
@@ -151,5 +163,63 @@ private fun FilterChips(
             },
             label = { Text("Nearby") }
         )
+    }
+}
+
+@Composable
+fun MainScreenHost() {
+    val navController = rememberNavController()
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
+    val currentRoute = navBackStackEntry?.destination?.route
+    val items = listOf("map", "groups", "settings")
+    Scaffold(
+        bottomBar = {
+            NavigationBar {
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Map, contentDescription = "Map") },
+                    label = { Text("Map") },
+                    selected = currentRoute == "map",
+                    onClick = { navController.navigate("map") }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.List, contentDescription = "Groups") },
+                    label = { Text("Groups") },
+                    selected = currentRoute == "groups",
+                    onClick = { navController.navigate("groups") }
+                )
+                NavigationBarItem(
+                    icon = { Icon(Icons.Default.Settings, contentDescription = "Settings") },
+                    label = { Text("Settings") },
+                    selected = currentRoute == "settings",
+                    onClick = { navController.navigate("settings") }
+                )
+            }
+        }
+    ) { innerPadding ->
+        NavHost(navController, startDestination = "map", Modifier.padding(innerPadding)) {
+            composable("map") { MapScreenPlaceholder() }
+            composable("groups") { GroupsScreenPlaceholder() }
+            composable("settings") { SettingsScreenPlaceholder() }
+        }
+    }
+}
+
+@Composable
+fun MapScreenPlaceholder() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Map Screen (to be implemented)")
+    }
+}
+
+@Composable
+fun GroupsScreenPlaceholder() {
+    // Use the existing group list UI for now
+    Text("Groups Screen (to be implemented)")
+}
+
+@Composable
+fun SettingsScreenPlaceholder() {
+    Box(Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+        Text("Settings Screen (to be implemented)")
     }
 }

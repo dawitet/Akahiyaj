@@ -1,6 +1,5 @@
 package com.dawitf.akahidegn
 
-import com.dawitf.akahidegn.domain.repository.ChatRepository
 import com.dawitf.akahidegn.domain.repository.GroupRepository
 import com.dawitf.akahidegn.viewmodel.MainViewModel
 import io.mockk.mockk
@@ -12,6 +11,8 @@ import org.junit.Assert.*
 import org.junit.Before
 import org.junit.Test
 import kotlin.system.measureTimeMillis
+import android.app.Application // Required for MainViewModel
+import com.dawitf.akahidegn.core.event.UiEventManager // Required for MainViewModel
 
 /**
  * Performance validation tests for the Akahidegn app
@@ -23,19 +24,23 @@ class PerformanceValidationTest {
 
     private lateinit var viewModel: MainViewModel
     private lateinit var mockGroupRepository: GroupRepository
-    private lateinit var mockChatRepository: ChatRepository
+    // Removed: private lateinit var mockChatRepository: ChatRepository
+    private lateinit var mockApplication: Application // Mock Application
+    private lateinit var mockUiEventManager: UiEventManager // Mock UiEventManager
     private val testDispatcher = StandardTestDispatcher()
 
     @Before
     fun setup() {
         Dispatchers.setMain(testDispatcher)
         
-        // Create mock repositories
+        // Create mock dependencies
         mockGroupRepository = mockk(relaxed = true)
-        mockChatRepository = mockk(relaxed = true)
+        // Removed: mockChatRepository = mockk(relaxed = true)
+        mockApplication = mockk(relaxed = true) // Initialize mock Application
+        mockUiEventManager = mockk(relaxed = true) // Initialize mock UiEventManager
         
         // Create ViewModel with mocked dependencies
-        viewModel = MainViewModel(mockGroupRepository, mockChatRepository)
+        viewModel = MainViewModel(mockApplication, mockGroupRepository, mockUiEventManager)
     }
 
     @After
@@ -105,14 +110,14 @@ class PerformanceValidationTest {
     @Test
     fun `verify stable data classes prevent unnecessary recomposition`() {
         // Test Group data class stability
-        val group1 = Group(
+        val group1 = com.dawitf.akahidegn.domain.model.Group(
             groupId = "test1",
             destinationName = "Test Destination",
             memberCount = 2,
             maxMembers = 4
         )
         
-        val group2 = Group(
+        val group2 = com.dawitf.akahidegn.domain.model.Group(
             groupId = "test1",
             destinationName = "Test Destination", 
             memberCount = 2,

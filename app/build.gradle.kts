@@ -230,6 +230,10 @@ dependencies {
     // Keep activity-compose aligned via version catalog (already added above)
     implementation("androidx.compose.material3:material3-window-size-class:1.1.2")
 
+    // OSMdroid for map display
+    implementation("org.osmdroid:osmdroid-android:6.1.20")
+    implementation("com.github.MKergall:osmbonuspack:6.9.0") // Correct JitPack dependency for bonuspack
+
     // Add dependencies for WorkManager testing
     testImplementation(libs.androidx.work.testing)
     testImplementation("androidx.test:core:1.6.1") // Updated

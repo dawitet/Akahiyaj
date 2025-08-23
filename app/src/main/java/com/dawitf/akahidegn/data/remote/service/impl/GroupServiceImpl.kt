@@ -65,9 +65,6 @@ class GroupServiceImpl @Inject constructor(
             }
         }
 
-        // Enable Firebase offline persistence to improve reliability
-        database.setPersistenceEnabled(true)
-        groupsRef.keepSynced(true) // Keep groups data synced even when offline
         groupsRef.addValueEventListener(listener)
 
         awaitClose {
