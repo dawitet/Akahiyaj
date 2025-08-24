@@ -38,8 +38,7 @@
         *   *Files to create/modify:* `MainScreen.kt` (or similar top-level UI host), new Composables for each tab.
 *   [X] **ViewModel Adjustments (Initial):**
     *   [X] In `MainViewModel`, adapt existing group fetching logic. Remove explicit distance sorting if it's currently done before map display. Groups will be filtered primarily by expiry.
-    *   [X] Remove search query StateFlow and related logic (`_searchQuery`, `updateSearchQuery`).
-        *   *File to modify:* `app/src/main/java/com/dawitf/akahidegn/viewmodel/MainViewModel.kt`
+    *   *File to modify:* `app/src/main/java/com/dawitf/akahidegn/viewmodel/MainViewModel.kt`
 
 ## Phase 2: Map Screen Implementation (Main Page)
 

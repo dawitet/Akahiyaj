@@ -29,6 +29,7 @@ firebase-perf = "20.5.2"
 firebase-crashlytics = "18.6.4"
 compose-material-icons-extended = "1.6.8"
 coil-compose = "2.6.0"
+androidx-preference = "1.2.1"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "core-ktx" }
@@ -60,6 +61,7 @@ androidx-ui-test-manifest = { group = "androidx.compose.ui", name = "ui-test-man
 androidx-constraintlayout = { group = "androidx.constraintlayout", name = "constraintlayout", version.ref = "constraintlayout" }
 androidx-material = { group = "com.google.android.material", name = "material", version.ref = "material" }
 firebase-bom = { group = "com.google.firebase", name = "firebase-bom", version.ref = "firebase-bom" }
+androidxPreferenceKtx = { group = "androidx.preference", name = "preference-ktx", version.ref = "androidx-preference" }
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }

@@ -59,6 +59,10 @@ class MainViewModel @Inject constructor(
     private val _pendingGroups = MutableStateFlow<List<Group>>(emptyList())
     private val _pendingJoins = MutableStateFlow<Set<String>>(emptySet())
 
+    // Search query state
+    private val _searchQuery = MutableStateFlow("")
+    val searchQuery: StateFlow<String> = _searchQuery
+
     // Base groups from repository
     private val baseGroups = groupRepository.getAllGroups()
         .flowOn(Dispatchers.IO)
@@ -272,6 +276,10 @@ class MainViewModel @Inject constructor(
         val currentPending = _pendingJoins.value.toMutableSet()
         currentPending.remove(groupId)
         _pendingJoins.value = currentPending
+    }
+
+    fun updateSearchQuery(query: String) {
+        _searchQuery.value = query
     }
 
     override fun onCleared() {

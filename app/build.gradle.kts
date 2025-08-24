@@ -138,7 +138,7 @@ dependencies {
 
     // Your existing dependencies
     implementation(libs.androidx.lifecycle.runtime.ktx) // Now using version catalog
-    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.7.0")
+    implementation("androidx.lifecycle:lifecycle-viewmodel-compose:2.9.2")
     implementation(libs.androidx.activity.compose)
     // Use BOM-managed Material3 instead of hardcoding versions
     implementation(libs.androidx.material3)
@@ -214,6 +214,7 @@ dependencies {
     
     // DataStore for secure preferences
     implementation("androidx.datastore:datastore-preferences:1.0.0")
+    implementation(libs.androidxPreferenceKtx) // Changed this line
     
     // WorkManager for background tasks
     implementation(libs.androidx.work.runtime)

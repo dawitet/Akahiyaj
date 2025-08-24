@@ -1,6 +1,7 @@
 package com.dawitf.akahidegn
 
 import android.Manifest
+import android.content.Context
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationListener
@@ -111,6 +112,11 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
 import kotlinx.coroutines.tasks.await
 import kotlin.random.Random
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Map
+import androidx.compose.material.icons.filled.Groups
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.ui.graphics.vector.ImageVector
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -172,6 +178,10 @@ class MainActivity : ComponentActivity() {
                             Log.d("LOCATION", "DeviceConsistencyService still processing location")
                             _userLocationFlow.value = location
                         }
+                        // Add an else branch for exhaustiveness
+                        else -> {
+                            Log.w("LOCATION", "Unknown result from DeviceConsistencyService")
+                        }
                     }
                 } catch (e: Exception) {
                     Log.e("LOCATION", "Error processing location through DeviceConsistencyService", e)
@@ -190,6 +200,9 @@ class MainActivity : ComponentActivity() {
     private lateinit var sharedPreferences: SharedPreferences
     private var userName: String? = null
 
+    // Add this property to control the dialog globally
+    private var showPermissionDialog by mutableStateOf(false)
+
     companion object {
         private const val LOCATION_PERMISSION_REQUEST_CODE = 1001
         private const val TAG = "MainActivityAuth"
@@ -205,7 +218,6 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         WindowCompat.setDecorFitsSystemWindows(window, false)
 
-        // Check location permission before setting content
         val hasLocationPermission = ContextCompat.checkSelfPermission(
             this, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
@@ -219,7 +231,7 @@ class MainActivity : ComponentActivity() {
         }
 
         setContent {
-            var showPermissionDialog by remember { mutableStateOf(!hasLocationPermission) }
+            // Only show the dialog if permission was denied (controlled by Activity property)
             if (showPermissionDialog) {
                 LocationPermissionDialog(onRequestPermission = {
                     ActivityCompat.requestPermissions(
@@ -229,34 +241,86 @@ class MainActivity : ComponentActivity() {
                     )
                 })
             } else {
-                // ...existing code to show the main app UI...
                 AkahidegnTheme {
-                    Surface(modifier = Modifier.fillMaxSize(), color = MaterialTheme.colorScheme.background) {
-                        MainScreen(/* pass required parameters */)
+                    val navController = rememberNavController()
+                    val navBackStackEntry by navController.currentBackStackEntryAsState()
+                    val currentRoute = navBackStackEntry?.destination?.route
+                    val mainViewModel: MainViewModel = androidx.lifecycle.viewmodel.compose.viewModel()
+                    Scaffold(
+                        bottomBar = {
+                            NavigationBar {
+                                val items = listOf(
+                                    Triple("map", "Map", Icons.Filled.Map),
+                                    Triple("groups", "Groups", Icons.Filled.Groups),
+                                    Triple("settings", "Settings", Icons.Filled.Settings)
+                                )
+                                items.forEach { (route, label, icon) ->
+                                    NavigationBarItem(
+                                        icon = { Icon(icon, contentDescription = label) },
+                                        label = { Text(label) },
+                                        selected = currentRoute == route,
+                                        onClick = {
+                                            navController.navigate(route) {
+                                                popUpTo(navController.graph.findStartDestination().id) { saveState = true }
+                                                launchSingleTop = true
+                                                restoreState = true
+                                            }
+                                        }
+                                    )
+                                }
+                            }
+                        }
+                    ) { innerPadding ->
+                        NavHost(
+                            navController = navController,
+                            startDestination = "map",
+                            modifier = Modifier.padding(innerPadding)
+                        ) {
+                            composable("map") {
+                                MapScreen(mainViewModel = mainViewModel)
+                            }
+                            composable("groups") {
+                                MainScreenContent(
+                                    onGroupClick = { group -> showGroupMembersDialog(group) },
+                                    onRefreshGroups = { refreshGroupsFromActivity() },
+                                    onCreateGroup = { showCreateGroupDialog() }
+                                )
+                            }
+                            composable("settings") {
+                                SettingsScreen(
+                                    onSignOut = {
+                                        signOut()
+                                        finish()
+                                    },
+                                    onOpenProfile = {
+                                        val userId = auth.currentUser?.uid
+                                        if (userId != null) {
+                                            navController.navigate(Screen.Profile.createRoute(userId))
+                                        } else {
+                                            Toast.makeText(this@MainActivity, getString(R.string.toast_user_must_sign_in_create), Toast.LENGTH_SHORT).show()
+                                        }
+                                    }
+                                )
+                            }
+                            // Profile and ActivityHistory remain accessible via navigation from Settings/Groups
+                            composable(Screen.ActivityHistory.route) {
+                                com.dawitf.akahidegn.ui.activity.ActivityHistoryScreen(
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
+                            composable(
+                                route = Screen.Profile.route,
+                                arguments = listOf(navArgument("userId") { type = NavType.StringType })
+                            ) { backStackEntry ->
+                                val userId = backStackEntry.arguments?.getString("userId") ?: return@composable
+                                com.dawitf.akahidegn.ui.screens.profile.ProfileScreen(
+                                    userId = userId,
+                                    onBack = { navController.popBackStack() }
+                                )
+                            }
+                        }
                     }
                 }
-            }
-        }
-    }
-
-    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
-        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
-            val granted = grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED
-            if (!granted) {
-                // Show dialog again if permission denied
-                setContent {
-                    LocationPermissionDialog(onRequestPermission = {
-                        ActivityCompat.requestPermissions(
-                            this,
-                            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION),
-                            LOCATION_PERMISSION_REQUEST_CODE
-                        )
-                    })
-                }
-            } else {
-                // Permission granted, reload main UI
-                recreate()
             }
         }
     }
@@ -967,17 +1031,21 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    @Deprecated("This method has been deprecated in favor of using the Activity Result API")
-    @Suppress("DEPRECATION") 
+    /**
+     * Handles the result of location permission requests
+     */
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == LOCATION_PERMISSION_REQUEST_CODE) {
             if (grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
                 Log.d("LOCATION", "ACCESS_FINE_LOCATION permission granted.")
+                // Initialize locationManager before using it
+                locationManager = getSystemService(android.content.Context.LOCATION_SERVICE) as LocationManager
                 setupLocationUpdates()
             } else {
                 Log.w("LOCATION", "ACCESS_FINE_LOCATION permission denied.")
                 Toast.makeText(this, getString(R.string.toast_location_permission_required_nearby), Toast.LENGTH_LONG).show()
+                showPermissionDialog = true
             }
         }
     }
@@ -1234,7 +1302,14 @@ class MainActivity : ComponentActivity() {
                         }
                     }
                 ) { innerPadding ->
-                    NavHost(navController, startDestination = Screen.Main.route, Modifier.padding(innerPadding)) {
+                    NavHost(
+                        navController = navController,
+                        startDestination = "map", // Set map as the main page
+                        modifier = Modifier.padding(innerPadding)
+                    ) {
+                        composable("map") {
+                            MapScreen(mainViewModel = mainViewModel)
+                        }
                         composable(Screen.Main.route) {
                             MainScreenContent(
                                 onGroupClick = { group -> showGroupMembersDialog(group) },

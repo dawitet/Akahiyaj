@@ -3,7 +3,7 @@ package com.dawitf.akahidegn
 import android.app.Application
 import android.util.Log
 import androidx.hilt.work.HiltWorkerFactory
-import androidx.work.Configuration
+import androidx.work.Configuration // For WorkManager
 import com.dawitf.akahidegn.service.GroupCleanupScheduler
 import com.dawitf.akahidegn.util.TestDeviceHelper
 import com.google.firebase.database.FirebaseDatabase
@@ -22,29 +22,33 @@ import coil.decode.SvgDecoder
 import coil.util.DebugLogger
 import dagger.hilt.android.HiltAndroidApp
 import javax.inject.Inject
-import org.osmdroid.config.Configuration // Added for OSMdroid
-import androidx.preference.PreferenceManager // Added for OSMdroid
+import androidx.preference.PreferenceManager // Added for OSMdroid (Correct import for preferences)
+// No need to import org.osmdroid.config.Configuration if using the fully qualified name
 
 @HiltAndroidApp
 class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderFactory {
-    
+
     @Inject
     lateinit var workerFactory: HiltWorkerFactory
-    
+
     @Inject
     lateinit var groupCleanupScheduler: GroupCleanupScheduler
-    
+
+    // This correctly refers to androidx.work.Configuration because of the import
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder()
             .setWorkerFactory(workerFactory)
             .build()
-    
+
     override fun onCreate() {
         super.onCreate()
 
-        // OSMdroid configuration
-        Configuration.getInstance().load(applicationContext, PreferenceManager.getDefaultSharedPreferences(applicationContext))
-        Configuration.getInstance().userAgentValue = BuildConfig.APPLICATION_ID // Using BuildConfig for safety
+        // Use the fully qualified name for OSMdroid's Configuration
+        org.osmdroid.config.Configuration.getInstance().load(
+            applicationContext,
+            androidx.preference.PreferenceManager.getDefaultSharedPreferences(applicationContext)
+        )
+        org.osmdroid.config.Configuration.getInstance().userAgentValue = BuildConfig.APPLICATION_ID // Using BuildConfig for safety
 
         try {
             // Initialize Firebase App first (important for other Firebase services)
@@ -58,19 +62,19 @@ class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderF
 
             // Enable Samsung test device configuration
             TestDeviceHelper.initializeTestDevices(this)
-            
+
             // Initialize Mobile Ads SDK
             initializeMobileAds()
 
             // Initialize Firebase Database persistence first
             initializeFirebaseDatabase()
-            
+
             // Initialize Firebase Authentication
             initializeFirebaseAuth()
-            
+
             // Schedule group cleanup task
             initializeGroupCleanup()
-            
+
             Log.d("APP_INIT", "Application initialized successfully")
         } catch (e: Exception) {
             Log.e("AkahidegnApp", "Error during application initialization", e)
@@ -97,12 +101,12 @@ class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderF
             Log.e("APP_INIT", "Firebase App Check initialization failed: ${e.message}")
         }
     }
-    
+
     private fun initializeMobileAds() {
         try {
             MobileAds.initialize(this) { initializationStatus ->
                 Log.d("APP_INIT", "Mobile Ads SDK initialized: $initializationStatus")
-                
+
                 // Log initialization status for each ad network
                 initializationStatus.adapterStatusMap.forEach { (adapterClass, status) ->
                     Log.d("APP_INIT", "Adapter $adapterClass: ${status.initializationState} - ${status.description}")
@@ -113,7 +117,7 @@ class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderF
             Log.e("APP_INIT", "Mobile Ads SDK initialization failed: ${e.message}")
         }
     }
-    
+
     private fun initializeFirebaseDatabase() {
         try {
             // Correct project URL (previously had a typo 'akahiyaj' vs 'akahidegn')
@@ -125,7 +129,7 @@ class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderF
             Log.w("APP_INIT", "Firebase database setup failed: ${e.message}") // Log message updated
         }
     }
-    
+
     private fun initializeFirebaseAuth() {
         try {
             Firebase.auth
@@ -134,7 +138,7 @@ class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderF
             Log.e("APP_INIT", "Firebase Authentication initialization failed: ${e.message}")
         }
     }
-    
+
     private fun initializeGroupCleanup() {
         try {
             groupCleanupScheduler.scheduleGroupCleanup()
@@ -143,7 +147,7 @@ class AkahidegnApplication : Application(), Configuration.Provider, ImageLoaderF
             Log.e("APP_INIT", "Group cleanup scheduler initialization failed: ${e.message}")
         }
     }
-    
+
     override fun newImageLoader(): ImageLoader {
         return ImageLoader.Builder(this)
             .components {

@@ -30,6 +30,7 @@ import android.graphics.Paint // For potential cluster icon customization
 import android.graphics.drawable.BitmapDrawable // For potential cluster icon customization
 import org.osmdroid.views.overlay.mylocation.MyLocationNewOverlay
 import org.osmdroid.views.overlay.mylocation.GpsMyLocationProvider
+import com.dawitf.akahidegn.domain.model.Group // Import Group data class
 
 @Composable
 fun MapScreen(
@@ -77,6 +78,8 @@ fun MapScreen(
         }
     }
 
+    var hasCenteredOnUser by remember { mutableStateOf(false) }
+
     // Add clusterer to map overlays (once)
     LaunchedEffect(mapView, groupClusterer) {
         if (!mapView.overlays.contains(groupClusterer)) {
@@ -89,9 +92,10 @@ fun MapScreen(
             androidLocation?.let {
                 val userGeoPoint = GeoPoint(it.latitude, it.longitude)
                 // userMarker logic removed as MyLocationNewOverlay is used
-                if (mainViewModel.initialMapLatitudeValue == null) {
+                if (!hasCenteredOnUser) {
                     mapView.controller.animateTo(userGeoPoint)
                     mapView.controller.setZoom(16.0)
+                    hasCenteredOnUser = true
                 }
                 mapView.invalidate() // Invalidate map for user marker updates
             }
@@ -214,13 +218,7 @@ fun MapScreen(
 
     DisposableEffect(Unit) {
         onDispose {
-            if (mapView.mapCenter != null) {
-                mainViewModel.saveMapState(
-                    mapView.mapCenter.latitude,
-                    mapView.mapCenter.longitude,
-                    mapView.zoomLevelDouble
-                )
-            }
+            // Removed call to mainViewModel.saveMapState (unresolved reference)
             // Clean up OSMdroid resources
             mapView.onDetach()
         }
